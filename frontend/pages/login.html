@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoachAI - Giriş</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+    <main class="auth-page">
+        <h1>CoachAI</h1>
+        <div id="auth-error"></div>
+        <form id="login-form">
+            <input type="email" id="email" placeholder="E-posta" required>
+            <input type="password" id="password" placeholder="Şifre" required>
+            <button type="submit">Giriş Yap</button>
+        </form>
+        <form id="register-form">
+            <input type="email" id="reg-email" placeholder="E-posta" required>
+            <input type="password" id="reg-password" placeholder="Şifre (min 6 karakter)" required minlength="6">
+            <button type="submit">Kayıt Ol</button>
+        </form>
+        <p><a href="index.html">Ana sayfaya dön</a></p>
+    </main>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        window.FIREBASE_CONFIG = FIREBASE_CONFIG;
+    </script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/login.js"></script>
+</body>
+</html>
