@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoachAI - Şirket Analizi</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/company.css">
+</head>
+<body>
+    <main class="company-page">
+        <h1>Şirket profili</h1>
+        <p id="auth-hint" style="color: #a1a1aa; margin-bottom: 1rem;">Oturum kontrol ediliyor…</p>
+        <div id="company-error"></div>
+        <div id="company-panel" style="display: none;">
+            <form id="company-form">
+                <input type="text" id="company-name" placeholder="Şirket adı (örn. Trendyol)" required maxlength="200">
+                <input type="text" id="position" placeholder="Pozisyon (örn. Backend Developer)" required maxlength="200">
+                <button type="submit" id="btn-analyze">Analiz et ve kaydet</button>
+            </form>
+        </div>
+        <div id="company-result">
+            <p id="company-meta"></p>
+            <h2>Teknoloji yığını</h2>
+            <ul id="list-tech"></ul>
+            <h2>Kültür</h2>
+            <p id="text-culture"></p>
+            <h2>Mülakat süreci</h2>
+            <p id="text-interview"></p>
+            <h2>Sık sorulan sorular</h2>
+            <ul id="list-questions"></ul>
+            <h2>Aranan özellikler</h2>
+            <ul id="list-traits"></ul>
+        </div>
+        <p style="margin-top: 1.5rem;"><a href="index.html">Ana sayfa</a></p>
+    </main>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>window.FIREBASE_CONFIG = FIREBASE_CONFIG;</script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/company.js"></script>
+</body>
+</html>
