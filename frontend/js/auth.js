@@ -3,7 +3,9 @@ let auth = null;
 function initAuth() {
     if (typeof firebase === "undefined") return null;
     if (!window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.apiKey) return null;
-    firebase.initializeApp(window.FIREBASE_CONFIG);
+    if (!firebase.apps.length) {
+        firebase.initializeApp(window.FIREBASE_CONFIG);
+    }
     auth = firebase.auth();
     return auth;
 }
