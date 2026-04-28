@@ -62,3 +62,21 @@ async def company_analyze(
         "position": position,
         **profile,
     }
+
+
+@router.get("/company/list")
+async def list_company_profiles(uid: str = Depends(get_current_user)):
+    db = get_firestore()
+    items = []
+    for d in db.collection("company_profiles").where("user_id", "==", uid).stream():
+        data = d.to_dict() or {}
+        items.append(
+            {
+                "profile_id": d.id,
+                "company_name": data.get("company_name") or "",
+                "position": data.get("position") or "",
+                "tech_stack_preview": (data.get("tech_stack") or [])[:6],
+            }
+        )
+    items.sort(key=lambda x: x["profile_id"], reverse=True)
+    return {"items": items}

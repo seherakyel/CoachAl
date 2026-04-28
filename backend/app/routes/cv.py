@@ -78,3 +78,23 @@ async def upload_cv(
         "education_level": education_level,
         "extracted_text_preview": extracted_text[:800],
     }
+
+
+@router.get("/cv/list")
+async def list_cv_documents(uid: str = Depends(get_current_user)):
+    db = get_firestore()
+    items = []
+    for d in db.collection("cv_documents").where("user_id", "==", uid).stream():
+        data = d.to_dict() or {}
+        skills = data.get("skills") or []
+        items.append(
+            {
+                "cv_id": d.id,
+                "skill_count": len(skills),
+                "skills_preview": skills[:8],
+                "experience_years": data.get("experience_years"),
+                "education_level": data.get("education_level"),
+            }
+        )
+    items.sort(key=lambda x: x["cv_id"], reverse=True)
+    return {"items": items}

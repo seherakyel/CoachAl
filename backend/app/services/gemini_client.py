@@ -53,3 +53,33 @@ CV metni:
     if edu is not None:
         edu = str(edu).strip().lower()
     return {"skills": skills, "experience_years": exp, "education_level": edu}
+
+
+def alignment_advice(
+    company_name: str,
+    position: str,
+    matched_skills: list,
+    missing_skills: list,
+    score_percent: float,
+    risk_level: str,
+) -> str:
+    model = get_model()
+    if not model:
+        return ""
+    ms = ", ".join(missing_skills[:20]) if missing_skills else "yok"
+    ok = ", ".join(matched_skills[:15]) if matched_skills else "yok"
+    prompt = f"""CoachAI uygulaması için kısa, net Türkçe koçluk metni yaz (maksimum 6 cümle).
+Şirket: {company_name}
+Pozisyon: {position}
+Hizalama skoru (yüzde): {score_percent}
+Risk: {risk_level} (YÜKSEK=elenme riski yüksek, DÜŞÜK=daha güçlü aday)
+Öne çıkan eşleşen yetenekler: {ok}
+Eksik veya zayıf görünen gereksinimler: {ms}
+
+Kullanıcıya: hangi eksikleri kapatması gerektiğini ve 2-4 haftalık somut bir aksiyon öner. Başlık veya madde işareti kullanma; düz paragraf.
+"""
+    try:
+        response = model.generate_content(prompt)
+        return (response.text or "").strip()
+    except Exception:
+        return ""
