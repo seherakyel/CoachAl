@@ -5,7 +5,7 @@ const _NAV = [
     { id: "cv-analysis", icon: "description",        label: "CV Analizi",    href: "cv-analysis.html" },
     { id: "interviews",  icon: "record_voice_over",  label: "Mülakatlar",    href: "interviews.html" },
     { id: "reports",     icon: "analytics",          label: "Raporlar",      href: "reports.html" },
-    { id: "settings",    icon: "settings",           label: "Ayarlar",       href: "#" },
+    { id: "settings",    icon: "settings",           label: "Ayarlar",       href: "settings.html" },
 ];
 
 function _navLink(item, active) {
