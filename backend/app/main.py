@@ -1,6 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import health, firebase, auth_test, cv, company, alignment, interview
+from app.routes import (
+    health,
+    firebase,
+    auth_test,
+    cv,
+    company,
+    alignment,
+    interview,
+    feedback,
+)
 
 app = FastAPI(title="CoachAI API", version="0.1.0")
 
@@ -19,3 +28,4 @@ app.include_router(cv.router, prefix="/api")
 app.include_router(company.router, prefix="/api")
 app.include_router(alignment.router, prefix="/api")
 app.include_router(interview.router, prefix="/api")
+app.include_router(feedback.router, prefix="/api")
