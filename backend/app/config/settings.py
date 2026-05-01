@@ -8,3 +8,16 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 def get_env(key: str, default: str = "") -> str:
     return os.getenv(key, default)
+
+
+def get_list_env(key: str, default: list[str] | None = None) -> list[str]:
+    raw = os.getenv(key, "")
+    items = [x.strip() for x in raw.split(",") if x.strip()]
+    return items or (default or [])
+
+
+def get_int_env(key: str, default: int) -> int:
+    try:
+        return int(os.getenv(key, str(default)))
+    except (TypeError, ValueError):
+        return default

@@ -5,3 +5,5 @@ firebase-admin
 pdfplumber
 google-generativeai
 python-multipart
+slowapi
+sentry-sdk[fastapi]

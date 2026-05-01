@@ -1,11 +1,12 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from google.cloud.firestore import SERVER_TIMESTAMP
 from pydantic import BaseModel, Field
 
 from app.config.firebase_config import get_firestore
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limit import enforce_daily_quota, limiter
 from app.services.company_intel import analyze_company_profile
 from app.config.settings import get_env
 
@@ -19,10 +20,13 @@ class CompanyAnalyzeBody(BaseModel):
 
 
 @router.post("/company/analyze")
+@limiter.limit("15/hour")
 async def company_analyze(
+    request: Request,
     body: CompanyAnalyzeBody,
     uid: str = Depends(get_current_user),
 ):
+    enforce_daily_quota(uid, "company_analyze", "DAILY_QUOTA_COMPANY_ANALYZE")
     if not get_env("GEMINI_API_KEY"):
         raise HTTPException(
             status_code=503,
@@ -65,18 +69,43 @@ async def company_analyze(
 
 
 @router.get("/company/list")
-async def list_company_profiles(uid: str = Depends(get_current_user)):
+async def list_company_profiles(
+    uid: str = Depends(get_current_user),
+    limit: int = 20,
+    cursor: str | None = None,
+):
+    limit = max(1, min(50, int(limit)))
     db = get_firestore()
+    from google.cloud.firestore import Query
+
+    q = (
+        db.collection("company_profiles")
+        .where("user_id", "==", uid)
+        .order_by("created_at", direction=Query.DESCENDING)
+        .limit(limit + 1)
+    )
+    if cursor:
+        cur_snap = db.collection("company_profiles").document(cursor).get()
+        if cur_snap.exists:
+            q = q.start_after(cur_snap)
+
+    docs = list(q.stream())
+    has_more = len(docs) > limit
+    docs = docs[:limit]
+
     items = []
-    for d in db.collection("company_profiles").where("user_id", "==", uid).stream():
+    for d in docs:
         data = d.to_dict() or {}
+        ts = data.get("created_at")
         items.append(
             {
                 "profile_id": d.id,
                 "company_name": data.get("company_name") or "",
                 "position": data.get("position") or "",
                 "tech_stack_preview": (data.get("tech_stack") or [])[:6],
+                "created_at": ts.isoformat() if hasattr(ts, "isoformat") else None,
             }
         )
-    items.sort(key=lambda x: x["profile_id"], reverse=True)
-    return {"items": items}
+
+    next_cursor = items[-1]["profile_id"] if items and has_more else None
+    return {"items": items, "next_cursor": next_cursor, "limit": limit}

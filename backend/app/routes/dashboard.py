@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from google.cloud.firestore import Query
 
 from app.config.firebase_config import get_firestore
 from app.middleware.auth import get_current_user
@@ -6,25 +7,41 @@ from app.middleware.auth import get_current_user
 
 router = APIRouter()
 
+MAX_PROFILES = 100
+MAX_ALIGNMENTS = 200
+MAX_INTERVIEWS = 200
 
-def _doc_id_iso(d) -> str | None:
+
+def _count(db, collection: str, uid: str) -> int:
     try:
-        ts = d.create_time
-        return ts.isoformat() if ts else None
+        agg = (
+            db.collection(collection)
+            .where("user_id", "==", uid)
+            .count()
+            .get()
+        )
+        return int(agg[0][0].value)
     except Exception:
-        return None
+        n = 0
+        for _ in db.collection(collection).where("user_id", "==", uid).limit(MAX_INTERVIEWS).stream():
+            n += 1
+        return n
 
 
 @router.get("/dashboard/summary")
 async def dashboard_summary(uid: str = Depends(get_current_user)):
     db = get_firestore()
 
-    cv_count = 0
-    for _ in db.collection("cv_documents").where("user_id", "==", uid).stream():
-        cv_count += 1
+    cv_count = _count(db, "cv_documents", uid)
 
     profiles = []
-    for d in db.collection("company_profiles").where("user_id", "==", uid).stream():
+    for d in (
+        db.collection("company_profiles")
+        .where("user_id", "==", uid)
+        .order_by("created_at", direction=Query.DESCENDING)
+        .limit(MAX_PROFILES)
+        .stream()
+    ):
         data = d.to_dict() or {}
         profiles.append(
             {
@@ -36,7 +53,13 @@ async def dashboard_summary(uid: str = Depends(get_current_user)):
 
     alignment_by_profile: dict[str, dict] = {}
     alignments_all = []
-    for d in db.collection("alignment_results").where("user_id", "==", uid).stream():
+    for d in (
+        db.collection("alignment_results")
+        .where("user_id", "==", uid)
+        .order_by("calculated_at", direction=Query.DESCENDING)
+        .limit(MAX_ALIGNMENTS)
+        .stream()
+    ):
         data = d.to_dict() or {}
         item = {
             "alignment_id": d.id,
@@ -54,7 +77,13 @@ async def dashboard_summary(uid: str = Depends(get_current_user)):
 
     interview_by_profile: dict[str, dict] = {}
     interview_count = 0
-    for d in db.collection("interview_sessions").where("user_id", "==", uid).stream():
+    for d in (
+        db.collection("interview_sessions")
+        .where("user_id", "==", uid)
+        .order_by("started_at", direction=Query.DESCENDING)
+        .limit(MAX_INTERVIEWS)
+        .stream()
+    ):
         data = d.to_dict() or {}
         if not data.get("completed_at"):
             continue
@@ -97,9 +126,7 @@ async def dashboard_summary(uid: str = Depends(get_current_user)):
         key=lambda x: (x["alignment_score"] is None, -(x["alignment_score"] or 0))
     )
 
-    recent_alignments = sorted(
-        alignments_all, key=lambda x: x["alignment_id"], reverse=True
-    )[:5]
+    recent_alignments = alignments_all[:5]
 
     return {
         "cv_count": cv_count,
@@ -107,4 +134,9 @@ async def dashboard_summary(uid: str = Depends(get_current_user)):
         "interview_count": interview_count,
         "applications": applications,
         "recent_alignments": recent_alignments,
+        "limits": {
+            "profiles_scanned": MAX_PROFILES,
+            "alignments_scanned": MAX_ALIGNMENTS,
+            "interviews_scanned": MAX_INTERVIEWS,
+        },
     }

@@ -1,12 +1,13 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from google.cloud.firestore import SERVER_TIMESTAMP
 from pydantic import BaseModel, Field
 
 from app.config.firebase_config import get_firestore
 from app.config.settings import get_env
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limit import enforce_daily_quota, limiter
 from app.services.answer_evaluator import evaluate_classic_answer, overall_classic_feedback
 from app.services.question_generator import generate_classic_questions
 from app.services.quiz_generator import generate_quiz_questions
@@ -57,10 +58,13 @@ def _load_cv_and_profile(db, uid: str, cv_id: str, profile_id: str) -> tuple[dic
 
 
 @router.post("/interview/classic")
+@limiter.limit("10/hour")
 async def start_classic(
+    request: Request,
     body: InterviewStartBody,
     uid: str = Depends(get_current_user),
 ):
+    enforce_daily_quota(uid, "classic_exam", "DAILY_QUOTA_CLASSIC_EXAM")
     if not get_env("GEMINI_API_KEY"):
         raise HTTPException(
             status_code=503,
@@ -204,10 +208,13 @@ async def evaluate_classic(
 
 
 @router.post("/interview/quiz")
+@limiter.limit("15/hour")
 async def start_quiz(
+    request: Request,
     body: InterviewStartBody,
     uid: str = Depends(get_current_user),
 ):
+    enforce_daily_quota(uid, "quiz", "DAILY_QUOTA_QUIZ")
     if not get_env("GEMINI_API_KEY"):
         raise HTTPException(
             status_code=503, detail="GEMINI_API_KEY tanımlı değil. .env dosyasına ekleyin."

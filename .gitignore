@@ -24,6 +24,8 @@ ENV/
 
 firebase-service-account.json
 firebase-adminsdk*.json
+*firebase-adminsdk*.json
+*-adminsdk-*.json
 serviceAccountKey.json
 .firebaserc
 firebase-debug.log
