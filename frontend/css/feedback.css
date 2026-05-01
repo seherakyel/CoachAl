@@ -1,0 +1,156 @@
+.feedback-page {
+    max-width: 760px;
+    width: 100%;
+}
+
+.feedback-page select,
+.feedback-page button {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.feedback-page select {
+    width: 100%;
+    margin-bottom: 0.75rem;
+    border: 1px solid #3f3f46;
+    background: #18181b;
+    color: #e4e4e7;
+}
+
+.feedback-page button {
+    border: none;
+    background: #6366f1;
+    color: white;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.feedback-page button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#fb-error {
+    display: none;
+    padding: 0.75rem;
+    margin: 1rem 0;
+    background: #7f1d1d;
+    color: #fecaca;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+#fb-result {
+    display: none;
+    text-align: left;
+    margin-top: 1.5rem;
+}
+
+#fb-result.visible {
+    display: block;
+}
+
+.fb-meta {
+    color: #a1a1aa;
+    margin-bottom: 1rem;
+}
+
+.danger-panel {
+    background: rgba(127, 29, 29, 0.25);
+    border: 1px solid #7f1d1d;
+    border-left: 4px solid #ef4444;
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.danger-panel h2 {
+    color: #fecaca;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.danger-panel p {
+    color: #fca5a5;
+    line-height: 1.55;
+}
+
+.cards-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+@media (max-width: 600px) {
+    .cards-row { grid-template-columns: 1fr; }
+}
+
+.card {
+    background: #18181b;
+    border: 1px solid #3f3f46;
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.card.strengths {
+    border-left: 3px solid #22c55e;
+}
+
+.card.weaknesses {
+    border-left: 3px solid #ef4444;
+}
+
+.card h3 {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    color: #e4e4e7;
+}
+
+.card ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: #a1a1aa;
+}
+
+.action-box {
+    background: #18181b;
+    border-left: 3px solid #6366f1;
+    border-radius: 0 8px 8px 0;
+    padding: 1rem;
+    color: #a1a1aa;
+    line-height: 1.55;
+    margin-bottom: 1rem;
+}
+
+.section-title {
+    font-size: 0.95rem;
+    color: #e4e4e7;
+    margin: 1rem 0 0.5rem;
+}
+
+.resources {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: #a1a1aa;
+}
+
+.prep-time {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.3rem 0.75rem;
+    background: #312e81;
+    color: #c7d2fe;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
+.feedback-page a {
+    color: #a1a1aa;
+    text-decoration: none;
+}
+
+.feedback-page a:hover {
+    color: #e4e4e7;
+}
