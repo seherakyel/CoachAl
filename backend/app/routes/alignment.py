@@ -14,6 +14,34 @@ from app.services.gemini_client import alignment_advice
 router = APIRouter()
 
 
+@router.get("/alignment/list")
+async def alignment_list(
+    limit: int = 20,
+    uid: str = Depends(get_current_user),
+):
+    db = get_firestore()
+    docs = (
+        db.collection("alignment_results")
+        .where("user_id", "==", uid)
+        .limit(min(limit, 50))
+        .stream()
+    )
+    items = []
+    for doc in docs:
+        d = doc.to_dict() or {}
+        items.append({
+            "id": doc.id,
+            "company_name": d.get("company_name", ""),
+            "target_position": d.get("position", ""),
+            "score": d.get("score", 0),
+            "risk_level": d.get("risk_level", ""),
+            "created_at": str(d.get("calculated_at", "")),
+            "cv_id": d.get("cv_id", ""),
+            "profile_id": d.get("profile_id", ""),
+        })
+    return {"items": items, "total": len(items)}
+
+
 class AlignmentScoreBody(BaseModel):
     cv_id: str = Field(..., min_length=1)
     profile_id: str = Field(..., min_length=1)

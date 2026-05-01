@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoachAI - Raporlar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"primary":"#3525cd","primary-container":"#4f46e5","on-primary":"#ffffff","on-primary-container":"#dad7ff","primary-fixed":"#e2dfff","primary-fixed-dim":"#c3c0ff","secondary":"#545f73","on-secondary":"#ffffff","secondary-container":"#d5e0f8","tertiary":"#7e3000","on-tertiary":"#ffffff","tertiary-container":"#a44100","on-tertiary-container":"#ffd2be","tertiary-fixed":"#ffdbcc","tertiary-fixed-dim":"#ffb695","on-tertiary-fixed":"#351000","error":"#ba1a1a","on-error":"#ffffff","error-container":"#ffdad6","on-error-container":"#93000a","background":"#fcf8ff","on-background":"#1b1b24","surface":"#fcf8ff","surface-container-lowest":"#ffffff","surface-container-low":"#f5f2ff","surface-container":"#f0ecf9","surface-container-high":"#eae6f4","surface-container-highest":"#e4e1ee","on-surface":"#1b1b24","on-surface-variant":"#464555","surface-variant":"#e4e1ee","outline":"#777587","outline-variant":"#c7c4d8"},borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},spacing:{"xs":"4px","sm":"12px","md":"24px","lg":"40px","xl":"64px","gutter":"24px","base":"8px","container-max":"1280px"},fontFamily:{"body-md":["Inter"],"h1":["Inter"],"h2":["Inter"],"h3":["Inter"],"body-lg":["Inter"],"label-sm":["Inter"]},fontSize:{"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],"h1":["40px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"h2":["30px",{"lineHeight":"1.3","letterSpacing":"-0.01em","fontWeight":"600"}],"h3":["24px",{"lineHeight":"1.4","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"label-sm":["14px",{"lineHeight":"1.4","fontWeight":"500"}]}}}}</script>
+<style>.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}</style>
+</head>
+<body class="bg-background text-on-background font-body-md flex h-screen overflow-hidden">
+<div id="sidebar-container"></div>
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<div id="header-container"></div>
+<main class="flex-1 overflow-y-auto p-8 lg:p-xl bg-background">
+<div class="max-w-[1024px] mx-auto space-y-lg">
+
+    <div>
+        <h1 class="font-h1 text-h1 text-on-surface mb-xs">Sonuç Raporu</h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant">CV ve mülakat geri bildirim analizi.</p>
+    </div>
+
+    <div id="selector-panel" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 space-y-6">
+        <h3 class="font-h3 text-h3 text-on-surface">Rapor Seçimi</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="flex flex-col gap-2">
+                <label class="font-label-sm text-label-sm text-on-surface">Eşleşme Analizi</label>
+                <select id="alignment-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">Yükleniyor…</option></select>
+            </div>
+            <div class="flex flex-col gap-2">
+                <label class="font-label-sm text-label-sm text-on-surface">Mülakat Seansı (İsteğe bağlı)</label>
+                <select id="session-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">Seçiniz…</option></select>
+            </div>
+        </div>
+        <div id="selector-error" class="hidden p-3 bg-error-container text-on-error-container text-sm rounded-lg border border-error/20"></div>
+        <button id="btn-generate" class="px-8 py-4 bg-primary-container text-on-primary rounded-lg font-semibold hover:bg-primary transition-colors flex items-center gap-2">
+            <span class="material-symbols-outlined">auto_awesome</span>Raporu Oluştur
+        </button>
+    </div>
+
+    <div id="generating-state" class="hidden flex flex-col items-center justify-center py-16 gap-6">
+        <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="font-body-lg text-body-lg text-on-surface-variant">AI rapor hazırlıyor…</p>
+    </div>
+
+    <div id="report-panel" class="hidden space-y-lg">
+        <div id="critical-warning" class="hidden bg-error-container rounded-xl p-md border border-error/20 flex gap-4 items-start shadow-sm">
+            <div class="bg-error/10 p-2 rounded-full shrink-0"><span class="material-symbols-outlined text-error">warning</span></div>
+            <div>
+                <h3 class="font-h3 text-h3 text-on-error-container mb-sm">Neden Elenebilirsin?</h3>
+                <ul id="critical-list" class="space-y-2"></ul>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+            <div class="lg:col-span-2 space-y-gutter">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+                    <div class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+                        <div class="flex items-center gap-3 mb-6 border-b border-surface-variant pb-4">
+                            <div class="bg-primary-fixed p-2 rounded-lg"><span class="material-symbols-outlined text-primary">thumb_up</span></div>
+                            <h3 class="font-h3 text-h3 text-on-surface">Güçlü Yönler</h3>
+                        </div>
+                        <ul id="strengths-list" class="space-y-4"></ul>
+                    </div>
+                    <div class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+                        <div class="flex items-center gap-3 mb-6 border-b border-surface-variant pb-4">
+                            <div class="bg-tertiary-fixed p-2 rounded-lg"><span class="material-symbols-outlined text-tertiary">trending_down</span></div>
+                            <h3 class="font-h3 text-h3 text-on-surface">Gelişim Alanları</h3>
+                        </div>
+                        <ul id="weaknesses-list" class="space-y-4"></ul>
+                    </div>
+                </div>
+                <div class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+                    <h3 class="font-h3 text-h3 text-on-surface mb-6">Aksiyon Planı</h3>
+                    <div id="action-plan" class="relative pl-6 border-l-2 border-surface-variant space-y-8"></div>
+                </div>
+            </div>
+            <div class="space-y-6">
+                <h3 class="font-h3 text-h3 text-on-surface">Önerilen Kaynaklar</h3>
+                <div id="resources-list" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</main>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/ui.js"></script>
+<script>initLayout("reports");</script>
+<script src="../js/reports.js"></script>
+</body>
+</html>

@@ -1,227 +1,133 @@
-const API_BASE = "http://localhost:8000";
+var examQuestions = [];
+var examSessionId = null;
 
-const authHint = document.getElementById("auth-hint");
-const examError = document.getElementById("exam-error");
-const setupPanel = document.getElementById("setup-panel");
-const examPanel = document.getElementById("exam-panel");
-const examInfo = document.getElementById("exam-info");
-const examForm = document.getElementById("exam-form");
-const btnStart = document.getElementById("btn-start");
-const btnSubmit = document.getElementById("btn-submit");
-const selCv = document.getElementById("sel-cv");
-const selProfile = document.getElementById("sel-profile");
-const examResult = document.getElementById("exam-result");
-const gauge = document.getElementById("gauge");
-const scoreValue = document.getElementById("score-value");
-const resultMeta = document.getElementById("result-meta");
-const summaryText = document.getElementById("summary-text");
-const resultList = document.getElementById("result-list");
-
-let currentSession = null;
-
-function showError(msg) {
-    examError.textContent = msg;
-    examError.style.display = "block";
-}
-
-function clearError() {
-    examError.textContent = "";
-    examError.style.display = "none";
-}
-
-function gaugeColor(score) {
-    if (score >= 75) return "#22c55e";
-    if (score >= 50) return "#eab308";
-    return "#ef4444";
-}
-
-function fillSelect(select, items, valueKey, labelFn, emptyMsg) {
-    select.innerHTML = "";
-    if (!items.length) {
-        const o = document.createElement("option");
-        o.value = "";
-        o.textContent = emptyMsg;
-        select.appendChild(o);
-        return;
-    }
-    items.forEach((it) => {
-        const o = document.createElement("option");
-        o.value = it[valueKey];
-        o.textContent = labelFn(it);
-        select.appendChild(o);
+function showPanel(id) {
+    ["setup-panel", "loading-panel", "exam-panel", "result-panel"].forEach(function(p) {
+        document.getElementById(p).classList.toggle("hidden", p !== id);
     });
 }
-
-async function loadOptions(token) {
-    const [r1, r2] = await Promise.all([
-        fetch(`${API_BASE}/api/cv/list`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_BASE}/api/company/list`, { headers: { Authorization: `Bearer ${token}` } }),
-    ]);
-    const cvs = r1.ok ? (await r1.json()).items : [];
-    const profiles = r2.ok ? (await r2.json()).items : [];
-    fillSelect(selCv, cvs, "cv_id", (it) => `${it.cv_id.slice(0, 8)}… · ${it.skill_count || 0} yetenek`, "Önce CV yükleyin");
-    fillSelect(
-        selProfile,
-        profiles,
-        "profile_id",
-        (it) => `${it.company_name} — ${it.position}`,
-        "Önce şirket analizi yapın"
-    );
-    btnStart.disabled = !cvs.length || !profiles.length;
+function setSetupError(msg) {
+    var el = document.getElementById("setup-error");
+    el.textContent = msg; el.classList.remove("hidden");
+}
+function setExamError(msg) {
+    var el = document.getElementById("exam-error");
+    el.textContent = msg; el.classList.remove("hidden");
 }
 
-function renderQuestions(questions) {
-    examForm.innerHTML = "";
-    questions.forEach((q) => {
-        const card = document.createElement("div");
-        card.className = "question-card";
-        const meta = document.createElement("div");
-        meta.className = "question-meta";
-        const tType = document.createElement("span");
-        tType.className = "tag type";
-        tType.textContent = q.type;
-        const tDiff = document.createElement("span");
-        tDiff.className = `tag diff-${q.difficulty}`;
-        tDiff.textContent = q.difficulty;
-        const tNo = document.createElement("span");
-        tNo.className = "tag";
-        tNo.textContent = `#${q.index + 1}`;
-        meta.appendChild(tNo);
-        meta.appendChild(tType);
-        meta.appendChild(tDiff);
-        const text = document.createElement("p");
-        text.className = "question-text";
-        text.textContent = q.question;
-        const ta = document.createElement("textarea");
-        ta.dataset.index = String(q.index);
-        ta.placeholder = "Cevabını yaz…";
-        card.appendChild(meta);
-        card.appendChild(text);
-        card.appendChild(ta);
-        examForm.appendChild(card);
-    });
-}
+async function loadDropdowns() {
+    var tok;
+    try { tok = await getToken(); } catch(e) { return; }
 
-btnStart.addEventListener("click", async () => {
-    clearError();
-    examResult.classList.remove("visible");
-    const cvId = selCv.value;
-    const profileId = selProfile.value;
-    if (!cvId || !profileId) {
-        showError("CV ve şirket profili seç.");
-        return;
-    }
-    const token = await getToken();
-    if (!token) { showError("Oturum yok."); return; }
-    btnStart.disabled = true;
+    var cvSel = document.getElementById("cv-select");
+    var profileSel = document.getElementById("profile-select");
+
+    var savedCvId = sessionStorage.getItem("coachai_cv_id");
+    var savedProfileId = sessionStorage.getItem("coachai_profile_id");
+
     try {
-        const res = await fetch(`${API_BASE}/api/interview/classic`, {
+        var cr = await fetch(API_BASE + "/api/cv/list?limit=20", { headers: { Authorization: "Bearer " + tok } });
+        var cd = await cr.json();
+        var cvs = cd.items || cd.cvs || [];
+        cvSel.innerHTML = `<option value="">CV seçin…</option>` +
+            cvs.map(function(c) { return `<option value="${c.id || c.cv_id}" ${(c.id || c.cv_id) === savedCvId ? "selected" : ""}>${c.filename || c.original_filename || c.id}</option>`; }).join("");
+    } catch(e) { cvSel.innerHTML = `<option value="">CV yüklenemedi</option>`; }
+
+    try {
+        var pr = await fetch(API_BASE + "/api/company/list?limit=20", { headers: { Authorization: "Bearer " + tok } });
+        var pd = await pr.json();
+        var profiles = pd.items || pd.profiles || [];
+        profileSel.innerHTML = `<option value="">Şirket profili seçin…</option>` +
+            profiles.map(function(p) { return `<option value="${p.id || p.profile_id}" ${(p.id || p.profile_id) === savedProfileId ? "selected" : ""}>${p.company_name || p.id} ${p.target_position ? "- " + p.target_position : ""}</option>`; }).join("");
+    } catch(e) { profileSel.innerHTML = `<option value="">Profil yüklenemedi</option>`; }
+}
+
+document.getElementById("btn-start-exam").addEventListener("click", async function() {
+    var cvId = document.getElementById("cv-select").value;
+    var profileId = document.getElementById("profile-select").value;
+    if (!cvId || !profileId) { setSetupError("CV ve şirket profili seçin."); return; }
+    document.getElementById("setup-error").classList.add("hidden");
+    showPanel("loading-panel");
+    try {
+        var tok = await getToken();
+        var r = await fetch(API_BASE + "/api/interview/classic", {
             method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ cv_id: cvId, profile_id: profileId }),
+            headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+            body: JSON.stringify({ cv_id: cvId, profile_id: profileId })
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-            const msg = data.detail ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail)) : "Hata";
-            showError(msg);
-            btnStart.disabled = false;
-            return;
-        }
-        currentSession = data;
-        examInfo.textContent = `${data.company_name} · ${data.position} · ${data.questions.length} soru`;
-        renderQuestions(data.questions);
-        setupPanel.style.display = "none";
-        examPanel.style.display = "block";
-    } catch (err) {
-        showError(err.message || "Ağ hatası");
-        btnStart.disabled = false;
+        var d = await r.json();
+        if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail));
+        examQuestions = d.questions || [];
+        examSessionId = d.session_id || null;
+        var profile = d.profile_name || d.company_name || "";
+        document.getElementById("exam-subtitle").textContent = profile ? profile + " için klasik mülakat" : "Klasik teknik mülakat";
+        renderExamQuestions();
+        showPanel("exam-panel");
+    } catch(err) {
+        showPanel("setup-panel");
+        setSetupError(err.message || "Sınav başlatılamadı");
     }
 });
 
-btnSubmit.addEventListener("click", async () => {
-    if (!currentSession) return;
-    clearError();
-    const answers = [];
-    examForm.querySelectorAll("textarea").forEach((ta) => {
-        answers.push({
-            question_index: parseInt(ta.dataset.index, 10),
-            answer: ta.value || "",
-        });
+function renderExamQuestions() {
+    var container = document.getElementById("questions-container");
+    container.innerHTML = examQuestions.map(function(q, i) {
+        var text = typeof q === "string" ? q : q.question || q.text || q;
+        return `<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+<div class="flex items-center gap-3 mb-4"><div class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold text-sm shrink-0">${i + 1}</div>
+<p class="font-body-lg text-body-lg text-on-surface font-medium">${text}</p></div>
+<textarea id="answer-${i}" rows="5" placeholder="Cevabınızı buraya yazın…" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"></textarea>
+</div>`;
+    }).join("");
+}
+
+document.getElementById("btn-submit-exam").addEventListener("click", async function() {
+    document.getElementById("exam-error").classList.add("hidden");
+    var answers = examQuestions.map(function(q, i) {
+        var text = typeof q === "string" ? q : q.question || q.text || q;
+        return { question: text, answer: (document.getElementById("answer-" + i) || {}).value || "" };
     });
-    const token = await getToken();
-    if (!token) { showError("Oturum yok."); return; }
-    btnSubmit.disabled = true;
-    btnSubmit.textContent = "Değerlendiriliyor…";
+    var hasContent = answers.some(function(a) { return a.answer.trim().length > 0; });
+    if (!hasContent) { setExamError("En az bir soruyu cevaplayın."); return; }
+
+    document.getElementById("btn-submit-exam").disabled = true;
+    document.getElementById("btn-submit-exam").innerHTML = `<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Değerlendiriliyor…`;
+
     try {
-        const res = await fetch(`${API_BASE}/api/interview/evaluate`, {
+        var tok = await getToken();
+        var body = { answers: answers };
+        if (examSessionId) body.session_id = examSessionId;
+        var r = await fetch(API_BASE + "/api/interview/evaluate", {
             method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ session_id: currentSession.session_id, answers }),
+            headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+            body: JSON.stringify(body)
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-            const msg = data.detail ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail)) : "Hata";
-            showError(msg);
-            btnSubmit.disabled = false;
-            btnSubmit.textContent = "Cevapları gönder";
-            return;
-        }
-        const total = Math.min(100, Math.max(0, Number(data.total_score) || 0));
-        gauge.style.setProperty("--score", String(total));
-        gauge.style.setProperty("--gauge-color", gaugeColor(total));
-        scoreValue.textContent = `${total}`;
-        resultMeta.textContent = `${currentSession.company_name} · ${currentSession.position}`;
-        summaryText.textContent = data.feedback || "Genel özet üretilemedi.";
-        resultList.innerHTML = "";
-        (data.per_question || []).forEach((p) => {
-            const wrap = document.createElement("div");
-            wrap.className = "q-result";
-            const head = document.createElement("div");
-            head.className = "q-head";
-            const left = document.createElement("div");
-            left.style.flex = "1";
-            const num = document.createElement("strong");
-            num.textContent = `#${p.question_index + 1} `;
-            const qtext = document.createElement("span");
-            qtext.style.color = "#e4e4e7";
-            qtext.textContent = p.question;
-            left.appendChild(num);
-            left.appendChild(qtext);
-            const sc = document.createElement("span");
-            sc.className = "q-score";
-            sc.textContent = `${p.score}/100`;
-            head.appendChild(left);
-            head.appendChild(sc);
-            const fb = document.createElement("p");
-            fb.className = "q-feedback";
-            fb.textContent = p.feedback || "—";
-            wrap.appendChild(head);
-            wrap.appendChild(fb);
-            resultList.appendChild(wrap);
-        });
-        examPanel.style.display = "none";
-        examResult.classList.add("visible");
-    } catch (err) {
-        showError(err.message || "Ağ hatası");
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = "Cevapları gönder";
+        var d = await r.json();
+        if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail));
+        sessionStorage.setItem("coachai_exam_session_id", d.session_id || "");
+        renderExamResults(d.results || d.evaluations || []);
+        showPanel("result-panel");
+    } catch(err) {
+        setExamError(err.message || "Değerlendirme başarısız");
+        document.getElementById("btn-submit-exam").disabled = false;
+        document.getElementById("btn-submit-exam").innerHTML = `<span class="material-symbols-outlined">send</span>Sınavı Teslim Et`;
     }
 });
 
-initAuth();
-onAuthChange(async (user) => {
-    if (!user) {
-        authHint.textContent = "Sınav için giriş yapmalısın.";
-        setupPanel.style.display = "none";
-        window.location.href = "login.html";
-        return;
-    }
-    authHint.textContent = `Giriş: ${user.email}`;
-    setupPanel.style.display = "block";
-    const token = await user.getIdToken();
-    try {
-        await loadOptions(token);
-    } catch (e) {
-        showError("Listeler yüklenemedi.");
-    }
-});
+function renderExamResults(results) {
+    document.getElementById("results-list").innerHTML = results.map(function(r, i) {
+        var q = r.question || ("Soru " + (i + 1));
+        var score = typeof r.score === "number" ? r.score : null;
+        var fb = r.feedback || r.comment || "";
+        var scoreColor = score !== null ? (score >= 80 ? "text-emerald-600" : score >= 60 ? "text-amber-600" : "text-red-600") : "text-on-surface-variant";
+        return `<div class="border-b border-outline-variant pb-6 last:border-0 last:pb-0">
+<div class="flex items-start justify-between mb-3">
+<p class="font-label-sm text-label-sm text-on-surface font-semibold max-w-[75%]">${q}</p>
+${score !== null ? `<span class="font-h3 text-h3 font-bold ${scoreColor}">${score}</span>` : ""}
+</div>
+${fb ? `<p class="font-body-md text-body-md text-on-surface-variant">${fb}</p>` : ""}
+</div>`;
+    }).join("") || "<p class='text-on-surface-variant text-sm'>Sonuç bulunamadı.</p>";
+}
+
+function onLayoutReady() { loadDropdowns(); }

@@ -1,325 +1,171 @@
-const API_BASE = "http://localhost:8000";
+var quizQuestions = [];
+var quizAnswers = [];
+var currentQ = 0;
+var timerInterval = null;
+var timeLeft = 60;
+var quizSessionId = null;
 
-const authHint = document.getElementById("auth-hint");
-const quizError = document.getElementById("quiz-error");
-const setupPanel = document.getElementById("setup-panel");
-const quizPanel = document.getElementById("quiz-panel");
-const quizResult = document.getElementById("quiz-result");
-const selCv = document.getElementById("sel-cv");
-const selProfile = document.getElementById("sel-profile");
-const btnStart = document.getElementById("btn-start");
-const btnPrev = document.getElementById("btn-prev");
-const btnNext = document.getElementById("btn-next");
-const btnSubmit = document.getElementById("btn-submit");
-const qHost = document.getElementById("q-host");
-const timerEl = document.getElementById("timer");
-const progressEl = document.getElementById("quiz-progress");
-const progressFill = document.getElementById("progress-fill");
-const gauge = document.getElementById("gauge");
-const scoreValue = document.getElementById("score-value");
-const resultMeta = document.getElementById("result-meta");
-const resultSummary = document.getElementById("result-summary");
-const resultList = document.getElementById("result-list");
-
-let session = null;
-let questions = [];
-let currentIdx = 0;
-let answers = {};
-let secondsPerQ = 60;
-let remaining = 60;
-let timerHandle = null;
-
-function showError(msg) {
-    quizError.textContent = msg;
-    quizError.style.display = "block";
-}
-
-function clearError() {
-    quizError.textContent = "";
-    quizError.style.display = "none";
-}
-
-function gaugeColor(score) {
-    if (score >= 75) return "#22c55e";
-    if (score >= 50) return "#eab308";
-    return "#ef4444";
-}
-
-function fillSelect(select, items, valueKey, labelFn, emptyMsg) {
-    select.innerHTML = "";
-    if (!items.length) {
-        const o = document.createElement("option");
-        o.value = "";
-        o.textContent = emptyMsg;
-        select.appendChild(o);
-        return;
-    }
-    items.forEach((it) => {
-        const o = document.createElement("option");
-        o.value = it[valueKey];
-        o.textContent = labelFn(it);
-        select.appendChild(o);
+function showPanel(id) {
+    ["setup-panel", "loading-panel", "quiz-panel", "result-panel"].forEach(function(p) {
+        document.getElementById(p).classList.toggle("hidden", p !== id);
     });
 }
 
-async function loadOptions(token) {
-    const [r1, r2] = await Promise.all([
-        fetch(`${API_BASE}/api/cv/list`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_BASE}/api/company/list`, { headers: { Authorization: `Bearer ${token}` } }),
-    ]);
-    const cvs = r1.ok ? (await r1.json()).items : [];
-    const profiles = r2.ok ? (await r2.json()).items : [];
-    fillSelect(selCv, cvs, "cv_id", (it) => `${it.cv_id.slice(0, 8)}… · ${it.skill_count || 0} yetenek`, "Önce CV yükleyin");
-    fillSelect(
-        selProfile,
-        profiles,
-        "profile_id",
-        (it) => `${it.company_name} — ${it.position}`,
-        "Önce şirket analizi yapın"
-    );
-    btnStart.disabled = !cvs.length || !profiles.length;
+async function loadDropdowns() {
+    var tok;
+    try { tok = await getToken(); } catch(e) { return; }
+
+    var cvSel = document.getElementById("cv-select");
+    var profileSel = document.getElementById("profile-select");
+    var savedCvId = sessionStorage.getItem("coachai_cv_id");
+    var savedProfileId = sessionStorage.getItem("coachai_profile_id");
+
+    try {
+        var cr = await fetch(API_BASE + "/api/cv/list?limit=20", { headers: { Authorization: "Bearer " + tok } });
+        var cd = await cr.json();
+        var cvs = cd.items || cd.cvs || [];
+        cvSel.innerHTML = `<option value="">CV seçin…</option>` +
+            cvs.map(function(c) { return `<option value="${c.id || c.cv_id}" ${(c.id || c.cv_id) === savedCvId ? "selected" : ""}>${c.filename || c.original_filename || c.id}</option>`; }).join("");
+    } catch(e) { cvSel.innerHTML = `<option value="">CV yüklenemedi</option>`; }
+
+    try {
+        var pr = await fetch(API_BASE + "/api/company/list?limit=20", { headers: { Authorization: "Bearer " + tok } });
+        var pd = await pr.json();
+        var profiles = pd.items || pd.profiles || [];
+        profileSel.innerHTML = `<option value="">Şirket profili seçin…</option>` +
+            profiles.map(function(p) { return `<option value="${p.id || p.profile_id}" ${(p.id || p.profile_id) === savedProfileId ? "selected" : ""}>${p.company_name || p.id} ${p.target_position ? "- " + p.target_position : ""}</option>`; }).join("");
+    } catch(e) { profileSel.innerHTML = `<option value="">Profil yüklenemedi</option>`; }
 }
 
-function stopTimer() {
-    if (timerHandle) {
-        clearInterval(timerHandle);
-        timerHandle = null;
+document.getElementById("btn-start-quiz").addEventListener("click", async function() {
+    var cvId = document.getElementById("cv-select").value;
+    var profileId = document.getElementById("profile-select").value;
+    if (!cvId || !profileId) {
+        var el = document.getElementById("setup-error");
+        el.textContent = "CV ve şirket profili seçin."; el.classList.remove("hidden"); return;
     }
-}
-
-function startTimer() {
-    stopTimer();
-    remaining = secondsPerQ;
-    updateTimerDisplay();
-    timerHandle = setInterval(() => {
-        remaining -= 1;
-        updateTimerDisplay();
-        if (remaining <= 0) {
-            stopTimer();
-            goNext(true);
-        }
-    }, 1000);
-}
-
-function updateTimerDisplay() {
-    timerEl.textContent = String(Math.max(0, remaining));
-    if (remaining <= 10) timerEl.classList.add("urgent");
-    else timerEl.classList.remove("urgent");
-}
-
-function renderQuestion() {
-    const q = questions[currentIdx];
-    progressEl.textContent = `Soru ${currentIdx + 1}/${questions.length}`;
-    progressFill.style.width = `${((currentIdx + 1) / questions.length) * 100}%`;
-    qHost.innerHTML = "";
-    const card = document.createElement("div");
-    card.className = "q-card";
-    const meta = document.createElement("div");
-    meta.className = "q-meta";
-    const tNo = document.createElement("span");
-    tNo.className = "tag";
-    tNo.textContent = `#${q.index + 1}`;
-    const tDiff = document.createElement("span");
-    tDiff.className = `tag diff-${q.difficulty || "orta"}`;
-    tDiff.textContent = q.difficulty || "orta";
-    meta.appendChild(tNo);
-    meta.appendChild(tDiff);
-    const text = document.createElement("p");
-    text.className = "q-text";
-    text.textContent = q.question;
-    const opts = document.createElement("div");
-    opts.className = "options";
-    q.options.forEach((opt, i) => {
-        const lbl = document.createElement("label");
-        lbl.className = "option" + (answers[q.index] === i ? " selected" : "");
-        const input = document.createElement("input");
-        input.type = "radio";
-        input.name = `q-${q.index}`;
-        input.value = String(i);
-        input.checked = answers[q.index] === i;
-        input.addEventListener("change", () => {
-            answers[q.index] = i;
-            opts.querySelectorAll(".option").forEach((el) => el.classList.remove("selected"));
-            lbl.classList.add("selected");
+    document.getElementById("setup-error").classList.add("hidden");
+    showPanel("loading-panel");
+    try {
+        var tok = await getToken();
+        var r = await fetch(API_BASE + "/api/interview/quiz", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+            body: JSON.stringify({ cv_id: cvId, profile_id: profileId })
         });
-        const span = document.createElement("span");
-        span.textContent = opt;
-        lbl.appendChild(input);
-        lbl.appendChild(span);
-        opts.appendChild(lbl);
-    });
-    card.appendChild(meta);
-    card.appendChild(text);
-    card.appendChild(opts);
-    qHost.appendChild(card);
+        var d = await r.json();
+        if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail));
+        quizQuestions = d.questions || [];
+        quizAnswers = new Array(quizQuestions.length).fill(null);
+        quizSessionId = d.session_id || null;
+        currentQ = 0;
+        showPanel("quiz-panel");
+        showQuestion(0);
+    } catch(err) {
+        showPanel("setup-panel");
+        var el = document.getElementById("setup-error");
+        el.textContent = err.message || "Quiz başlatılamadı"; el.classList.remove("hidden");
+    }
+});
 
-    btnPrev.disabled = currentIdx === 0;
-    const isLast = currentIdx === questions.length - 1;
-    btnNext.style.display = isLast ? "none" : "";
-    btnSubmit.style.display = isLast ? "" : "none";
+function showQuestion(idx) {
+    if (idx >= quizQuestions.length) { submitQuiz(); return; }
+    var q = quizQuestions[idx];
+    var text = typeof q === "string" ? q : q.question || q.text || q;
+    var options = typeof q === "object" && q.options ? q.options : [];
+    document.getElementById("question-text").textContent = text;
+    document.getElementById("quiz-progress").textContent = "Soru " + (idx + 1) + " / " + quizQuestions.length;
+    document.getElementById("progress-bar").style.width = (((idx) / quizQuestions.length) * 100) + "%";
+
+    var container = document.getElementById("options-container");
+    container.innerHTML = options.map(function(opt, oi) {
+        var label = typeof opt === "string" ? opt : opt.text || opt;
+        return `<button class="w-full text-left px-5 py-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:border-primary hover:bg-primary-fixed text-on-surface text-sm font-medium transition-all" data-oi="${oi}">${String.fromCharCode(65 + oi)}. ${label}</button>`;
+    }).join("") || `<textarea id="free-answer" rows="4" placeholder="Cevabınızı yazın…" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"></textarea><button id="free-next" class="mt-4 w-full bg-primary text-on-primary py-3 rounded-lg font-semibold text-sm">Sonraki</button>`;
+
+    container.querySelectorAll("[data-oi]").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            quizAnswers[idx] = parseInt(btn.getAttribute("data-oi"));
+            clearTimer();
+            currentQ++; showQuestion(currentQ);
+        });
+    });
+    var freeNext = document.getElementById("free-next");
+    if (freeNext) {
+        freeNext.addEventListener("click", function() {
+            quizAnswers[idx] = (document.getElementById("free-answer") || {}).value || "";
+            clearTimer();
+            currentQ++; showQuestion(currentQ);
+        });
+    }
     startTimer();
 }
 
-function goNext(timeoutTriggered = false) {
-    if (currentIdx < questions.length - 1) {
-        currentIdx += 1;
-        renderQuestion();
-    } else if (timeoutTriggered) {
-        submitQuiz();
-    }
+function startTimer() {
+    clearTimer();
+    timeLeft = 60;
+    document.getElementById("timer-display").textContent = timeLeft;
+    timerInterval = setInterval(function() {
+        timeLeft--;
+        document.getElementById("timer-display").textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearTimer();
+            quizAnswers[currentQ] = null;
+            currentQ++; showQuestion(currentQ);
+        }
+    }, 1000);
 }
-
-function goPrev() {
-    if (currentIdx > 0) {
-        currentIdx -= 1;
-        renderQuestion();
-    }
-}
+function clearTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
 
 async function submitQuiz() {
-    if (!session) return;
-    stopTimer();
-    btnSubmit.disabled = true;
-    btnNext.disabled = true;
-    btnPrev.disabled = true;
-    btnSubmit.textContent = "Gönderiliyor…";
-    const token = await getToken();
-    if (!token) { showError("Oturum yok."); return; }
-    const payload = {
-        session_id: session.session_id,
-        answers: questions.map((q) => ({
-            question_index: q.index,
-            selected_index: answers[q.index] === undefined ? null : answers[q.index],
-        })),
-    };
+    clearTimer();
+    showPanel("loading-panel");
     try {
-        const res = await fetch(`${API_BASE}/api/interview/quiz/submit`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(payload),
+        var tok = await getToken();
+        var answers = quizQuestions.map(function(q, i) {
+            var text = typeof q === "string" ? q : q.question || q.text || q;
+            return { question: text, answer_index: quizAnswers[i], answer: quizAnswers[i] };
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-            const msg = data.detail ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail)) : "Hata";
-            showError(msg);
-            btnSubmit.disabled = false;
-            btnNext.disabled = false;
-            btnSubmit.textContent = "Bitir ve gönder";
-            return;
-        }
-        renderResult(data);
-    } catch (err) {
-        showError(err.message || "Ağ hatası");
-        btnSubmit.disabled = false;
-        btnNext.disabled = false;
-        btnSubmit.textContent = "Bitir ve gönder";
+        var body = { answers: answers };
+        if (quizSessionId) body.session_id = quizSessionId;
+        var r = await fetch(API_BASE + "/api/interview/quiz/submit", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+        var d = await r.json();
+        if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail));
+        sessionStorage.setItem("coachai_quiz_session_id", d.session_id || "");
+        renderResults(d);
+        showPanel("result-panel");
+    } catch(err) {
+        showPanel("setup-panel");
+        var el = document.getElementById("setup-error");
+        el.textContent = err.message || "Quiz gönderilemedi"; el.classList.remove("hidden");
     }
 }
 
-function renderResult(data) {
-    quizPanel.style.display = "none";
-    quizResult.classList.add("visible");
-    const pct = Math.min(100, Math.max(0, Number(data.total_score) || 0));
-    gauge.style.setProperty("--score", String(pct));
-    gauge.style.setProperty("--gauge-color", gaugeColor(pct));
-    scoreValue.textContent = `${pct}%`;
-    resultMeta.textContent = `${session.company_name} · ${session.position}`;
-    resultSummary.textContent = `${data.correct_count} / ${data.total_questions} doğru`;
-    resultList.innerHTML = "";
-    (data.per_question || []).forEach((p) => {
-        const wrap = document.createElement("div");
-        wrap.className = "q-result";
-        const head = document.createElement("div");
-        head.className = "head";
-        const left = document.createElement("div");
-        left.style.flex = "1";
-        const num = document.createElement("strong");
-        num.textContent = `#${p.question_index + 1} `;
-        const qt = document.createElement("span");
-        qt.style.color = "#e4e4e7";
-        qt.textContent = p.question;
-        left.appendChild(num);
-        left.appendChild(qt);
-        const tag = document.createElement("span");
-        tag.className = p.is_correct ? "r-correct" : "r-wrong";
-        tag.textContent = p.is_correct ? "Doğru" : "Yanlış";
-        head.appendChild(left);
-        head.appendChild(tag);
-        wrap.appendChild(head);
-        (p.options || []).forEach((opt, i) => {
-            const line = document.createElement("div");
-            line.className = "opt-line";
-            const isUser = i === p.selected_index;
-            const isRight = i === p.correct_index;
-            if (isRight) line.classList.add("right");
-            else if (isUser) line.classList.add("user");
-            const prefix = isRight ? "✓ " : isUser ? "✗ " : "  ";
-            line.textContent = `${prefix}${String.fromCharCode(65 + i)}. ${opt}`;
-            wrap.appendChild(line);
-        });
-        if (p.explanation) {
-            const ex = document.createElement("p");
-            ex.className = "expl";
-            ex.textContent = `Açıklama: ${p.explanation}`;
-            wrap.appendChild(ex);
-        }
-        resultList.appendChild(wrap);
-    });
+function renderResults(d) {
+    var correct = typeof d.score === "number" ? d.score : (d.correct_count || 0);
+    var total = d.total || quizQuestions.length;
+    document.getElementById("final-score").textContent = correct + "/" + total;
+    document.getElementById("result-summary").textContent = correct + " doğru, " + (total - correct) + " yanlış. " + (d.summary || "");
+    var detail = d.results || d.evaluations || [];
+    document.getElementById("results-detail").innerHTML = detail.map(function(r, i) {
+        var q = r.question || ("Soru " + (i + 1));
+        var correct_ans = r.correct_answer || r.correct || "";
+        var user_ans = r.user_answer !== undefined ? r.user_answer : "—";
+        var isCorrect = r.is_correct !== undefined ? r.is_correct : null;
+        var borderCls = isCorrect === true ? "border-emerald-100" : isCorrect === false ? "border-red-100" : "border-outline-variant";
+        var iconCls = isCorrect === true ? "text-emerald-500" : isCorrect === false ? "text-red-500" : "text-on-surface-variant";
+        var icon = isCorrect === true ? "check_circle" : isCorrect === false ? "cancel" : "help";
+        return `<div class="bg-surface-container-lowest border ${borderCls} rounded-xl p-5 flex gap-4">
+<span class="material-symbols-outlined ${iconCls} text-[24px] shrink-0">${icon}</span>
+<div><p class="font-label-sm text-label-sm text-on-surface font-semibold mb-1">${q}</p>
+${correct_ans ? `<p class="text-sm text-emerald-700">Doğru: ${correct_ans}</p>` : ""}
+${r.feedback ? `<p class="text-sm text-on-surface-variant mt-1">${r.feedback}</p>` : ""}
+</div></div>`;
+    }).join("") || "";
 }
 
-btnStart.addEventListener("click", async () => {
-    clearError();
-    const cvId = selCv.value;
-    const profileId = selProfile.value;
-    if (!cvId || !profileId) { showError("CV ve şirket profili seç."); return; }
-    const token = await getToken();
-    if (!token) { showError("Oturum yok."); return; }
-    btnStart.disabled = true;
-    try {
-        const res = await fetch(`${API_BASE}/api/interview/quiz`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ cv_id: cvId, profile_id: profileId }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-            const msg = data.detail ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail)) : "Hata";
-            showError(msg);
-            btnStart.disabled = false;
-            return;
-        }
-        session = data;
-        questions = data.questions || [];
-        secondsPerQ = data.seconds_per_question || 60;
-        currentIdx = 0;
-        answers = {};
-        setupPanel.style.display = "none";
-        quizPanel.style.display = "block";
-        renderQuestion();
-    } catch (err) {
-        showError(err.message || "Ağ hatası");
-        btnStart.disabled = false;
-    }
-});
-
-btnPrev.addEventListener("click", () => goPrev());
-btnNext.addEventListener("click", () => goNext(false));
-btnSubmit.addEventListener("click", () => submitQuiz());
-
-initAuth();
-onAuthChange(async (user) => {
-    if (!user) {
-        authHint.textContent = "Quiz için giriş yapmalısın.";
-        setupPanel.style.display = "none";
-        window.location.href = "login.html";
-        return;
-    }
-    authHint.textContent = `Giriş: ${user.email}`;
-    setupPanel.style.display = "block";
-    const token = await user.getIdToken();
-    try {
-        await loadOptions(token);
-    } catch (e) {
-        showError("Listeler yüklenemedi.");
-    }
-});
+function onLayoutReady() { loadDropdowns(); }

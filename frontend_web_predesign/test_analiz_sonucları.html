@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CoachAI - Şirket Analizi ve Eşleşme Sonucu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary": "#7e3000",
+                      "primary": "#3525cd",
+                      "on-surface": "#1b1b24",
+                      "primary-fixed-dim": "#c3c0ff",
+                      "error-container": "#ffdad6",
+                      "surface-container": "#f0ecf9",
+                      "on-secondary-fixed": "#111c2d",
+                      "secondary-fixed": "#d8e3fb",
+                      "secondary-fixed-dim": "#bcc7de",
+                      "surface-container-low": "#f5f2ff",
+                      "on-primary-fixed": "#0f0069",
+                      "tertiary-fixed-dim": "#ffb695",
+                      "error": "#ba1a1a",
+                      "tertiary-container": "#a44100",
+                      "surface-container-highest": "#e4e1ee",
+                      "on-secondary-container": "#586377",
+                      "surface-tint": "#4d44e3",
+                      "on-tertiary-fixed": "#351000",
+                      "on-tertiary-fixed-variant": "#7b2f00",
+                      "on-primary-container": "#dad7ff",
+                      "primary-fixed": "#e2dfff",
+                      "on-primary": "#ffffff",
+                      "inverse-on-surface": "#f3effc",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "primary-container": "#4f46e5",
+                      "surface-dim": "#dcd8e5",
+                      "on-tertiary": "#ffffff",
+                      "outline-variant": "#c7c4d8",
+                      "surface-container-high": "#eae6f4",
+                      "on-secondary": "#ffffff",
+                      "inverse-surface": "#302f39",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#ffdbcc",
+                      "background": "#fcf8ff",
+                      "inverse-primary": "#c3c0ff",
+                      "secondary-container": "#d5e0f8",
+                      "surface-container-lowest": "#ffffff",
+                      "surface": "#fcf8ff",
+                      "on-background": "#1b1b24",
+                      "on-surface-variant": "#464555",
+                      "on-error": "#ffffff",
+                      "secondary": "#545f73",
+                      "on-tertiary-container": "#ffd2be",
+                      "on-secondary-fixed-variant": "#3c475a",
+                      "surface-variant": "#e4e1ee",
+                      "outline": "#777587",
+                      "surface-bright": "#fcf8ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "lg": "40px",
+                      "container-max": "1280px",
+                      "xs": "4px",
+                      "xl": "64px",
+                      "gutter": "24px",
+                      "md": "24px",
+                      "sm": "12px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "h1": [
+                              "Inter"
+                      ],
+                      "h3": [
+                              "Inter"
+                      ],
+                      "h2": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "code-snippet": [
+                              "Space Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h1": [
+                              "40px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "h3": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "h2": [
+                              "30px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "code-snippet": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex h-screen border-r w-64 sticky left-0 top-0 border-r border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 flex-col h-full py-6 z-50">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xl">C</div>
+<div>
+<h2 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">CoachAI</h2>
+<p class="text-xs text-slate-500 font-sans tracking-tight">AI Interview Coach</p>
+</div>
+</div>
+<div class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-sans text-sm font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200 active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-sans text-sm font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200 active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">description</span>
+                CV Analysis
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-sans text-sm font-medium tracking-tight text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 border-r-2 border-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200 active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+                Reports
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-sans text-sm font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200 active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">record_voice_over</span>
+                Interviews
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-sans text-sm font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200 active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+                Settings
+            </a>
+</div>
+<div class="px-4 mt-auto space-y-4">
+<button class="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">Upgrade to Pro</button>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-sans text-sm font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200 active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">help</span>
+                    Support
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg font-sans text-sm font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200 active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">logout</span>
+                    Sign Out
+                </a>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-h-screen relative w-full overflow-hidden">
+<!-- TopNavBar -->
+<header class="w-full h-16 sticky top-0 z-40 border-b border-slate-100 dark:border-slate-800 shadow-sm bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-8">
+<div class="flex items-center gap-6">
+<!-- Mobile Menu Button -->
+<button class="md:hidden text-slate-500">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-h3 text-h3 text-slate-900 hidden">CoachAI</h1>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-sans text-sm antialiased text-slate-500 dark:text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-all focus:ring-2 focus:ring-indigo-500/20" href="#">History</a>
+<a class="font-sans text-sm antialiased text-slate-500 dark:text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-all focus:ring-2 focus:ring-indigo-500/20" href="#">Resources</a>
+<a class="font-sans text-sm antialiased text-slate-500 dark:text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-all focus:ring-2 focus:ring-indigo-500/20" href="#">Feedback</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-slate-500 hover:text-indigo-500 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 hover:text-indigo-500 transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden border border-slate-300">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a young male software developer. The lighting is studio quality, soft and flattering, set against a clean, light gray background. The subject is wearing a casual yet neat dark blue button-down shirt. The aesthetic is clean, modern, and aligned with a premium corporate tech platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBftqLnOpxRJC6yD3A_4EtkA7xEGqTJLaNVF3-1Rb5ertE7Mgncdclg6BFqUwoOegeFHrf2DlBPA00M3onfjJ_Wv2ZxzyGuEETseCC_241LTjhYCmjSPJzxuyxPMDEfbEgvH4ziMHSEdwKMnv1FmA1TL1tCBUmCPzW7PrfPEe5vJ0yxAvu4eee4xXAykNE5bfrJB7kqPJj6pRA8A18AWkJUxLrzgihnu0o2MulQ4qaa9PWjbU_3mTB-lgH4U4-HRXfGBdb1kCbO22c"/>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 overflow-y-auto p-4 md:p-8 lg:p-xl">
+<div class="max-w-[1024px] mx-auto space-y-md">
+<!-- Header / Gauge -->
+<div class="flex flex-col items-center justify-center bg-surface-container-lowest rounded-xl p-8 border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+<h2 class="font-h2 text-h2 text-on-surface mb-2">Şirket Eşleşme Analizi</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-8 text-center max-w-lg">Profilinizin Trendyol'un teknik ve kültürel beklentileriyle ne kadar örtüştüğünü gösteren detaylı rapor.</p>
+<div class="relative w-48 h-48 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
+<!-- Background track -->
+<circle cx="50" cy="50" fill="none" r="45" stroke="#f1f5f9" stroke-width="8"></circle>
+<!-- Progress arc (88%) -->
+<circle class="transition-all duration-1000 ease-out" cx="50" cy="50" fill="none" r="45" stroke="#10b981" stroke-dasharray="283" stroke-dashoffset="34" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-h1 text-h1 text-emerald-600 leading-none">88</span>
+<span class="font-label-sm text-label-sm text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full mt-2">Düşük Risk</span>
+</div>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-md">
+<!-- Company Profile (Left Col, spans 1) -->
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)] flex flex-col">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-16 h-16 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center overflow-hidden">
+<span class="font-bold text-2xl text-orange-600">tr</span>
+</div>
+<div>
+<h3 class="font-h3 text-h3 text-on-surface">Trendyol</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">E-Commerce &amp; Tech</p>
+</div>
+</div>
+<div class="mb-6">
+<h4 class="font-label-sm text-label-sm font-semibold text-on-surface mb-2">Kültür Özeti</h4>
+<p class="font-body-md text-sm text-on-surface-variant leading-relaxed">Hızlı büyüyen, veri odaklı ve otonom ekiplerle çalışan bir teknoloji organizasyonu. "Data-driven" karar alma ve sürekli öğrenme ön planda.</p>
+</div>
+<div class="mb-6">
+<h4 class="font-label-sm text-label-sm font-semibold text-on-surface mb-2">Tech Stack (Hedef Rol)</h4>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant text-xs rounded-full font-medium">Go</span>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant text-xs rounded-full font-medium">Java</span>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant text-xs rounded-full font-medium">Kubernetes</span>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant text-xs rounded-full font-medium">Redis</span>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant text-xs rounded-full font-medium">Kafka</span>
+</div>
+</div>
+<div class="mt-auto">
+<h4 class="font-label-sm text-label-sm font-semibold text-on-surface mb-3">Mülakat Süreci</h4>
+<div class="space-y-4 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-slate-200">
+<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+<div class="flex items-center justify-center w-6 h-6 rounded-full border-2 border-white bg-indigo-600 text-white shrink-0 shadow">
+<span class="material-symbols-outlined text-[14px]">done</span>
+</div>
+<div class="w-[calc(100%-3rem)] md:w-[calc(50%-2rem)] p-3 rounded-lg bg-surface-container-low border border-slate-100">
+<h5 class="text-xs font-semibold text-on-surface">HR Screening</h5>
+</div>
+</div>
+<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+<div class="flex items-center justify-center w-6 h-6 rounded-full border-2 border-white bg-slate-300 text-white shrink-0 shadow">
+<span class="material-symbols-outlined text-[14px]">code</span>
+</div>
+<div class="w-[calc(100%-3rem)] md:w-[calc(50%-2rem)] p-3 rounded-lg bg-white border border-slate-100">
+<h5 class="text-xs font-semibold text-on-surface">Technical Challenge</h5>
+</div>
+</div>
+<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+<div class="flex items-center justify-center w-6 h-6 rounded-full border-2 border-white bg-slate-300 text-white shrink-0 shadow">
+<span class="material-symbols-outlined text-[14px]">groups</span>
+</div>
+<div class="w-[calc(100%-3rem)] md:w-[calc(50%-2rem)] p-3 rounded-lg bg-white border border-slate-100">
+<h5 class="text-xs font-semibold text-on-surface">System Design</h5>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Comparison & Recommendations (Right Col, spans 2) -->
+<div class="lg:col-span-2 flex flex-col gap-md">
+<!-- AI Recommendation Box -->
+<div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 flex gap-4 relative overflow-hidden shadow-[0_4px_24px_rgba(53,37,205,0.04)]">
+<div class="absolute top-0 right-0 w-32 h-32 bg-indigo-200/20 rounded-bl-full blur-2xl"></div>
+<div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm z-10">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+</div>
+<div class="z-10">
+<h3 class="font-label-sm text-label-sm font-semibold text-indigo-900 mb-1">CoachAI Tavsiyesi</h3>
+<p class="font-body-md text-sm text-indigo-800 leading-relaxed">Trendyol teknik mülakatlarında <strong>Redis</strong> üzerine odaklanman ve caching stratejileri hakkındaki bilgi eksiklerini gidermen, genel mülakat başarını <strong>%20 artırabilir</strong>. Dağıtık sistemler konusundaki tecrüben güçlü bir avantaj.</p>
+</div>
+</div>
+<!-- Split View Comparison -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+<!-- Matched Skills -->
+<div class="bg-white rounded-xl p-6 border border-emerald-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)] h-full">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h3 class="font-label-sm text-label-sm font-semibold text-emerald-900">Eşleşen Yetenekler</h3>
+</div>
+<ul class="space-y-4">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-emerald-500 text-[20px] shrink-0 mt-0.5">done</span>
+<div>
+<span class="font-label-sm text-sm font-medium text-slate-800 block">Microservices Architecture</span>
+<span class="font-body-md text-xs text-slate-500">CV'nizde 3+ yıl deneyim tespit edildi.</span>
+</div>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-emerald-500 text-[20px] shrink-0 mt-0.5">done</span>
+<div>
+<span class="font-label-sm text-sm font-medium text-slate-800 block">Distributed Systems</span>
+<span class="font-body-md text-xs text-slate-500">Önceki projeleriniz beklentilerle örtüşüyor.</span>
+</div>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-emerald-500 text-[20px] shrink-0 mt-0.5">done</span>
+<div>
+<span class="font-label-sm text-sm font-medium text-slate-800 block">Java / Spring Boot</span>
+<span class="font-body-md text-xs text-slate-500">İleri seviye yetkinlik doğrulandı.</span>
+</div>
+</li>
+</ul>
+</div>
+<!-- Missing / To Improve -->
+<div class="bg-white rounded-xl p-6 border border-amber-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)] h-full">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<h3 class="font-label-sm text-label-sm font-semibold text-amber-900">Eksik / Geliştirilebilir</h3>
+</div>
+<ul class="space-y-4">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-amber-500 text-[20px] shrink-0 mt-0.5">error</span>
+<div>
+<span class="font-label-sm text-sm font-medium text-slate-800 block">Redis Optimization</span>
+<span class="font-body-md text-xs text-slate-500">Temel bilgi var ancak yüksek trafikli senaryolar eksik.</span>
+</div>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-amber-500 text-[20px] shrink-0 mt-0.5">error</span>
+<div>
+<span class="font-label-sm text-sm font-medium text-slate-800 block">Unit Testing Coverage</span>
+<span class="font-body-md text-xs text-slate-500">Trendyol TDD pratiklerine önem verir, CV'de zayıf.</span>
+</div>
+</li>
+</ul>
+<div class="mt-8 pt-4 border-t border-slate-100">
+<button class="w-full py-2.5 px-4 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">school</span>
+                                        Çalışma Planı Oluştur
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

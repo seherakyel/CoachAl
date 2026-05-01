@@ -16,6 +16,33 @@ from app.services.quiz_generator import generate_quiz_questions
 router = APIRouter()
 
 
+@router.get("/interview/list")
+async def interview_list(
+    limit: int = 20,
+    uid: str = Depends(get_current_user),
+):
+    db = get_firestore()
+    docs = (
+        db.collection("interview_sessions")
+        .where("user_id", "==", uid)
+        .limit(min(limit, 50))
+        .stream()
+    )
+    items = []
+    for doc in docs:
+        d = doc.to_dict() or {}
+        items.append({
+            "id": doc.id,
+            "session_id": doc.id,
+            "type": d.get("type", "classic"),
+            "created_at": str(d.get("created_at", "")),
+            "cv_id": d.get("cv_id", ""),
+            "profile_id": d.get("profile_id", ""),
+            "score": d.get("score"),
+        })
+    return {"items": items, "total": len(items)}
+
+
 class InterviewStartBody(BaseModel):
     cv_id: str = Field(..., min_length=1)
     profile_id: str = Field(..., min_length=1)

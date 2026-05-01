@@ -1,39 +1,58 @@
-const errorEl = document.getElementById("auth-error");
-const loginForm = document.getElementById("login-form");
-const registerForm = document.getElementById("register-form");
+var tabLogin = document.getElementById("tab-login");
+var tabRegister = document.getElementById("tab-register");
+var loginForm = document.getElementById("login-form");
+var registerForm = document.getElementById("register-form");
+var authError = document.getElementById("auth-error");
 
-function showError(msg) {
-    errorEl.textContent = msg;
-    errorEl.style.display = "block";
+function showErr(msg) {
+    authError.textContent = msg;
+    authError.classList.remove("hidden");
 }
+function clearErr() { authError.classList.add("hidden"); }
 
-function clearError() {
-    errorEl.textContent = "";
-    errorEl.style.display = "none";
-}
-
-loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearError();
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    try {
-        await login(email, password);
-        window.location.href = "index.html";
-    } catch (err) {
-        showError(err.message || "Giriş başarısız");
-    }
+tabLogin.addEventListener("click", function() {
+    loginForm.classList.remove("hidden");
+    registerForm.classList.add("hidden");
+    tabLogin.classList.add("text-primary", "border-primary");
+    tabLogin.classList.remove("text-on-surface-variant", "border-transparent");
+    tabRegister.classList.remove("text-primary", "border-primary");
+    tabRegister.classList.add("text-on-surface-variant", "border-transparent");
+    clearErr();
 });
 
-registerForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearError();
-    const email = document.getElementById("reg-email").value;
-    const password = document.getElementById("reg-password").value;
+tabRegister.addEventListener("click", function() {
+    registerForm.classList.remove("hidden");
+    loginForm.classList.add("hidden");
+    tabRegister.classList.add("text-primary", "border-primary");
+    tabRegister.classList.remove("text-on-surface-variant", "border-transparent");
+    tabLogin.classList.remove("text-primary", "border-primary");
+    tabLogin.classList.add("text-on-surface-variant", "border-transparent");
+    clearErr();
+});
+
+loginForm.addEventListener("submit", async function(e) {
+    e.preventDefault(); clearErr();
+    var btn = loginForm.querySelector("button[type=submit]");
+    btn.disabled = true; btn.textContent = "Giriş yapılıyor…";
     try {
-        await register(email, password);
-        window.location.href = "index.html";
-    } catch (err) {
-        showError(err.message || "Kayıt başarısız");
-    }
+        await login(document.getElementById("email").value, document.getElementById("password").value);
+        window.location.href = "dashboard.html";
+    } catch(err) { showErr(err.message || "Giriş başarısız"); }
+    btn.disabled = false; btn.textContent = "Giriş Yap";
+});
+
+registerForm.addEventListener("submit", async function(e) {
+    e.preventDefault(); clearErr();
+    var btn = registerForm.querySelector("button[type=submit]");
+    btn.disabled = true; btn.textContent = "Kayıt olunuyor…";
+    try {
+        await register(document.getElementById("reg-email").value, document.getElementById("reg-password").value);
+        window.location.href = "dashboard.html";
+    } catch(err) { showErr(err.message || "Kayıt başarısız"); }
+    btn.disabled = false; btn.textContent = "Kayıt Ol";
+});
+
+initAuth();
+onAuthChange(function(user) {
+    if (user) window.location.href = "dashboard.html";
 });
