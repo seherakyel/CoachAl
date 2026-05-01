@@ -28,6 +28,7 @@ tabRegister.addEventListener("click", function() {
     tabLogin.classList.remove("text-primary", "border-primary");
     tabLogin.classList.add("text-on-surface-variant", "border-transparent");
     clearErr();
+    clearErr();
 });
 
 loginForm.addEventListener("submit", async function(e) {
@@ -37,7 +38,7 @@ loginForm.addEventListener("submit", async function(e) {
     try {
         await login(document.getElementById("email").value, document.getElementById("password").value);
         window.location.href = "dashboard.html";
-    } catch(err) { showErr(err.message || "Giriş başarısız"); }
+    } catch(err) { showErr(err.message || "Giriş başarısız. E-posta veya şifre hatalı."); }
     btn.disabled = false; btn.textContent = "Giriş Yap";
 });
 
@@ -48,8 +49,8 @@ registerForm.addEventListener("submit", async function(e) {
     try {
         await register(document.getElementById("reg-email").value, document.getElementById("reg-password").value);
         window.location.href = "dashboard.html";
-    } catch(err) { showErr(err.message || "Kayıt başarısız"); }
-    btn.disabled = false; btn.textContent = "Kayıt Ol";
+    } catch(err) { showErr(err.message || "Hesap oluşturulamadı."); }
+    btn.disabled = false; btn.textContent = "Hesap Oluştur";
 });
 
 initAuth();
