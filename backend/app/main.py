@@ -9,6 +9,7 @@ from app.routes import (
     alignment,
     interview,
     feedback,
+    dashboard,
 )
 
 app = FastAPI(title="CoachAI API", version="0.1.0")
@@ -29,3 +30,4 @@ app.include_router(company.router, prefix="/api")
 app.include_router(alignment.router, prefix="/api")
 app.include_router(interview.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
+app.include_router(dashboard.router, prefix="/api")
