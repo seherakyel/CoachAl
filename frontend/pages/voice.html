@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoachAI - Sesli Mülakat</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/voice.css">
+</head>
+<body>
+    <main class="voice-page">
+        <h1>Sesli mülakat</h1>
+        <div class="voice-card">
+            <div class="voice-icon">●</div>
+            <span class="coming-soon">Yakında</span>
+            <h2>Telefon başında stresli simülasyon</h2>
+            <p>Bu modülün mimarisi hazırlandı, fakat şu an aktif değil. Önce klasik sınav ve teknik quiz modüllerinin olgunlaşması bekleniyor.</p>
+            <p style="text-align:left; max-width: 360px; margin: 0 auto;">Planlanan akış:</p>
+            <ul>
+                <li>AI sesli soru sorar (Text-to-Speech)</li>
+                <li>Kullanıcı mikrofona konuşur (Speech-to-Text)</li>
+                <li>Cevap metinleştirilip değerlendirilir</li>
+                <li>Geri bildirim ve sıradaki soru</li>
+            </ul>
+            <button type="button" disabled>Sesli mülakatı başlat</button>
+            <p id="voice-status" style="margin-top: 0.75rem; font-size: 0.85rem; color: #71717a;"></p>
+        </div>
+        <p style="margin-top: 1.5rem;"><a href="index.html">Ana sayfa</a></p>
+    </main>
+    <script src="../js/voice.js"></script>
+</body>
+</html>
