@@ -21,6 +21,7 @@ from app.routes import (
     feedback,
     dashboard,
     usage,
+    config,
 )
 
 logger = configure_logging()
@@ -105,3 +106,4 @@ app.include_router(interview.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(usage.router, prefix="/api")
+app.include_router(config.router, prefix="/api")

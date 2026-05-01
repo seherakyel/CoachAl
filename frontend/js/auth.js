@@ -29,12 +29,20 @@ async function logout() {
 }
 
 function onAuthChange(callback) {
-    const a = auth || initAuth();
-    if (!a) return;
-    a.onAuthStateChanged(callback);
+    var ready = window._firebaseConfigReady || Promise.resolve();
+    ready.then(function() {
+        var a = initAuth();
+        if (!a) return;
+        a.onAuthStateChanged(callback);
+    });
 }
 
 function getToken() {
-    const user = auth ? auth.currentUser : null;
-    return user ? user.getIdToken() : Promise.resolve(null);
+    var user = auth ? auth.currentUser : null;
+    if (user) return user.getIdToken();
+    return (window._firebaseConfigReady || Promise.resolve()).then(function() {
+        initAuth();
+        var u = auth ? auth.currentUser : null;
+        return u ? u.getIdToken() : null;
+    });
 }
