@@ -35,6 +35,33 @@ Yapay zeka destekli mülakat simülasyonu ve CV analiz platformu.
 3. 6-7 yazılı soru üretilir, cevapları yaz, **Cevapları gönder**
 4. Her cevap Gemini ile değerlendirilir; sonuç `interview_sessions` koleksiyonuna yazılır
 
+## Teknik quiz (Aşama 7)
+
+1. CV ve şirket profili oluşturulmuş olmalı
+2. `http://localhost:5500/pages/quiz.html` — CV ve profili seç, **Quizi başlat**
+3. 10 soru, her biri 60 saniye, 4 şıklı; süre dolunca otomatik geçer
+4. Bitir ve gönder → her doğru +10 puan; sonuçta her soru için doğru cevap ve açıklama gösterilir
+5. Backend doğru cevapları frontend'e göndermez; puanlama sunucu tarafında yapılır
+
+## Sesli mülakat (Aşama 8 – pasif)
+
+- Mimarisi yer alıyor; arayüz `pages/voice.html`, backend `POST /api/interview/voice` (501 Not Implemented)
+- Şu an "Yakında" rozetiyle gösterilir; aktif değildir
+
+## CV Doktoru — Geri Bildirim (Aşama 9)
+
+1. En az bir hizalama hesaplanmış olmalı; opsiyonel olarak bir mülakat oturumu seçebilirsin
+2. `http://localhost:5500/pages/feedback.html` — hizalama (ve istenirse oturum) seç, **Geri bildirim üret**
+3. "Neden elenebilirsin?" kırmızı paneli, güçlü/zayıf yönler, aksiyon planı, kaynaklar, tahmini hazırlık süresi
+4. Sonuç `feedback_reports` koleksiyonuna yazılır
+
+## Dashboard (Aşama 10)
+
+1. `http://localhost:5500/pages/dashboard.html`
+2. Sayaçlar (CV/şirket/mülakat sayısı + ortalama hizalama)
+3. Şirket bazında bar chart (hizalama / klasik / quiz) + en güçlü başvuru için radar chart (Chart.js)
+4. Backend: `GET /api/dashboard/summary`
+
 ## Çalıştırma
 
 **Backend:**
