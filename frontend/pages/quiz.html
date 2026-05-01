@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoachAI - Teknik Quiz</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/quiz.css">
+</head>
+<body>
+    <main class="quiz-page">
+        <h1>Teknik quiz</h1>
+        <p id="auth-hint" style="color: #a1a1aa; margin-bottom: 1rem;">Oturum kontrol ediliyor…</p>
+        <div id="quiz-error"></div>
+
+        <div id="setup-panel" style="display: none;">
+            <label for="sel-cv">CV kaydı</label>
+            <select id="sel-cv"></select>
+            <label for="sel-profile">Şirket profili</label>
+            <select id="sel-profile"></select>
+            <button type="button" id="btn-start">Quizi başlat</button>
+        </div>
+
+        <div id="quiz-panel" style="display: none;">
+            <div class="quiz-header">
+                <span class="quiz-progress" id="quiz-progress">Soru 1/10</span>
+                <span class="timer" id="timer">60</span>
+            </div>
+            <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div></div>
+            <div id="q-host"></div>
+            <div class="nav-row">
+                <button type="button" id="btn-prev">Önceki</button>
+                <button type="button" id="btn-next">Sonraki</button>
+                <button type="button" id="btn-submit">Bitir ve gönder</button>
+            </div>
+        </div>
+
+        <div id="quiz-result">
+            <div class="score-row">
+                <div class="score-gauge-wrap" id="gauge" style="--score: 0;">
+                    <span class="score-gauge-value" id="score-value">0%</span>
+                </div>
+                <div>
+                    <p id="result-meta" style="color: #a1a1aa; margin-bottom: 0.25rem;"></p>
+                    <p id="result-summary" style="color: #71717a; font-size: 0.9rem;"></p>
+                </div>
+            </div>
+            <h2 style="font-size: 1rem; margin-bottom: 0.5rem;">Soru bazında sonuç</h2>
+            <div id="result-list"></div>
+        </div>
+
+        <p style="margin-top: 1.5rem;"><a href="index.html">Ana sayfa</a></p>
+    </main>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>window.FIREBASE_CONFIG = FIREBASE_CONFIG;</script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/quiz.js"></script>
+</body>
+</html>
