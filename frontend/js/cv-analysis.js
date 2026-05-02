@@ -92,7 +92,9 @@ async function startUpload(file) {
         sessionStorage.setItem("coachai_cv_id", cvId);
         sessionStorage.setItem("coachai_cv_name", file.name);
 
-        var skills = (d.parsed_data && d.parsed_data.skills) ? d.parsed_data.skills : [];
+        var pd = d.parsed_data || {};
+        var skills = Array.isArray(pd.skills) ? pd.skills : (Array.isArray(d.skills) ? d.skills : []);
+        sessionStorage.setItem("coachai_cv_parsed", JSON.stringify(pd));
         document.getElementById("upload-filename").textContent = file.name + " — yüklendi";
         skillsContainer.innerHTML = skills.slice(0, 14).map(function(s) {
             return `<span class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium border border-emerald-200">${s}</span>`;
