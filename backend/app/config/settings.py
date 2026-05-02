@@ -7,7 +7,10 @@ PROJECT_ROOT = BASE_DIR.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
 def get_env(key: str, default: str = "") -> str:
-    return os.getenv(key, default)
+    raw = os.getenv(key)
+    if raw is None:
+        return default
+    return raw.strip()
 
 
 def get_list_env(key: str, default: list[str] | None = None) -> list[str]:

@@ -54,13 +54,48 @@ if (btnReupload) {
         cvId = null;
         sessionStorage.removeItem("coachai_cv_id");
         sessionStorage.removeItem("coachai_cv_name");
+        sessionStorage.removeItem("coachai_cv_parsed");
         uploadStatus.classList.add("hidden");
+        var note = document.getElementById("cv-ai-note");
+        if (note) note.classList.add("hidden");
+        if (document.getElementById("cv-summary-text")) document.getElementById("cv-summary-text").textContent = "";
+        if (document.getElementById("cv-analysis-text")) document.getElementById("cv-analysis-text").textContent = "";
+        if (skillsContainer) skillsContainer.innerHTML = "";
         step2Lock.classList.remove("hidden");
         step2Badge.className = "w-8 h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-sm font-bold";
         btnAnalyze.disabled = true;
         fileInput.value = "";
         clearError();
     });
+}
+
+function renderCvParsed(pd) {
+    var skills = Array.isArray(pd.skills) ? pd.skills : [];
+    var summary = (pd.summary || "").trim();
+    var logic = (pd.match_score_logic || "").trim();
+    if (!skillsContainer) return;
+    if (skills.length > 0) {
+        skillsContainer.innerHTML = skills.slice(0, 20).map(function(s) {
+            return '<li class="flex gap-2 items-start"><span class="text-emerald-600 mt-0.5 shrink-0">•</span><span>' +
+                String(s).replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</span></li>";
+        }).join("");
+    } else {
+        skillsContainer.innerHTML = "<li class=\"text-on-surface-variant\">Yetenek tespit edilemedi</li>";
+    }
+    var note = document.getElementById("cv-ai-note");
+    var sumEl = document.getElementById("cv-summary-text");
+    var anaEl = document.getElementById("cv-analysis-text");
+    if (note && sumEl && anaEl) {
+        if (summary || logic) {
+            note.classList.remove("hidden");
+            sumEl.textContent = summary || "—";
+            anaEl.textContent = logic || "—";
+        } else {
+            note.classList.add("hidden");
+            sumEl.textContent = "";
+            anaEl.textContent = "";
+        }
+    }
 }
 
 async function startUpload(file) {
@@ -93,12 +128,9 @@ async function startUpload(file) {
         sessionStorage.setItem("coachai_cv_name", file.name);
 
         var pd = d.parsed_data || {};
-        var skills = Array.isArray(pd.skills) ? pd.skills : (Array.isArray(d.skills) ? d.skills : []);
         sessionStorage.setItem("coachai_cv_parsed", JSON.stringify(pd));
         document.getElementById("upload-filename").textContent = file.name + " — yüklendi";
-        skillsContainer.innerHTML = skills.slice(0, 14).map(function(s) {
-            return `<span class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium border border-emerald-200">${s}</span>`;
-        }).join("") || "<span class='text-sm text-on-surface-variant'>Yetenek tespit edilemedi</span>";
+        renderCvParsed(pd);
 
         uploadStatus.classList.remove("hidden");
         unlockStep2();
@@ -166,7 +198,16 @@ function onLayoutReady() {
         cvId = savedCvId;
         var name = sessionStorage.getItem("coachai_cv_name") || "Önceki CV";
         document.getElementById("upload-filename").textContent = name + " — önceki oturumdan";
-        skillsContainer.innerHTML = "<span class='text-sm text-on-surface-variant'>Yetenekler önceden kaydedildi</span>";
+        try {
+            var raw = sessionStorage.getItem("coachai_cv_parsed");
+            if (raw) {
+                renderCvParsed(JSON.parse(raw));
+            } else {
+                if (skillsContainer) skillsContainer.innerHTML = "<li class=\"text-on-surface-variant\">Yetenekler önceki oturumda kayıtlı; yeniden yükleyerek güncelleyin.</li>";
+            }
+        } catch (e) {
+            if (skillsContainer) skillsContainer.innerHTML = "<li class=\"text-on-surface-variant\">Yetenekler önceki oturumda kayıtlı</li>";
+        }
         uploadStatus.classList.remove("hidden");
         unlockStep2();
     }

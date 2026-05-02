@@ -45,8 +45,14 @@
             <span class="material-symbols-outlined text-emerald-600 mt-0.5" style="font-variation-settings:'FILL' 1">check_circle</span>
             <div class="flex-1">
                 <p class="font-label-sm text-label-sm text-on-surface font-semibold mb-1" id="upload-filename">—</p>
-                <p class="font-body-md text-body-md text-on-surface-variant mb-3">Tespit edilen yetenekler:</p>
-                <div id="skills-container" class="flex flex-wrap gap-2"></div>
+                <p class="font-body-md text-body-md text-on-surface-variant mb-2">Tespit edilen yetenekler:</p>
+                <ul id="skills-container" class="list-none space-y-2 text-sm text-on-surface max-h-48 overflow-y-auto"></ul>
+                <div id="cv-ai-note" class="hidden mt-4 pt-4 border-t border-emerald-200/60">
+                    <p class="font-label-sm text-label-sm text-on-surface font-semibold mb-1.5">Yapay zeka özeti</p>
+                    <p id="cv-summary-text" class="text-sm text-on-surface leading-relaxed"></p>
+                    <p class="font-label-sm text-label-sm text-on-surface font-semibold mt-3 mb-1.5">Kısa değerlendirme</p>
+                    <p id="cv-analysis-text" class="text-sm text-on-surface-variant leading-relaxed"></p>
+                </div>
             </div>
             <button id="btn-reupload" class="text-xs text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1 shrink-0"><span class="material-symbols-outlined text-[16px]">refresh</span>Değiştir</button>
         </div>
