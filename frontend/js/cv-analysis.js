@@ -165,7 +165,7 @@ btnAnalyze.addEventListener("click", async function() {
         var cr = await fetch(API_BASE + "/api/company/analyze", {
             method: "POST",
             headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
-            body: JSON.stringify({ company_name: company, target_position: position })
+            body: JSON.stringify({ company_name: company, position: position })
         });
         var cd = await cr.json();
         if (!cr.ok) throw new Error(typeof cd.detail === "string" ? cd.detail : JSON.stringify(cd.detail));
