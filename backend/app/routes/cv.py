@@ -1,10 +1,9 @@
 import uuid
-from datetime import timedelta
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from google.cloud.firestore import SERVER_TIMESTAMP
 
-from app.config.firebase_config import get_firestore, get_storage
+from app.config.firebase_config import get_firestore
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limit import enforce_daily_quota, limiter
 from app.services.cv_parser import extract_text_from_pdf
@@ -32,22 +31,6 @@ async def upload_cv(
         raise HTTPException(status_code=400, detail="Dosya çok küçük veya bozuk")
 
     cv_id = str(uuid.uuid4())
-    storage_path = f"cvs/{uid}/{cv_id}.pdf"
-
-    try:
-        bucket = get_storage()
-    except Exception as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Storage kullanılamıyor: {e!s}. Firebase Storage etkin mi kontrol et.",
-        )
-
-    blob = bucket.blob(storage_path)
-    blob.upload_from_string(raw, content_type="application/pdf")
-    try:
-        file_url = blob.generate_signed_url(expiration=timedelta(days=7))
-    except Exception:
-        file_url = f"gs://{bucket.name}/{storage_path}"
 
     extracted_text = extract_text_from_pdf(raw)
     if not extracted_text:
@@ -63,8 +46,7 @@ async def upload_cv(
     doc_ref.set(
         {
             "user_id": uid,
-            "file_url": file_url,
-            "storage_path": storage_path,
+            "file_name": file.filename,
             "extracted_text": extracted_text[:50000],
             "skills": skills,
             "experience_years": experience_years,
@@ -76,7 +58,6 @@ async def upload_cv(
 
     return {
         "cv_id": cv_id,
-        "file_url": file_url,
         "skills": skills,
         "experience_years": experience_years,
         "education_level": education_level,

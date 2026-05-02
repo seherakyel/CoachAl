@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from google.cloud.firestore import Query
 
 from app.config.firebase_config import get_firestore
 from app.middleware.auth import get_current_user
@@ -38,7 +37,6 @@ async def dashboard_summary(uid: str = Depends(get_current_user)):
     for d in (
         db.collection("company_profiles")
         .where("user_id", "==", uid)
-        .order_by("created_at", direction=Query.DESCENDING)
         .limit(MAX_PROFILES)
         .stream()
     ):
@@ -56,7 +54,6 @@ async def dashboard_summary(uid: str = Depends(get_current_user)):
     for d in (
         db.collection("alignment_results")
         .where("user_id", "==", uid)
-        .order_by("calculated_at", direction=Query.DESCENDING)
         .limit(MAX_ALIGNMENTS)
         .stream()
     ):
@@ -80,7 +77,6 @@ async def dashboard_summary(uid: str = Depends(get_current_user)):
     for d in (
         db.collection("interview_sessions")
         .where("user_id", "==", uid)
-        .order_by("started_at", direction=Query.DESCENDING)
         .limit(MAX_INTERVIEWS)
         .stream()
     ):
