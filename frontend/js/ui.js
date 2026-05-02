@@ -17,7 +17,7 @@ function _navLink(item, active) {
 }
 
 function _sidebar(active) {
-    return `<aside class="bg-white h-screen border-r border-slate-100 w-64 sticky left-0 top-0 shadow-sm flex flex-col py-6 flex-shrink-0 z-50">
+    return `<aside id="main-sidebar" class="fixed left-0 top-0 md:relative bg-white h-screen border-r border-slate-100 w-64 shadow-sm flex flex-col py-6 flex-shrink-0 z-50 -translate-x-full md:translate-x-0 transition-transform duration-300">
 <div class="px-6 mb-8 flex items-center gap-3">
 <div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-bold text-sm">C</div>
 <div><div class="text-xl font-bold text-slate-900 leading-tight">CoachAI</div><div class="text-xs text-slate-500">AI Mülakat Koçu</div></div>
@@ -28,17 +28,36 @@ function _sidebar(active) {
 <button class="w-full bg-primary text-on-primary text-sm py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">Pro'ya Geç</button></div>
 <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-sm font-medium transition-colors"><span class="material-symbols-outlined text-[20px]">help</span>Destek</a>
 <button id="ui-signout" class="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-sm font-medium transition-colors"><span class="material-symbols-outlined text-[20px]">logout</span>Çıkış Yap</button>
-</div></aside>`;
+</div></aside>
+<div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/40 z-40 md:hidden"></div>`;
 }
 
 function _header(email) {
     const init = email ? email[0].toUpperCase() : "U";
-    return `<header class="bg-white/80 backdrop-blur-md w-full h-16 sticky top-0 z-40 border-b border-slate-100 shadow-sm flex items-center justify-between px-8 flex-shrink-0">
-<div class="flex items-center gap-4">
-<div class="relative hidden md:block w-56"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">search</span>
-<input class="w-full pl-10 pr-4 py-1.5 bg-surface-container-low border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors" placeholder="Ara..."/></div></div>
-<div class="flex items-center gap-3"><span class="text-sm text-on-surface-variant hidden md:block">${email || ""}</span>
-<button class="text-slate-500 hover:text-indigo-500 transition-colors p-2 rounded-full hover:bg-slate-50"><span class="material-symbols-outlined text-[22px]">notifications</span></button>
+    return `<header class="bg-white/80 backdrop-blur-md w-full h-16 sticky top-0 z-40 border-b border-slate-100 shadow-sm flex items-center justify-between px-4 md:px-8 flex-shrink-0">
+<div class="flex items-center gap-3">
+<button id="sidebar-toggle" class="md:hidden p-2 rounded-lg hover:bg-slate-50 text-slate-500 transition-colors" aria-label="Menüyü aç">
+<span class="material-symbols-outlined text-[22px]">menu</span></button>
+<div class="relative hidden md:block w-56">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">search</span>
+<input id="global-search" class="w-full pl-10 pr-4 py-1.5 bg-surface-container-low border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors" placeholder="Ara..."/>
+</div></div>
+<div class="flex items-center gap-3">
+<span class="text-sm text-on-surface-variant hidden md:block">${email || ""}</span>
+<div class="relative">
+<button id="notif-btn" class="text-slate-500 hover:text-indigo-500 transition-colors p-2 rounded-full hover:bg-slate-50" aria-label="Bildirimler">
+<span class="material-symbols-outlined text-[22px]">notifications</span></button>
+<div id="notif-panel" class="hidden absolute right-0 top-12 w-72 bg-white rounded-xl border border-slate-100 shadow-xl z-50 p-4">
+<div class="flex items-center justify-between mb-3">
+<span class="text-sm font-semibold text-on-surface">Sistem Bildirimleri</span>
+<span class="text-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">0 yeni</span>
+</div>
+<div class="flex flex-col items-center justify-center py-6 gap-2">
+<span class="material-symbols-outlined text-[32px] text-slate-300">notifications_none</span>
+<p class="text-xs text-on-surface-variant">Yeni bildirim yok</p>
+</div>
+</div>
+</div>
 <div class="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold text-sm border-2 border-primary-fixed-dim">${init}</div>
 </div></header>`;
 }
@@ -50,10 +69,40 @@ function initLayout(pageId) {
         if (!user) { window.location.href = "login.html"; return; }
         if (sc) sc.innerHTML = _sidebar(pageId);
         if (hc) hc.innerHTML = _header(user.email);
+
         var so = document.getElementById("ui-signout");
         if (so) so.addEventListener("click", function() {
             logout().then(function() { window.location.href = "login.html"; });
         });
+
+        var toggleBtn = document.getElementById("sidebar-toggle");
+        var sidebar = document.getElementById("main-sidebar");
+        var overlay = document.getElementById("sidebar-overlay");
+        if (toggleBtn && sidebar && overlay) {
+            toggleBtn.addEventListener("click", function() {
+                sidebar.classList.toggle("-translate-x-full");
+                overlay.classList.toggle("hidden");
+            });
+            overlay.addEventListener("click", function() {
+                sidebar.classList.add("-translate-x-full");
+                overlay.classList.add("hidden");
+            });
+        }
+
+        var notifBtn = document.getElementById("notif-btn");
+        var notifPanel = document.getElementById("notif-panel");
+        if (notifBtn && notifPanel) {
+            notifBtn.addEventListener("click", function(e) {
+                e.stopPropagation();
+                notifPanel.classList.toggle("hidden");
+            });
+            document.addEventListener("click", function(e) {
+                if (notifPanel && !notifPanel.contains(e.target)) {
+                    notifPanel.classList.add("hidden");
+                }
+            });
+        }
+
         if (typeof onLayoutReady === "function") onLayoutReady(user);
     });
 }
