@@ -3,34 +3,74 @@ import re
 from app.config.settings import get_env
 
 
-def get_model():
+def get_model(generation_config: dict | None = None):
     import google.generativeai as genai
     key = get_env("GEMINI_API_KEY")
     if not key:
         return None
     genai.configure(api_key=key)
-    return genai.GenerativeModel(get_env("GEMINI_MODEL", "gemini-2.0-flash"))
+    return genai.GenerativeModel(
+        get_env("GEMINI_MODEL", "gemini-2.0-flash"),
+        generation_config=generation_config or {},
+    )
+
+
+def _coerce_skills(value) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    out = []
+    for item in value:
+        s = str(item).strip()
+        if s:
+            out.append(s)
+    return out
+
+
+def _coerce_education(value) -> str | None:
+    if value is None:
+        return None
+    edu = str(value).strip().lower()
+    valid = {"lise", "on_lisans", "lisans", "yuksek_lisans", "doktora", "bilinmiyor"}
+    return edu if edu in valid else "bilinmiyor"
+
+
+def _coerce_experience(value):
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def extract_cv_structure_from_text(cv_text: str) -> dict:
-    model = get_model()
+    empty = {
+        "skills": [],
+        "experience_years": None,
+        "education_level": None,
+        "summary": "",
+        "match_score_logic": "",
+    }
+    model = get_model({"response_mime_type": "application/json"})
     if not model:
-        return {
-            "skills": [],
-            "experience_years": None,
-            "education_level": None,
-        }
-    prompt = f"""Aşağıdaki metin bir CV. Sadece geçerli JSON döndür, başka metin yazma.
-Alanlar:
-- skills: string dizisi, teknik ve profesyonel yetenekler (kısa anahtar kelimeler, İngilizce veya Türkçe karışık olabilir)
-- experience_years: sayı, toplam profesyonel iş deneyimi yılı (tam sayı veya ondalık bir yıl, tahmin edilemiyorsa null)
-- education_level: string, şunlardan biri: lise, on_lisans, lisans, yuksek_lisans, doktora, bilinmiyor
+        return empty
 
-CV metni:
----
-{cv_text[:12000]}
----
-"""
+    prompt = (
+        "Aşağıdaki metin bir CV'den çıkarılmıştır. İçinde fotoğraf veya grafikler "
+        "olabilir, sadece metne odaklan. Bu bilgileri analiz et ve aşağıdaki JSON "
+        "şemasında döndür. Şemada belirtilen alanlar dışında alan ekleme.\n\n"
+        "Şema:\n"
+        "{\n"
+        '  "skills": ["string"],            // teknik ve profesyonel anahtar yetenekler\n'
+        '  "experience_years": number|null, // toplam profesyonel deneyim (yıl)\n'
+        '  "education_level": "string",     // lise|on_lisans|lisans|yuksek_lisans|doktora|bilinmiyor\n'
+        '  "summary": "string",             // 2-3 cümlelik aday özeti (Türkçe)\n'
+        '  "match_score_logic": "string"    // adayın güçlü/zayıf yanlarının kısa analizi\n'
+        "}\n\n"
+        "CV metni:\n---\n"
+        f"{cv_text[:14000]}\n---"
+    )
+
     try:
         response = model.generate_content(prompt)
         raw = (response.text or "").strip()
@@ -38,21 +78,15 @@ CV metni:
         raw = re.sub(r"\s*```$", "", raw)
         data = json.loads(raw)
     except Exception:
-        return {"skills": [], "experience_years": None, "education_level": None}
-    skills = data.get("skills") or []
-    if not isinstance(skills, list):
-        skills = []
-    skills = [str(s).strip() for s in skills if str(s).strip()]
-    exp = data.get("experience_years")
-    if exp is not None:
-        try:
-            exp = float(exp)
-        except (TypeError, ValueError):
-            exp = None
-    edu = data.get("education_level")
-    if edu is not None:
-        edu = str(edu).strip().lower()
-    return {"skills": skills, "experience_years": exp, "education_level": edu}
+        return empty
+
+    return {
+        "skills": _coerce_skills(data.get("skills")),
+        "experience_years": _coerce_experience(data.get("experience_years")),
+        "education_level": _coerce_education(data.get("education_level")),
+        "summary": str(data.get("summary") or "").strip(),
+        "match_score_logic": str(data.get("match_score_logic") or "").strip(),
+    }
 
 
 def alignment_advice(

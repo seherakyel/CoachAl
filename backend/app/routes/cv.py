@@ -12,6 +12,8 @@ from app.services.gemini_client import extract_cv_structure_from_text
 router = APIRouter()
 
 MAX_BYTES = 10 * 1024 * 1024
+MIN_BYTES = 100
+MIN_TEXT_CHARS = 40
 
 
 @router.post("/cv/upload")
@@ -22,35 +24,59 @@ async def upload_cv(
     uid: str = Depends(get_current_user),
 ):
     enforce_daily_quota(uid, "cv_upload", "DAILY_QUOTA_CV_UPLOAD")
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
+
+    if not file or not file.filename:
+        raise HTTPException(status_code=400, detail="Dosya bulunamadı")
+
+    filename = file.filename
+    content_type = (file.content_type or "").lower()
+    is_pdf_mime = content_type == "application/pdf"
+    is_pdf_ext = filename.lower().endswith(".pdf")
+    if not is_pdf_ext or (content_type and not is_pdf_mime):
         raise HTTPException(status_code=400, detail="Sadece PDF dosyası yüklenebilir")
+
     raw = await file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Dosya boş, içerik bulunamadı")
     if len(raw) > MAX_BYTES:
         raise HTTPException(status_code=400, detail="Dosya boyutu en fazla 10 MB olabilir")
-    if len(raw) < 100:
+    if len(raw) < MIN_BYTES:
         raise HTTPException(status_code=400, detail="Dosya çok küçük veya bozuk")
+    if not raw.startswith(b"%PDF"):
+        raise HTTPException(status_code=400, detail="Geçerli bir PDF değil")
+
+    try:
+        extracted_text = extract_text_from_pdf(raw)
+    except Exception:
+        raise HTTPException(
+            status_code=422,
+            detail="PDF okunamadı, dosya bozuk veya şifreli olabilir",
+        )
+
+    if not extracted_text or len(extracted_text) < MIN_TEXT_CHARS:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "PDF metin katmanı içermiyor. Lütfen Word, Google Docs veya "
+                "Canva gibi bir araçtan dijital olarak oluşturulmuş bir dosya "
+                "yükleyin (taranmış veya fotoğraflanmış PDF'ler desteklenmez)."
+            ),
+        )
+
+    parsed = extract_cv_structure_from_text(extracted_text)
 
     cv_id = str(uuid.uuid4())
-
-    extracted_text = extract_text_from_pdf(raw)
-    if not extracted_text:
-        raise HTTPException(status_code=422, detail="PDF içinden metin çıkarılamadı")
-
-    structured = extract_cv_structure_from_text(extracted_text)
-    skills = structured.get("skills") or []
-    experience_years = structured.get("experience_years")
-    education_level = structured.get("education_level")
-
     db = get_firestore()
-    doc_ref = db.collection("cv_documents").document(cv_id)
-    doc_ref.set(
+    db.collection("cv_documents").document(cv_id).set(
         {
             "user_id": uid,
-            "file_name": file.filename,
+            "file_name": filename,
             "extracted_text": extracted_text[:50000],
-            "skills": skills,
-            "experience_years": experience_years,
-            "education_level": education_level,
+            "skills": parsed.get("skills") or [],
+            "experience_years": parsed.get("experience_years"),
+            "education_level": parsed.get("education_level"),
+            "summary": parsed.get("summary") or "",
+            "match_score_logic": parsed.get("match_score_logic") or "",
             "uploaded_at": SERVER_TIMESTAMP,
             "parsed": True,
         }
@@ -58,9 +84,14 @@ async def upload_cv(
 
     return {
         "cv_id": cv_id,
-        "skills": skills,
-        "experience_years": experience_years,
-        "education_level": education_level,
+        "file_name": filename,
+        "parsed_data": {
+            "skills": parsed.get("skills") or [],
+            "experience_years": parsed.get("experience_years"),
+            "education_level": parsed.get("education_level"),
+            "summary": parsed.get("summary") or "",
+            "match_score_logic": parsed.get("match_score_logic") or "",
+        },
         "extracted_text_preview": extracted_text[:800],
     }
 

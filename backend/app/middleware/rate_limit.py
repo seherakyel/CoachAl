@@ -19,7 +19,7 @@ def _key_func(request: Request) -> str:
 limiter = Limiter(
     key_func=_key_func,
     default_limits=[get_env("RATE_LIMIT_DEFAULT", "60/minute")],
-    headers_enabled=True,
+    headers_enabled=False,
 )
 
 
