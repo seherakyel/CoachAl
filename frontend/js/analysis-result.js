@@ -247,21 +247,21 @@ function populateAnalysisResult() {
         var v = alignment[t.key];
         var p = pct01(v);
         return (
-            '<div data-ar-score-row class="flex gap-4 rounded-2xl border border-slate-100/95 bg-white px-5 py-4 shadow-sm ring-1 ring-slate-900/[0.03] transition-shadow duration-300 hover:shadow-md">' +
-            '<div class="ar-score-row-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 ring-1 ring-indigo-100">' +
-            '<span class="material-symbols-outlined text-[22px]" style="font-variation-settings:\'FILL\' 1">' +
+            '<div data-ar-score-row class="flex gap-3 rounded-xl border border-slate-100/95 bg-white px-3.5 py-2.5 shadow-sm ring-1 ring-slate-900/[0.03] transition-shadow duration-300 hover:shadow-md">' +
+            '<div class="ar-score-row-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-600 ring-1 ring-indigo-100 self-start mt-0.5">' +
+            '<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:\'FILL\' 1">' +
             t.icon +
             "</span></div>" +
-            '<div class="min-w-0 flex-1 pt-0.5">' +
-            '<div class="flex items-baseline justify-between gap-3 mb-2.5">' +
-            '<span class="text-sm font-semibold text-slate-800">' +
+            '<div class="min-w-0 flex-1">' +
+            '<div class="flex items-baseline justify-between gap-2 mb-1">' +
+            '<span class="text-sm font-semibold text-slate-800 leading-tight">' +
             escapeHtml(t.label) +
-            '</span><span class="ar-score-pct text-base font-bold tabular-nums tracking-tight text-indigo-700" data-target="' +
+            '</span><span class="ar-score-pct text-sm font-bold tabular-nums tracking-tight text-indigo-700" data-target="' +
             p +
             '">0%</span></div>' +
-            '<div class="ar-score-bar-track mb-3">' +
+            '<div class="ar-score-bar-track mb-1.5">' +
             '<div class="ar-score-bar-fill"></div></div>' +
-            '<p class="text-xs leading-relaxed text-slate-600">' +
+            '<p class="text-[11px] leading-snug text-slate-600">' +
             escapeHtml(t.hint) +
             "</p></div></div>"
         );
