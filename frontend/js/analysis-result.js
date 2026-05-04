@@ -46,16 +46,44 @@ function populateAnalysisResult() {
     var score = Math.round(rawPct);
 
     var scoreValEl = document.getElementById("score-value");
-    var riskEl = document.getElementById("score-risk");
+    var riskBadgeEl = document.getElementById("score-risk-badge");
+    var riskIconEl = document.getElementById("score-risk-icon");
+    var riskLabelEl = document.getElementById("score-risk-label");
+    var glowWrap = document.getElementById("score-glow-wrap");
     var arcEl = document.getElementById("score-arc");
     if (scoreValEl) scoreValEl.textContent = score;
 
     var risk = score >= 80 ? "Düşük Risk" : score >= 60 ? "Orta Risk" : "Yüksek Risk";
-    if (riskEl) {
-        riskEl.textContent = risk;
-        if (score >= 80) { riskEl.className = "font-label-sm text-label-sm bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full mt-2"; }
-        else if (score >= 60) { riskEl.className = "font-label-sm text-label-sm bg-amber-50 text-amber-700 px-2 py-1 rounded-full mt-2"; }
-        else { riskEl.className = "font-label-sm text-label-sm bg-red-50 text-red-700 px-2 py-1 rounded-full mt-2"; }
+    var badgeBase = "mt-6 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold shadow-sm";
+    if (riskLabelEl) riskLabelEl.textContent = risk;
+    if (riskIconEl) {
+        riskIconEl.setAttribute("style", "font-variation-settings:'FILL' 1,'wght' 500");
+    }
+    if (riskBadgeEl && riskIconEl) {
+        if (score >= 80) {
+            riskBadgeEl.className = badgeBase + " border border-emerald-200/90 bg-emerald-50/95 text-emerald-800";
+            riskIconEl.textContent = "verified";
+            riskIconEl.className = "material-symbols-outlined text-[18px] text-emerald-600";
+        } else if (score >= 60) {
+            riskBadgeEl.className = badgeBase + " border border-amber-200/90 bg-amber-50/95 text-amber-900";
+            riskIconEl.textContent = "priority_high";
+            riskIconEl.className = "material-symbols-outlined text-[18px] text-amber-600";
+        } else {
+            riskBadgeEl.className = badgeBase + " border border-red-200/90 bg-red-50/95 text-red-800";
+            riskIconEl.textContent = "warning";
+            riskIconEl.className = "material-symbols-outlined text-[18px] text-red-600";
+        }
+    }
+    if (glowWrap) {
+        glowWrap.className = "ar-score-glow-wrap relative flex items-center justify-center w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72";
+        if (score >= 80) glowWrap.classList.add("ar-glow-emerald");
+        else if (score >= 60) glowWrap.classList.add("ar-glow-amber");
+        else glowWrap.classList.add("ar-glow-red");
+    }
+    if (scoreValEl) {
+        if (score >= 80) scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-emerald-600 leading-none";
+        else if (score >= 60) scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-amber-600 leading-none";
+        else scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-red-600 leading-none";
     }
 
     if (arcEl) {
@@ -69,12 +97,23 @@ function populateAnalysisResult() {
 
     var company = companyProfile.company_name || sessionStorage.getItem("coachai_company_name") || "—";
     document.getElementById("company-name").textContent = company;
-    document.getElementById("company-initial").textContent = company[0] ? company[0].toUpperCase() : "—";
+    var companyKey = String(company).trim().toLowerCase();
+    var logoTrendy = document.getElementById("company-logo-trendyol");
+    var logoFallback = document.getElementById("company-logo-fallback");
+    var initialEl = document.getElementById("company-initial");
+    if (companyKey.indexOf("trendyol") !== -1) {
+        if (logoTrendy) logoTrendy.classList.remove("hidden");
+        if (logoFallback) logoFallback.classList.add("hidden");
+    } else {
+        if (logoTrendy) logoTrendy.classList.add("hidden");
+        if (logoFallback) logoFallback.classList.remove("hidden");
+        if (initialEl) initialEl.textContent = company[0] ? company[0].toUpperCase() : "—";
+    }
     document.getElementById("company-industry").textContent = companyProfile.industry || "Technology";
     var targetPos = (companyProfile.position || alignment.position || "").trim();
     var posEl = document.getElementById("company-position");
     if (targetPos && posEl) {
-        posEl.textContent = "Hedef rol: " + targetPos;
+        posEl.textContent = "Hedef rol · " + targetPos;
         posEl.classList.remove("hidden");
     }
     document.getElementById("result-subtitle").textContent = "Profilinizin " + company + " beklentileriyle eşleşme analizi.";
