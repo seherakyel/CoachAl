@@ -14,6 +14,85 @@ function splitLongInterviewParagraph(text) {
     return chunks.length > 1 ? chunks : [s];
 }
 
+/** İnce hatlı SVG — konu metnine göre (kod, bulut, mimari, veri, güvenlik, varsayılan) */
+function arTopicIconSvg(text, className) {
+    var cls = className || "ar-step-ico";
+    var t = String(text || "").toLowerCase();
+    var op = ' fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
+    if (/bulut|cloud|aws|azure|gcp|kubernetes|k8s|docker|devops|deploy|infra|network|ağ|container/i.test(t)) {
+        return (
+            '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
+            '<path' + op + ' d="M6.5 17.5A4.5 4.5 0 014 10.2a5.5 5.5 0 0110.3-1.1A4 4 0 0118.5 17.5h-12z"/>' +
+            "</svg>"
+        );
+    }
+    if (/mimari|architecture|microservice|mikroservis|design|pattern|scalab|ölçek|sistem|monolith|gateway|event|ddd|clean/i.test(t)) {
+        return (
+            '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
+            '<rect x="3" y="4" width="18" height="4" rx="1"' + op + '/>' +
+            '<rect x="5" y="10" width="14" height="4" rx="1"' + op + '/>' +
+            '<rect x="7" y="16" width="10" height="4" rx="1"' + op + "/>" +
+            "</svg>"
+        );
+    }
+    if (/kod|code|geliştir|program|yazılım|test|git|bug|refactor|java|python|go|typescript|javascript|debug|review/i.test(t)) {
+        return (
+            '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
+            '<path' + op + ' d="M7 8l-4 4 4 4"/>' +
+            '<path' + op + ' d="M17 8l4 4-4 4"/>' +
+            '<path' + op + ' d="M14 4l-4 16"/>' +
+            "</svg>"
+        );
+    }
+    if (/veri|data|sql|nosql|database|db|cache|redis|mongo|postgres|transaction|kafka|stream/i.test(t)) {
+        return (
+            '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
+            '<ellipse cx="12" cy="6" rx="7" ry="3"' + op + '/>' +
+            '<path' + op + ' d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>' +
+            "</svg>"
+        );
+    }
+    if (/güvenlik|security|auth|oauth|jwt|şifre|encrypt|xss|csrf|oauth|iam/i.test(t)) {
+        return (
+            '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
+            '<path' + op + ' d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/>' +
+            "</svg>"
+        );
+    }
+    return (
+        '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="9"' + op + '/>' +
+        '<circle cx="12" cy="12" r="5"' + op + '/>' +
+        '<circle cx="12" cy="12" r="1.5"' + op + "/>" +
+        "</svg>"
+    );
+}
+
+function arAccordionChevron() {
+    return (
+        '<svg class="ar-acc-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+        '<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+        "</svg>"
+    );
+}
+
+/** Mülakat konusu: başlık + detay (iki satır / iki nokta / uzun metin) */
+function arSplitTopicBody(s) {
+    s = String(s).trim();
+    var i = s.indexOf(":");
+    if (i > 0 && i < 96) {
+        return { topic: s.slice(0, i).trim(), rest: s.slice(i + 1).trim() };
+    }
+    var lines = s.split(/\r?\n/);
+    if (lines.length > 1 && lines[0].length < 140) {
+        return { topic: lines[0].trim(), rest: lines.slice(1).join("\n").trim() };
+    }
+    if (s.length > 96) {
+        return { topic: s.slice(0, 93).trim() + "…", rest: s };
+    }
+    return { topic: s, rest: "" };
+}
+
 function populateAnalysisResult() {
     var alignment = safeParseJSON(sessionStorage.getItem("coachai_alignment"), null);
     var companyProfile = safeParseJSON(sessionStorage.getItem("coachai_company_profile"), null);
@@ -135,9 +214,24 @@ function populateAnalysisResult() {
             interviewSteps = splitLongInterviewParagraph(interviewSteps[0]);
         }
     }
-    document.getElementById("interview-process").innerHTML = interviewSteps.map(function(p, i) {
-        return '<div class="flex items-center gap-3 p-2 rounded-lg ' + (i === 0 ? "bg-surface-container-low" : "bg-surface-container-lowest") + '"><span class="material-symbols-outlined text-[16px] ' + (i === 0 ? "text-primary" : "text-outline") + '">' + (i === 0 ? "done" : "radio_button_unchecked") + '</span><span class="text-sm text-on-surface">' + escapeHtml(p) + "</span></div>";
-    }).join("") || "<span class='text-on-surface-variant text-sm'>Şirket profilinde mülakat adımları metin olarak geldi; yukarıdaki özetten takip edebilirsiniz.</span>";
+    document.getElementById("interview-process").innerHTML = interviewSteps.length
+        ? '<div class="ar-ip-timeline"><div class="ar-ip-line" aria-hidden="true"></div>' +
+          interviewSteps
+              .map(function(p, i) {
+                  return (
+                      '<div class="ar-ip-step">' +
+                      '<span class="ar-ip-dot" aria-hidden="true"></span>' +
+                      '<span class="text-[11px] font-bold uppercase tracking-wide text-indigo-600/90 mb-1.5 block">Adım ' +
+                      (i + 1) +
+                      "</span>" +
+                      '<p class="text-sm text-on-surface leading-relaxed">' +
+                      escapeHtml(p) +
+                      "</p></div>"
+                  );
+              })
+              .join("") +
+          "</div>"
+        : "<span class='text-on-surface-variant text-sm'>Şirket profilinde mülakat adımları metin olarak geldi; yukarıdaki özetten takip edebilirsiniz.</span>";
 
     var traitLabels = [
         { key: "S", label: "Yetenek eşleşmesi", hint: "CV’deki yeteneklerin şirket profiline uyumu", icon: "psychology" },
@@ -188,8 +282,23 @@ function populateAnalysisResult() {
     }
     if (Array.isArray(questions) && questions.length) {
         document.getElementById("common-questions-section").classList.remove("hidden");
-        document.getElementById("common-questions").innerHTML = questions.map(function(q, i) {
-            return '<li class="flex gap-2.5 items-start rounded-lg border border-slate-200/80 bg-white/90 px-3 py-2"><span class="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-indigo-100 text-indigo-800 font-label-sm text-[10px] font-semibold">' + (i + 1) + '</span><span class="text-sm text-on-surface leading-relaxed">' + escapeHtml(String(q)) + "</span></li>";
+        document.getElementById("common-questions").innerHTML = questions.map(function(q) {
+            var full = String(q).trim();
+            var parts = arSplitTopicBody(full);
+            var detailText = parts.rest && parts.rest.length ? parts.rest : full;
+            return (
+                '<details class="ar-q-acc">' +
+                "<summary>" +
+                arTopicIconSvg(parts.topic, "ar-q-topic-ico") +
+                '<span class="min-w-0 flex-1">' +
+                escapeHtml(parts.topic) +
+                "</span>" +
+                arAccordionChevron() +
+                "</summary>" +
+                '<div class="ar-q-acc-panel">' +
+                escapeHtml(detailText) +
+                "</div></details>"
+            );
         }).join("");
     }
 
@@ -265,14 +374,14 @@ function populateAnalysisResult() {
             "Mülakatta anlatacağınız projelerde ölçülebilir sonuçları (ölçek, süre, kalite) hazır tutun."
         ];
     }
-    document.getElementById("next-steps-list").innerHTML = nextSteps.slice(0, 5).map(function(text, idx) {
+    document.getElementById("next-steps-list").innerHTML = nextSteps.slice(0, 5).map(function(text) {
         return (
-            '<li class="flex gap-3 rounded-lg border border-indigo-100/90 bg-indigo-50/40 px-3 py-2.5">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shadow-sm">' +
-            (idx + 1) +
-            '</span><span class="text-[15px] leading-relaxed text-on-surface">' +
+            "<li>" +
+            '<div class="ar-next-card">' +
+            arTopicIconSvg(text, "ar-step-ico") +
+            '<span class="text-[15px] leading-relaxed text-on-surface min-w-0">' +
             escapeHtml(text) +
-            "</span></li>"
+            "</span></div></li>"
         );
     }).join("");
 

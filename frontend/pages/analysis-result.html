@@ -95,6 +95,126 @@
   transform:scale(0.96);
   transform-origin:center;
 }
+/* Sonraki adımlar — hover kartları */
+.ar-next-card{
+  display:flex;
+  gap:0.875rem;
+  align-items:flex-start;
+  border-radius:0.875rem;
+  border:1px solid rgb(226 232 240 / 0.95);
+  background:#fff;
+  padding:0.9rem 1rem;
+  box-shadow:0 1px 2px rgb(15 23 42 / 0.04);
+  transition:border-color .2s ease, background-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.ar-next-card:hover{
+  border-color:rgb(165 180 252 / 0.85);
+  background:rgb(238 242 255 / 0.45);
+  box-shadow:0 4px 14px rgb(79 70 229 / 0.08);
+  transform:translateY(-2px);
+}
+.ar-step-ico{
+  width:1.35rem;
+  height:1.35rem;
+  flex-shrink:0;
+  color:rgb(79 70 229);
+  margin-top:0.1rem;
+}
+/* Mülakat konuları — akordeon */
+details.ar-q-acc{
+  border-radius:0.875rem;
+  border:1px solid rgb(226 232 240 / 0.95);
+  background:#fff;
+  overflow:hidden;
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
+details.ar-q-acc:hover{
+  border-color:rgb(199 210 254 / 0.9);
+  box-shadow:0 2px 8px rgb(15 23 42 / 0.05);
+}
+details.ar-q-acc[open]{
+  border-color:rgb(165 180 252 / 0.85);
+  box-shadow:0 4px 16px rgb(79 70 229 / 0.07);
+}
+details.ar-q-acc > summary{
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  align-items:flex-start;
+  gap:0.65rem;
+  padding:0.85rem 1rem;
+  font-size:0.875rem;
+  font-weight:600;
+  color:rgb(15 23 42);
+  line-height:1.45;
+}
+details.ar-q-acc > summary::-webkit-details-marker{display:none}
+.ar-q-acc-panel{
+  padding:0 1rem 1rem 1rem;
+  padding-left:2.75rem;
+  border-top:1px solid rgb(241 245 249);
+  font-size:0.8125rem;
+  line-height:1.6;
+  color:rgb(71 85 105);
+}
+.ar-acc-chevron{
+  flex-shrink:0;
+  width:1.25rem;
+  height:1.25rem;
+  margin-top:0.15rem;
+  margin-left:auto;
+  color:rgb(99 102 241);
+  transition:transform .2s ease;
+}
+details.ar-q-acc[open] > summary .ar-acc-chevron{
+  transform:rotate(180deg);
+}
+.ar-q-topic-ico{
+  width:1.15rem;
+  height:1.15rem;
+  flex-shrink:0;
+  margin-top:0.2rem;
+  color:rgb(79 70 229);
+  opacity:0.9;
+}
+/* Mülakat süreci — zaman çizgisi */
+.ar-ip-timeline{position:relative;padding-left:1.6rem}
+.ar-ip-line{
+  position:absolute;
+  left:0.45rem;
+  top:0.5rem;
+  bottom:0.5rem;
+  width:2px;
+  background:linear-gradient(180deg,rgb(199 210 254),rgb(226 232 240));
+  border-radius:1px;
+}
+.ar-ip-step{
+  position:relative;
+  padding:0.85rem 1rem;
+  margin-bottom:0.65rem;
+  border-radius:0.875rem;
+  border:1px solid rgb(226 232 240 / 0.95);
+  background:#fff;
+  box-shadow:0 1px 2px rgb(15 23 42 / 0.04);
+  transition:border-color .2s ease, background-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.ar-ip-step:last-child{margin-bottom:0}
+.ar-ip-step:hover{
+  border-color:rgb(165 180 252 / 0.75);
+  background:rgb(248 250 252);
+  box-shadow:0 4px 12px rgb(15 23 42 / 0.06);
+  transform:translateY(-1px);
+}
+.ar-ip-dot{
+  position:absolute;
+  left:-1.15rem;
+  top:1rem;
+  width:0.55rem;
+  height:0.55rem;
+  border-radius:9999px;
+  background:rgb(79 70 229);
+  box-shadow:0 0 0 4px #fff,0 0 0 5px rgb(199 210 254);
+}
 </style>
 </head>
 <body class="bg-[#F8FAFC] text-on-background font-body-md flex h-screen overflow-hidden antialiased">
@@ -218,7 +338,7 @@
                         </div>
                         <h4 class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant mb-2">Mülakatta sık odaklanılan konular</h4>
                         <p class="text-xs text-on-surface-variant mb-3 leading-relaxed">Seçtiğiniz şirket ve pozisyon için örnek soru/tema başlıkları; gerçek mülakat değişebilir.</p>
-                        <ol id="common-questions" class="list-none space-y-2.5"></ol>
+                        <div id="common-questions" class="flex flex-col gap-2"></div>
                     </div>
 
                     <div class="pt-6 border-t border-slate-200/90">
@@ -228,7 +348,7 @@
                                 <div class="h-12 ar-skel w-full rounded-lg"></div>
                                 <div class="h-12 ar-skel w-full rounded-lg opacity-80"></div>
                             </div>
-                            <div class="ar-live space-y-2" id="interview-process"></div>
+                            <div class="ar-live space-y-2.5" id="interview-process"></div>
                         </div>
                     </div>
                 </div>
@@ -273,7 +393,7 @@
                         <div class="h-10 ar-skel rounded-lg w-full opacity-90"></div>
                         <div class="h-10 ar-skel rounded-lg w-11/12 opacity-80"></div>
                     </div>
-                    <ul id="next-steps-list" class="ar-live space-y-3"></ul>
+                    <ul id="next-steps-list" class="ar-live list-none space-y-3 p-0 m-0"></ul>
                 </div>
             </div>
 
