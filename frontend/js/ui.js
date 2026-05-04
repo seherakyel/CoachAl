@@ -25,7 +25,7 @@ function _sidebar(active) {
 <nav class="flex-1 px-4 space-y-1">${_NAV.map(i => _navLink(i, active)).join("")}</nav>
 <div class="px-4 mt-auto space-y-3">
 <div class="bg-surface-container rounded-lg p-4"><p class="text-xs text-on-surface-variant mb-3">Gelişmiş özelliklerin kilidi</p>
-<button class="w-full bg-primary text-on-primary text-sm py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">Pro'ya Geç</button></div>
+<button class="w-full rounded-lg bg-indigo-600 py-2.5 px-4 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Pro'ya Geç</button></div>
 <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-sm font-medium transition-colors"><span class="material-symbols-outlined text-[20px]">help</span>Destek</a>
 <button id="ui-signout" class="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-sm font-medium transition-colors"><span class="material-symbols-outlined text-[20px]">logout</span>Çıkış Yap</button>
 </div></aside>
