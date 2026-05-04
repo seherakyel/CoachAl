@@ -14,83 +14,39 @@ function splitLongInterviewParagraph(text) {
     return chunks.length > 1 ? chunks : [s];
 }
 
-/** İnce hatlı SVG — konu metnine göre (kod, bulut, mimari, veri, güvenlik, varsayılan) */
-function arTopicIconSvg(text, className) {
-    var cls = className || "ar-step-ico";
-    var t = String(text || "").toLowerCase();
-    var op = ' fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
-    if (/bulut|cloud|aws|azure|gcp|kubernetes|k8s|docker|devops|deploy|infra|network|ağ|container/i.test(t)) {
-        return (
-            '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
-            '<path' + op + ' d="M6.5 17.5A4.5 4.5 0 014 10.2a5.5 5.5 0 0110.3-1.1A4 4 0 0118.5 17.5h-12z"/>' +
-            "</svg>"
-        );
-    }
-    if (/mimari|architecture|microservice|mikroservis|design|pattern|scalab|ölçek|sistem|monolith|gateway|event|ddd|clean/i.test(t)) {
-        return (
-            '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
-            '<rect x="3" y="4" width="18" height="4" rx="1"' + op + '/>' +
-            '<rect x="5" y="10" width="14" height="4" rx="1"' + op + '/>' +
-            '<rect x="7" y="16" width="10" height="4" rx="1"' + op + "/>" +
-            "</svg>"
-        );
-    }
-    if (/kod|code|geliştir|program|yazılım|test|git|bug|refactor|java|python|go|typescript|javascript|debug|review/i.test(t)) {
-        return (
-            '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
-            '<path' + op + ' d="M7 8l-4 4 4 4"/>' +
-            '<path' + op + ' d="M17 8l4 4-4 4"/>' +
-            '<path' + op + ' d="M14 4l-4 16"/>' +
-            "</svg>"
-        );
-    }
-    if (/veri|data|sql|nosql|database|db|cache|redis|mongo|postgres|transaction|kafka|stream/i.test(t)) {
-        return (
-            '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
-            '<ellipse cx="12" cy="6" rx="7" ry="3"' + op + '/>' +
-            '<path' + op + ' d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>' +
-            "</svg>"
-        );
-    }
-    if (/güvenlik|security|auth|oauth|jwt|şifre|encrypt|xss|csrf|oauth|iam/i.test(t)) {
-        return (
-            '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
-            '<path' + op + ' d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/>' +
-            "</svg>"
-        );
-    }
-    return (
-        '<svg class="' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' +
-        '<circle cx="12" cy="12" r="9"' + op + '/>' +
-        '<circle cx="12" cy="12" r="5"' + op + '/>' +
-        '<circle cx="12" cy="12" r="1.5"' + op + "/>" +
-        "</svg>"
-    );
+/** tech_stack maddesinin eşleşen / eksik yetenek satırlarıyla örtüşüp örtüşmediği */
+function arTechTokensOverlap(tech, phrase) {
+    var a = String(tech).toLowerCase().trim();
+    var b = String(phrase).toLowerCase().trim();
+    if (!a || !b) return false;
+    if (b.indexOf(a) !== -1 || a.indexOf(b) !== -1) return true;
+    var strip = function(s) {
+        return s.replace(/[^a-z0-9+#.]/g, "");
+    };
+    var sa = strip(a);
+    var sb = strip(b);
+    if (sa.length >= 3 && sb.indexOf(sa) !== -1) return true;
+    if (sb.length >= 3 && sa.indexOf(sb) !== -1) return true;
+    var words = a.split(/[\s,/]+/).filter(function(w) {
+        return w.length > 2;
+    });
+    return words.some(function(w) {
+        return b.indexOf(w) !== -1;
+    });
 }
 
-function arAccordionChevron() {
-    return (
-        '<svg class="ar-acc-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-        '<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
-        "</svg>"
-    );
-}
-
-/** Mülakat konusu: başlık + detay (iki satır / iki nokta / uzun metin) */
-function arSplitTopicBody(s) {
-    s = String(s).trim();
-    var i = s.indexOf(":");
-    if (i > 0 && i < 96) {
-        return { topic: s.slice(0, i).trim(), rest: s.slice(i + 1).trim() };
-    }
-    var lines = s.split(/\r?\n/);
-    if (lines.length > 1 && lines[0].length < 140) {
-        return { topic: lines[0].trim(), rest: lines.slice(1).join("\n").trim() };
-    }
-    if (s.length > 96) {
-        return { topic: s.slice(0, 93).trim() + "…", rest: s };
-    }
-    return { topic: s, rest: "" };
+function arTechBadgeKind(tech, matchedUi, missingUi) {
+    var m = matchedUi.some(function(row) {
+        var lab = row.skill != null ? String(row.skill) : "";
+        return arTechTokensOverlap(tech, lab);
+    });
+    if (m) return "matched";
+    var g = missingUi.some(function(row) {
+        var lab = row.skill != null ? String(row.skill) : "";
+        return arTechTokensOverlap(tech, lab);
+    });
+    if (g) return "gap";
+    return "gap";
 }
 
 function populateAnalysisResult() {
@@ -133,45 +89,46 @@ function populateAnalysisResult() {
     if (scoreValEl) scoreValEl.textContent = score;
 
     var risk = score >= 80 ? "Düşük Risk" : score >= 60 ? "Orta Risk" : "Yüksek Risk";
-    var badgeBase = "mt-6 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold shadow-sm";
+    var badgeBase =
+        "mt-6 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold border border-slate-200 bg-white text-slate-700";
     if (riskLabelEl) riskLabelEl.textContent = risk;
     if (riskIconEl) {
         riskIconEl.setAttribute("style", "font-variation-settings:'FILL' 1,'wght' 500");
     }
     if (riskBadgeEl && riskIconEl) {
         if (score >= 80) {
-            riskBadgeEl.className = badgeBase + " border border-emerald-200/90 bg-emerald-50/95 text-emerald-800";
+            riskBadgeEl.className = badgeBase;
             riskIconEl.textContent = "verified";
             riskIconEl.className = "material-symbols-outlined text-[18px] text-emerald-600";
         } else if (score >= 60) {
-            riskBadgeEl.className = badgeBase + " border border-amber-200/90 bg-amber-50/95 text-amber-900";
+            riskBadgeEl.className = badgeBase;
             riskIconEl.textContent = "priority_high";
-            riskIconEl.className = "material-symbols-outlined text-[18px] text-amber-600";
+            riskIconEl.className = "material-symbols-outlined text-[18px] text-amber-500";
         } else {
-            riskBadgeEl.className = badgeBase + " border border-red-200/90 bg-red-50/95 text-red-800";
+            riskBadgeEl.className = badgeBase;
             riskIconEl.textContent = "warning";
-            riskIconEl.className = "material-symbols-outlined text-[18px] text-red-600";
+            riskIconEl.className = "material-symbols-outlined text-[18px] text-rose-600";
         }
     }
     if (glowWrap) {
         glowWrap.className = "ar-score-glow-wrap relative flex items-center justify-center w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72";
-        if (score >= 80) glowWrap.classList.add("ar-glow-emerald");
+        if (score >= 80) glowWrap.classList.add("ar-glow-indigo");
         else if (score >= 60) glowWrap.classList.add("ar-glow-amber");
         else glowWrap.classList.add("ar-glow-red");
     }
     if (scoreValEl) {
-        if (score >= 80) scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-emerald-600 leading-none";
+        if (score >= 80) scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-indigo-600 leading-none";
         else if (score >= 60) scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-amber-600 leading-none";
-        else scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-red-600 leading-none";
+        else scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-rose-600 leading-none";
     }
 
     if (arcEl) {
         var circumference = 283;
         var offset = circumference - (score / 100) * circumference;
         arcEl.style.strokeDashoffset = offset;
-        if (score >= 80) arcEl.style.stroke = "#10b981";
+        if (score >= 80) arcEl.style.stroke = "#4f46e5";
         else if (score >= 60) arcEl.style.stroke = "#f59e0b";
-        else arcEl.style.stroke = "#ef4444";
+        else arcEl.style.stroke = "#f43f5e";
     }
 
     var company = companyProfile.company_name || sessionStorage.getItem("coachai_company_name") || "—";
@@ -199,11 +156,6 @@ function populateAnalysisResult() {
     document.getElementById("company-culture").textContent = companyProfile.culture_summary || "—";
     document.getElementById("ai-advice").textContent = alignment.advice || companyProfile.preparation_tips || "Analiziniz tamamlandı. Mülakat moduna geçebilirsiniz.";
 
-    var techStack = companyProfile.tech_stack || [];
-    document.getElementById("tech-stack").innerHTML = techStack.map(function(t) {
-        return `<span class="px-3 py-1 bg-surface-container text-on-surface-variant text-xs rounded-full font-medium">${escapeHtml(String(t))}</span>`;
-    }).join("") || "<span class='text-on-surface-variant text-sm'>—</span>";
-
     var processRaw = companyProfile.interview_process;
     var interviewSteps = [];
     if (Array.isArray(processRaw)) {
@@ -215,16 +167,15 @@ function populateAnalysisResult() {
         }
     }
     document.getElementById("interview-process").innerHTML = interviewSteps.length
-        ? '<div class="ar-ip-timeline"><div class="ar-ip-line" aria-hidden="true"></div>' +
+        ? '<div class="ar-ip-plain">' +
           interviewSteps
               .map(function(p, i) {
                   return (
-                      '<div class="ar-ip-step">' +
-                      '<span class="ar-ip-dot" aria-hidden="true"></span>' +
-                      '<span class="text-[11px] font-bold uppercase tracking-wide text-indigo-600/90 mb-1.5 block">Adım ' +
+                      '<div class="ar-ip-row pl-3 border-l-[3px] border-indigo-400">' +
+                      '<span class="text-[11px] font-semibold uppercase tracking-wide text-indigo-700">Adım ' +
                       (i + 1) +
                       "</span>" +
-                      '<p class="text-sm text-on-surface leading-relaxed">' +
+                      '<p class="mt-2 text-sm text-slate-700 leading-relaxed">' +
                       escapeHtml(p) +
                       "</p></div>"
                   );
@@ -242,16 +193,16 @@ function populateAnalysisResult() {
         var v = alignment[t.key];
         var p = pct01(v);
         return (
-            '<div class="flex gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-sm">' +
-            '<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary">' +
+            '<div class="flex gap-4 rounded-xl border border-slate-100 bg-white px-4 py-4">' +
+            '<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">' +
             '<span class="material-symbols-outlined text-[22px]">' + t.icon + "</span></div>" +
             '<div class="min-w-0 flex-1">' +
             '<div class="flex items-center justify-between gap-2 mb-2">' +
-            '<span class="text-sm font-medium text-on-surface">' + escapeHtml(t.label) + "</span>" +
-            '<span class="text-sm font-semibold tabular-nums text-primary">' + p + "%</span></div>" +
-            '<div class="h-2.5 overflow-hidden rounded-full bg-surface-container">' +
-            '<div class="h-full rounded-full bg-gradient-to-r from-primary to-indigo-500 transition-all duration-500" style="width:' + p + '%"></div></div>' +
-            '<p class="mt-2 text-xs leading-relaxed text-on-surface-variant">' + escapeHtml(t.hint) + "</p>" +
+            '<span class="text-sm font-medium text-slate-800">' + escapeHtml(t.label) + "</span>" +
+            '<span class="text-sm font-semibold tabular-nums text-indigo-700">' + p + "%</span></div>" +
+            '<div class="h-2 overflow-hidden rounded-full bg-slate-100">' +
+            '<div class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-indigo-500 transition-all duration-500" style="width:' + p + '%"></div></div>' +
+            '<p class="mt-3 text-xs leading-relaxed text-slate-600">' + escapeHtml(t.hint) + "</p>" +
             "</div></div>"
         );
     }).join("");
@@ -259,67 +210,42 @@ function populateAnalysisResult() {
     var traits = companyProfile.key_traits || [];
     if (Array.isArray(traits) && traits.length) {
         document.getElementById("key-traits-section").classList.remove("hidden");
-        document.getElementById("key-traits").innerHTML = traits.map(function(t) {
-            return '<span class="px-2.5 py-1 bg-indigo-50/80 text-indigo-900 text-xs rounded-lg border border-indigo-100/80 font-medium">' + escapeHtml(String(t)) + "</span>";
-        }).join("");
+        document.getElementById("key-traits").innerHTML = traits
+            .map(function(t) {
+                return (
+                    '<li class="flex gap-3 text-sm leading-relaxed text-slate-600">' +
+                    '<span class="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" aria-hidden="true"></span>' +
+                    "<span>" +
+                    escapeHtml(String(t)) +
+                    "</span></li>"
+                );
+            })
+            .join("");
     }
 
-    var questions = companyProfile.common_questions || [];
-    var posLabel = (companyProfile.position || alignment.position || "").trim();
-    var leadEl = document.getElementById("common-questions-lead");
-    if (leadEl) {
-        if (posLabel) {
-            leadEl.textContent =
-                company +
-                " ve “" +
-                posLabel +
-                "” rolü için bu şirketin tipik beklentileriyle örtüşen örnek mülakat temaları aşağıda. Kamuya açık bilgiler ve makul çıkarımlara dayanır.";
-        } else {
-            leadEl.textContent =
-                company +
-                " profiline göre örnek mülakat temaları aşağıda. Kamuya açık bilgiler ve makul çıkarımlara dayanır.";
-        }
-    }
-    if (Array.isArray(questions) && questions.length) {
-        document.getElementById("common-questions-section").classList.remove("hidden");
-        document.getElementById("common-questions").innerHTML = questions.map(function(q) {
-            var full = String(q).trim();
-            var parts = arSplitTopicBody(full);
-            var detailText = parts.rest && parts.rest.length ? parts.rest : full;
-            return (
-                '<details class="ar-q-acc">' +
-                "<summary>" +
-                arTopicIconSvg(parts.topic, "ar-q-topic-ico") +
-                '<span class="min-w-0 flex-1">' +
-                escapeHtml(parts.topic) +
-                "</span>" +
-                arAccordionChevron() +
-                "</summary>" +
-                '<div class="ar-q-acc-panel">' +
-                escapeHtml(detailText) +
-                "</div></details>"
-            );
-        }).join("");
-    }
-
-    function rowHtml(kind, iconCls, iconName, label, detail) {
+    function rowHtml(kind, label, detail) {
         var d = (detail || "").trim();
-        var shell =
+        var leftEdge =
             kind === "matched"
-                ? "rounded-xl border border-emerald-200/90 bg-emerald-50/40 p-3 shadow-sm"
-                : "rounded-xl border border-amber-200/90 bg-amber-50/50 p-3 shadow-sm";
+                ? "border-b border-solid border-slate-100 border-l-[4px] border-indigo-600"
+                : "border-b border-solid border-slate-100 border-l-[4px] border-indigo-200 [border-left-style:dashed]";
+        var iconHtml =
+            kind === "matched"
+                ? '<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 shadow-sm ring-1 ring-indigo-200/90">' +
+                  '<span class="material-symbols-outlined text-[22px]" style="font-variation-settings:\'FILL\' 1,\'wght\' 500">check_circle</span></div>'
+                : '<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-indigo-200 bg-slate-50 text-slate-400">' +
+                  '<span class="material-symbols-outlined text-[20px]" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">change_circle</span></div>';
         return (
-            '<li class="' +
-            shell +
-            '"><div class="flex items-start gap-3"><span class="material-symbols-outlined ' +
-            iconCls +
-            ' mt-0.5 shrink-0 text-[22px]">' +
-            iconName +
-            '</span><div class="min-w-0"><span class="block text-sm font-semibold text-on-surface">' +
+            '<li class="border-b border-slate-100 py-4 pl-4 ' +
+            leftEdge +
+            ' last:border-b-0">' +
+            '<div class="flex items-start gap-3">' +
+            iconHtml +
+            '<div class="min-w-0"><span class="block text-sm font-semibold text-slate-800">' +
             escapeHtml(label) +
             "</span>" +
             (d
-                ? '<span class="mt-1 block text-xs leading-relaxed text-on-surface-variant">' +
+                ? '<span class="ar-skill-detail mt-2 block text-xs text-slate-600">' +
                   escapeHtml(d) +
                   "</span>"
                 : "") +
@@ -347,43 +273,42 @@ function populateAnalysisResult() {
         });
     }
 
+    var techStack = companyProfile.tech_stack || [];
+    document.getElementById("tech-stack").innerHTML = techStack
+        .map(function(t) {
+            var raw = String(t);
+            var kind = arTechBadgeKind(raw, matchedUi, missingUi);
+            var check =
+                '<span class="material-symbols-outlined text-[15px] text-indigo-600 shrink-0" style="font-variation-settings:\'FILL\' 1,\'wght\' 500">check_circle</span>';
+            var plus =
+                '<span class="material-symbols-outlined text-[15px] text-indigo-300 shrink-0" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">add_circle</span>';
+            var shell =
+                kind === "matched"
+                    ? "inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700"
+                    : "inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600";
+            return (
+                "<span class='" +
+                shell +
+                "'>" +
+                (kind === "matched" ? check : plus) +
+                "<span>" +
+                escapeHtml(raw) +
+                "</span></span>"
+            );
+        })
+        .join("") || "<span class='text-on-surface-variant text-sm'>—</span>";
+
     document.getElementById("matched-skills").innerHTML = matchedUi.map(function(row) {
         var lab = row.skill != null ? String(row.skill) : "";
         var det = row.detail != null ? String(row.detail) : "";
-        return rowHtml("matched", "text-emerald-600", "check_circle", lab, det);
-    }).join("") || "<li class='rounded-xl border border-dashed border-emerald-200 bg-emerald-50/30 p-4 text-sm text-on-surface-variant'>Eşleşen yetenek listesi için analizi yeniden çalıştırın.</li>";
+        return rowHtml("matched", lab, det);
+    }).join("") || "<li class='border-b border-slate-100 py-4 text-sm text-slate-500 last:border-0'>Eşleşen yetenek listesi için analizi yeniden çalıştırın.</li>";
 
     document.getElementById("missing-skills").innerHTML = missingUi.map(function(row) {
         var lab = row.skill != null ? String(row.skill) : "";
         var det = row.detail != null ? String(row.detail) : "";
-        return rowHtml("missing", "text-amber-600", "trending_up", lab, det);
-    }).join("") || "<li class='rounded-xl border border-dashed border-amber-200 bg-amber-50/30 p-4 text-sm text-on-surface-variant'>Gelişim alanı listesi için analizi yeniden çalıştırın.</li>";
-
-    var nextSteps = Array.isArray(alignment.next_steps) ? alignment.next_steps : [];
-    nextSteps = nextSteps.map(function(s) { return String(s).trim(); }).filter(Boolean);
-    if (nextSteps.length < 2 && missingUi && missingUi.length) {
-        nextSteps = missingUi.slice(0, 4).map(function(row) {
-            var lab = row.skill != null ? String(row.skill) : "";
-            return lab ? "“" + lab + "” alanında kısa pratik veya örnek proje ile hazırlanın." : "";
-        }).filter(Boolean);
-    }
-    if (nextSteps.length < 2) {
-        nextSteps = [
-            "Güçlü yönlerinizi 2-3 STAR hikayesiyle netleştirin.",
-            "Şirketin teknoloji setine uygun bir kaynak veya açık kaynak kod örneği inceleyin.",
-            "Mülakatta anlatacağınız projelerde ölçülebilir sonuçları (ölçek, süre, kalite) hazır tutun."
-        ];
-    }
-    document.getElementById("next-steps-list").innerHTML = nextSteps.slice(0, 5).map(function(text) {
-        return (
-            "<li>" +
-            '<div class="ar-next-card">' +
-            arTopicIconSvg(text, "ar-step-ico") +
-            '<span class="text-[15px] leading-relaxed text-on-surface min-w-0">' +
-            escapeHtml(text) +
-            "</span></div></li>"
-        );
-    }).join("");
+        return rowHtml("missing", lab, det);
+    }).join("") || "<li class='border-b border-slate-100 py-4 text-sm text-slate-500 last:border-0'>Gelişim alanı listesi için analizi yeniden çalıştırın.</li>";
 
     var root = document.getElementById("analysis-root");
     if (root) root.classList.add("analysis-ready");

@@ -1,5 +1,26 @@
 const API_BASE = "http://localhost:8000";
 
+/** Uygulama geneli: kart/buton geçişleri, CTA gradyanı (bir kez enjekte edilir) */
+function injectCoachAiChromeStyles() {
+    if (document.getElementById("coachai-chrome-styles")) return;
+    var style = document.createElement("style");
+    style.id = "coachai-chrome-styles";
+    style.textContent =
+        "button,.coachai-cta-primary,.ar-surface-card,.ar-skills-col-matched,.ar-skills-col-missing{" +
+        "transition:all .3s ease}" +
+        "#main-sidebar nav a{transition:all .3s ease}" +
+        ".coachai-cta-primary{display:inline-flex;align-items:center;justify-content:center;" +
+        "background:linear-gradient(135deg,#7c3aed 0%,#6366f1 46%,#2563eb 100%);" +
+        "color:#fff!important;border:none;cursor:pointer;" +
+        "box-shadow:0 4px 18px rgba(99,102,241,.38)}" +
+        ".coachai-cta-primary:hover{transform:scale(1.03);filter:brightness(1.05);" +
+        "box-shadow:0 8px 26px rgba(79,70,229,.48)}" +
+        ".coachai-cta-primary:active{transform:scale(1.01)}" +
+        ".coachai-cta-primary:focus-visible{outline:none;" +
+        "box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(129,140,248,.65),0 4px 18px rgba(99,102,241,.38)}";
+    document.head.appendChild(style);
+}
+
 const _NAV = [
     { id: "dashboard",   icon: "dashboard",         label: "Panel",         href: "dashboard.html" },
     { id: "cv-analysis", icon: "description",        label: "CV Analizi",    href: "cv-analysis.html" },
@@ -11,9 +32,9 @@ const _NAV = [
 function _navLink(item, active) {
     const a = item.id === active;
     const cls = a
-        ? "text-indigo-600 bg-indigo-50/50 border-r-2 border-indigo-600"
-        : "text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-200";
-    return `<a href="${item.href}" class="flex items-center gap-3 px-3 py-2 rounded-lg font-sans text-sm font-medium ${cls}"><span class="material-symbols-outlined text-[20px]">${item.icon}</span>${item.label}</a>`;
+        ? "text-indigo-900 bg-gradient-to-r from-indigo-50 via-violet-50/90 to-white border-l-[4px] border-indigo-600 shadow-sm ring-1 ring-indigo-100/70 font-semibold"
+        : "text-slate-500 hover:text-slate-900 hover:bg-slate-50 font-medium transition-all duration-300 ease-in-out";
+    return `<a href="${item.href}" class="flex items-center gap-3 py-2.5 pr-3 pl-2.5 rounded-lg font-sans text-sm ${cls}"><span class="material-symbols-outlined text-[20px] shrink-0">${item.icon}</span>${item.label}</a>`;
 }
 
 function _sidebar(active) {
@@ -25,7 +46,7 @@ function _sidebar(active) {
 <nav class="flex-1 px-4 space-y-1">${_NAV.map(i => _navLink(i, active)).join("")}</nav>
 <div class="px-4 mt-auto space-y-3">
 <div class="bg-surface-container rounded-lg p-4"><p class="text-xs text-on-surface-variant mb-3">Gelişmiş özelliklerin kilidi</p>
-<button class="w-full rounded-lg bg-indigo-600 py-2.5 px-4 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Pro'ya Geç</button></div>
+<button type="button" class="coachai-cta-primary w-full rounded-xl py-2.5 px-4 text-sm font-semibold">Pro'ya Geç</button></div>
 <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-sm font-medium transition-colors"><span class="material-symbols-outlined text-[20px]">help</span>Destek</a>
 <button id="ui-signout" class="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-sm font-medium transition-colors"><span class="material-symbols-outlined text-[20px]">logout</span>Çıkış Yap</button>
 </div></aside>
@@ -63,6 +84,7 @@ function _header(email) {
 }
 
 function initLayout(pageId) {
+    injectCoachAiChromeStyles();
     var sc = document.getElementById("sidebar-container");
     var hc = document.getElementById("header-container");
     onAuthChange(function(user) {
