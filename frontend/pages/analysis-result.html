@@ -112,6 +112,39 @@
 .ar-skill-detail{
   line-height:1.6;
 }
+/* Skor bileşenleri — premium bar & ikon */
+.ar-score-bar-track{
+  height:8px;
+  border-radius:9999px;
+  background:#f1f5f9;
+  overflow:hidden;
+}
+.ar-score-bar-fill{
+  height:8px;
+  width:0%;
+  border-radius:9999px;
+  background:linear-gradient(90deg,#c7d2fe 0%,#a5b4fc 22%,#818cf8 52%,#6366f1 78%,#4f46e5 100%);
+  box-shadow:
+    0 0 12px rgba(129,140,248,0.55),
+    0 0 24px rgba(99,102,241,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.ar-score-row-icon{
+  box-shadow:0 4px 14px rgba(15,23,42,0.06),0 1px 3px rgba(79,70,229,0.08);
+  transition:transform 0.35s ease,box-shadow 0.35s ease;
+}
+.ar-score-row-icon:hover{
+  transform:scale(1.06);
+  box-shadow:0 8px 22px rgba(79,70,229,0.14),0 2px 8px rgba(15,23,42,0.06);
+}
+.ar-trait-badge{
+  transition:background-color 0.2s ease,border-color 0.2s ease,box-shadow 0.2s ease;
+}
+.ar-trait-badge:hover{
+  background-color:rgba(238,242,255,0.65);
+  border-color:rgba(165,180,252,0.85);
+  box-shadow:0 2px 8px rgba(79,70,229,0.08);
+}
 </style>
 </head>
 <body class="bg-[#F8FAFC] text-on-background font-body-md flex h-screen overflow-hidden antialiased">
@@ -225,7 +258,7 @@
                     <div id="key-traits-section" class="pt-8 border-t border-slate-200/80 hidden">
                         <h4 class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant mb-2">Aranan profil</h4>
                         <p class="text-xs text-on-surface-variant mb-4 leading-relaxed">Bu rol için öne çıkan beklentiler (şirket profili).</p>
-                        <ul id="key-traits" class="m-0 list-none space-y-3 p-0"></ul>
+                        <div id="key-traits" class="ar-live flex flex-wrap gap-2"></div>
                     </div>
 
                     <div class="pt-8 border-t border-slate-200/80">

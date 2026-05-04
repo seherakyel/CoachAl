@@ -49,6 +49,60 @@ function arTechBadgeKind(tech, matchedUi, missingUi) {
     return "gap";
 }
 
+/** Skor bileşenleri: yüzde ve bar 0'dan hedefe animasyon */
+function animateScoreBreakdownPcts() {
+    var rows = document.querySelectorAll("[data-ar-score-row]");
+    if (!rows || !rows.length) return;
+    rows.forEach(function(row) {
+        var pctEl = row.querySelector(".ar-score-pct");
+        var barEl = row.querySelector(".ar-score-bar-fill");
+        if (!pctEl || !barEl) return;
+        var target = parseInt(pctEl.getAttribute("data-target"), 10);
+        if (Number.isNaN(target)) target = 0;
+        target = Math.min(100, Math.max(0, target));
+        pctEl.textContent = "0%";
+        barEl.style.width = "0%";
+        var startTs = null;
+        var duration = 1000;
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+        function step(ts) {
+            if (startTs === null) startTs = ts;
+            var u = Math.min(1, (ts - startTs) / duration);
+            var v = Math.round(target * easeOutCubic(u));
+            pctEl.textContent = v + "%";
+            barEl.style.width = v + "%";
+            if (u < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    });
+}
+
+/** Aranan profil rozeti — minik Material ikon veya yıldız */
+function traitBadgeLeadingGraphic(label) {
+    var s = String(label).toLowerCase();
+    function matIcon(name, fillOne) {
+        return (
+            '<span class="material-symbols-outlined text-[15px] text-indigo-500 shrink-0" style="font-variation-settings:\'FILL\' ' +
+            (fillOne ? "1" : "0") +
+            ',\'wght\' 500">' +
+            name +
+            "</span>"
+        );
+    }
+    if (/react|vue|angular|svelte|javascript|typescript|css|html|web|ui|ux|geliştir|website|frontend/.test(s)) return matIcon("code", true);
+    if (/python|java|go|rust|kotlin|php|ruby|backend|api|microservice|spring|node/.test(s)) return matIcon("terminal", true);
+    if (/cloud|aws|azure|gcp|docker|kubernetes|devops|infra|sunucu/.test(s)) return matIcon("cloud", false);
+    if (/sql|nosql|data|analytics|machine|learning|\bai\b|ml|veri|kafka/.test(s)) return matIcon("database", false);
+    if (/lead|manager|takım|team|iletişim|communication|english|soft|collaboration|agile|scrum/.test(s)) return matIcon("groups", true);
+    if (/güvenlik|security|auth|oauth|encrypt/.test(s)) return matIcon("shield", false);
+    if (/tasarım|design|figma|mobil|mobile|ios|android/.test(s)) return matIcon("palette", false);
+    return (
+        '<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100/90 text-[12px] leading-none text-indigo-600" aria-hidden="true">\u2726</span>'
+    );
+}
+
 function populateAnalysisResult() {
     var alignment = safeParseJSON(sessionStorage.getItem("coachai_alignment"), null);
     var companyProfile = safeParseJSON(sessionStorage.getItem("coachai_company_profile"), null);
@@ -193,31 +247,41 @@ function populateAnalysisResult() {
         var v = alignment[t.key];
         var p = pct01(v);
         return (
-            '<div class="flex gap-4 rounded-xl border border-slate-100 bg-white px-4 py-4">' +
-            '<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">' +
-            '<span class="material-symbols-outlined text-[22px]">' + t.icon + "</span></div>" +
-            '<div class="min-w-0 flex-1">' +
-            '<div class="flex items-center justify-between gap-2 mb-2">' +
-            '<span class="text-sm font-medium text-slate-800">' + escapeHtml(t.label) + "</span>" +
-            '<span class="text-sm font-semibold tabular-nums text-indigo-700">' + p + "%</span></div>" +
-            '<div class="h-2 overflow-hidden rounded-full bg-slate-100">' +
-            '<div class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-indigo-500 transition-all duration-500" style="width:' + p + '%"></div></div>' +
-            '<p class="mt-3 text-xs leading-relaxed text-slate-600">' + escapeHtml(t.hint) + "</p>" +
-            "</div></div>"
+            '<div data-ar-score-row class="flex gap-4 rounded-2xl border border-slate-100/95 bg-white px-5 py-4 shadow-sm ring-1 ring-slate-900/[0.03] transition-shadow duration-300 hover:shadow-md">' +
+            '<div class="ar-score-row-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 ring-1 ring-indigo-100">' +
+            '<span class="material-symbols-outlined text-[22px]" style="font-variation-settings:\'FILL\' 1">' +
+            t.icon +
+            "</span></div>" +
+            '<div class="min-w-0 flex-1 pt-0.5">' +
+            '<div class="flex items-baseline justify-between gap-3 mb-2.5">' +
+            '<span class="text-sm font-semibold text-slate-800">' +
+            escapeHtml(t.label) +
+            '</span><span class="ar-score-pct text-base font-bold tabular-nums tracking-tight text-indigo-700" data-target="' +
+            p +
+            '">0%</span></div>' +
+            '<div class="ar-score-bar-track mb-3">' +
+            '<div class="ar-score-bar-fill"></div></div>' +
+            '<p class="text-xs leading-relaxed text-slate-600">' +
+            escapeHtml(t.hint) +
+            "</p></div></div>"
         );
     }).join("");
+    requestAnimationFrame(function() {
+        requestAnimationFrame(animateScoreBreakdownPcts);
+    });
 
     var traits = companyProfile.key_traits || [];
     if (Array.isArray(traits) && traits.length) {
         document.getElementById("key-traits-section").classList.remove("hidden");
         document.getElementById("key-traits").innerHTML = traits
             .map(function(t) {
+                var raw = String(t);
                 return (
-                    '<li class="flex gap-3 text-sm leading-relaxed text-slate-600">' +
-                    '<span class="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" aria-hidden="true"></span>' +
-                    "<span>" +
-                    escapeHtml(String(t)) +
-                    "</span></li>"
+                    '<span class="ar-trait-badge inline-flex max-w-full items-center gap-2 rounded-full border border-indigo-200/75 bg-indigo-50/30 px-3.5 py-2 text-left text-xs font-medium text-slate-700">' +
+                    traitBadgeLeadingGraphic(raw) +
+                    "<span class=\"min-w-0 break-words leading-snug\">" +
+                    escapeHtml(raw) +
+                    "</span></span>"
                 );
             })
             .join("");
