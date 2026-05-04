@@ -286,6 +286,83 @@ def extract_cv_structure_from_text(cv_text: str) -> dict:
     }
 
 
+def enrich_skill_display_items(
+    company_name: str,
+    position: str,
+    matched_labels: list[str],
+    missing_labels: list[str],
+) -> tuple[list[dict], list[dict]]:
+    def _default_m(s: str) -> dict:
+        return {
+            "skill": s,
+            "detail": (
+                f"{s}, şirket profilindeki teknoloji beklentisiyle örtüşüyor; "
+                "mülakatta bu konuda örnekler verin."
+            ),
+        }
+
+    def _default_g(s: str) -> dict:
+        return {
+            "skill": s,
+            "detail": (
+                f"{s} bu pozisyon için sık aranan bir başlık; "
+                "kısa bir proje veya hands-on pratik ile seviyenizi göstermeniz iyi olur."
+            ),
+        }
+
+    m_in = [str(x).strip() for x in (matched_labels or []) if str(x).strip()][:16]
+    g_in = [str(x).strip() for x in (missing_labels or []) if str(x).strip()][:16]
+    if not m_in and not g_in:
+        return [], []
+
+    if not get_env("GEMINI_API_KEY"):
+        return ([_default_m(s) for s in m_in], [_default_g(s) for s in g_in])
+
+    prompt = (
+        "Sen kariyer koçusun. Sadece geçerli JSON döndür.\n"
+        'Şema: {"matched":[{"skill":"string","detail":"string"}],'
+        '"missing":[{"skill":"string","detail":"string"}]}\n'
+        "detail alanları Türkçe, tek cümle, yapıcı ve somut olsun.\n\n"
+        f"Şirket: {company_name}\nPozisyon: {position}\n"
+        f"Eşleşen etiketler (sırayı koru): {m_in}\n"
+        f"Eksik / geliştirilebilir etiketler (sırayı koru): {g_in}\n"
+        "Her dizideki öğe sayısı yukarıdaki etiket sayısıyla aynı olmalı."
+    )
+    for model_id in _model_chain():
+        model = get_model({"response_mime_type": "application/json"}, model_id)
+        if not model:
+            continue
+        try:
+            data = _run_cv_prompt(model, prompt)
+            if not data:
+                continue
+            m_out = data.get("matched") or []
+            g_out = data.get("missing") or []
+            if not isinstance(m_out, list):
+                m_out = []
+            if not isinstance(g_out, list):
+                g_out = []
+            m_norm: list[dict] = []
+            for i, lab in enumerate(m_in):
+                det = ""
+                if i < len(m_out) and isinstance(m_out[i], dict):
+                    det = str(m_out[i].get("detail") or "").strip()
+                m_norm.append({"skill": lab, "detail": det or _default_m(lab)["detail"]})
+            g_norm: list[dict] = []
+            for i, lab in enumerate(g_in):
+                det = ""
+                if i < len(g_out) and isinstance(g_out[i], dict):
+                    det = str(g_out[i].get("detail") or "").strip()
+                g_norm.append({"skill": lab, "detail": det or _default_g(lab)["detail"]})
+            return (m_norm, g_norm)
+        except ResourceExhausted:
+            continue
+        except Exception:
+            continue
+
+    return ([_default_m(s) for s in m_in], [_default_g(s) for s in g_in])
+
+
 def alignment_advice(
     company_name: str,
     position: str,

@@ -113,6 +113,8 @@ def compute_alignment(
     position: str,
 ) -> dict:
     required = required_skills_from_profile(tech_stack, key_traits)
+    if not required and tech_stack:
+        required = [str(x).strip() for x in tech_stack if str(x).strip()]
     s, matched, missing = skill_match_sets(cv_skills, required)
     req_years = infer_required_experience_years(position)
     e = experience_factor(cv_experience_years, req_years)
