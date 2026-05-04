@@ -8,7 +8,7 @@ from app.config.firebase_config import get_firestore
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limit import enforce_daily_quota, limiter
 from app.services.alignment_engine import compute_alignment
-from app.services.gemini_client import alignment_advice, enrich_skill_display_items
+from app.services.gemini_client import alignment_coaching, enrich_skill_display_items
 
 
 router = APIRouter()
@@ -85,7 +85,7 @@ async def alignment_score(
         position=position,
     )
 
-    advice = alignment_advice(
+    coaching = alignment_coaching(
         company_name=company_name,
         position=position,
         matched_skills=result["matched_skills"],
@@ -93,6 +93,8 @@ async def alignment_score(
         score_percent=result["score_percent"],
         risk_level=result["risk_level"],
     )
+    advice = coaching["advice"]
+    next_steps = coaching.get("next_steps") or []
 
     matched_ui, missing_ui = enrich_skill_display_items(
         company_name,
@@ -114,6 +116,7 @@ async def alignment_score(
             "matched_skills_ui": matched_ui,
             "missing_skills_ui": missing_ui,
             "advice": advice,
+            "next_steps": next_steps,
             "S": result["S"],
             "E": result["E"],
             "D": result["D"],
@@ -128,6 +131,7 @@ async def alignment_score(
         "company_name": company_name,
         "position": position,
         "advice": advice,
+        "next_steps": next_steps,
         "matched_skills_ui": matched_ui,
         "missing_skills_ui": missing_ui,
         **{k: v for k, v in result.items() if k not in ("required_skills_used",)},

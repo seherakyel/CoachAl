@@ -1,5 +1,7 @@
 import json
 import re
+from typing import Any
+
 from google.api_core.exceptions import ResourceExhausted
 
 from app.config.settings import get_env
@@ -363,6 +365,23 @@ def enrich_skill_display_items(
     return ([_default_m(s) for s in m_in], [_default_g(s) for s in g_in])
 
 
+def _fallback_next_steps(missing_skills: list) -> list[str]:
+    out: list[str] = []
+    for lab in [str(x).strip() for x in (missing_skills or []) if str(x).strip()][:4]:
+        out.append(
+            f"“{lab}” için mini proje, örnek repo veya kısa modül ile seviyenizi somutlaştırın."
+        )
+    if len(out) < 3:
+        out.append(
+            "Mülakatta 2-3 proje örneğinizi ölçülebilir sonuçlarla (ölçek, gecikme, kalite) anlatın."
+        )
+    if len(out) < 3:
+        out.append(
+            "Güçlü yönlerinizi STAR yöntemiyle 2-3 hikayede toplayıp mülakatta kullanın."
+        )
+    return out[:5]
+
+
 def alignment_advice(
     company_name: str,
     position: str,
@@ -398,3 +417,75 @@ Kullanıcıya: hangi eksikleri kapatması gerektiğini ve 2-4 haftalık somut bi
         except Exception:
             return ""
     return ""
+
+
+def alignment_coaching(
+    company_name: str,
+    position: str,
+    matched_skills: list,
+    missing_skills: list,
+    score_percent: float,
+    risk_level: str,
+) -> dict[str, Any]:
+    """Koçluk paragrafı + 3-5 somut adım. Model hatasında metin + deterministik adımlara düşer."""
+    ms = ", ".join(missing_skills[:20]) if missing_skills else "yok"
+    ok = ", ".join(matched_skills[:15]) if matched_skills else "yok"
+    json_prompt = f"""CoachAI için Türkçe çıktı üret. YALNIZCA geçerli JSON döndür; açıklama, markdown veya kod çiti yok.
+Şema: {{"advice":"string","next_steps":["string",...]}}
+- advice: düz paragraf, en fazla 6 cümle, başlık veya madde işareti yok.
+- next_steps: tam 4 kısa madde. Önümüzdeki 2-4 hafta için somut eylemler; net fiillerle başlasın veya doğrudan yapılacak işi söylesin. Her madde en fazla 140 karakter.
+
+Şirket: {company_name}
+Pozisyon: {position}
+Hizalama skoru (yüzde): {score_percent}
+Risk: {risk_level} (YÜKSEK=elenme riski yüksek, ORTA, DÜŞÜK=daha güçlü aday)
+Eşleşen yetenekler: {ok}
+Eksik veya zayıf gereksinimler: {ms}
+"""
+    key = get_env("GEMINI_API_KEY")
+    if key:
+        for model_id in _model_chain():
+            model = get_model({"response_mime_type": "application/json"}, model_id)
+            if not model:
+                continue
+            try:
+                response = model.generate_content(json_prompt)
+                raw = _extract_response_text(response)
+                data = _parse_json_object(raw) or {}
+                adv = (data.get("advice") or "").strip()
+                steps_raw = data.get("next_steps")
+                steps: list[str] = []
+                if isinstance(steps_raw, list):
+                    for x in steps_raw:
+                        s = str(x).strip()
+                        if s and len(steps) < 5:
+                            steps.append(s[:200])
+                if adv and 3 <= len(steps) <= 5:
+                    return {"advice": adv, "next_steps": steps}
+                if adv:
+                    if not steps:
+                        steps = _fallback_next_steps(missing_skills)
+                    elif len(steps) < 3:
+                        for fb in _fallback_next_steps(missing_skills):
+                            if len(steps) >= 4:
+                                break
+                            if fb not in steps:
+                                steps.append(fb)
+                    return {"advice": adv, "next_steps": steps[:5]}
+            except ResourceExhausted:
+                continue
+            except Exception:
+                continue
+
+    advice = alignment_advice(
+        company_name,
+        position,
+        matched_skills,
+        missing_skills,
+        score_percent,
+        risk_level,
+    )
+    return {
+        "advice": advice,
+        "next_steps": _fallback_next_steps(missing_skills),
+    }
