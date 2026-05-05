@@ -14,6 +14,69 @@ function splitLongInterviewParagraph(text) {
     return chunks.length > 1 ? chunks : [s];
 }
 
+/** Üçüncü adım için genel kapanış metni (API’de yeterli madde yoksa) */
+var AR_INTERVIEW_THIRD_PLACEHOLDER =
+    "Kapanış, referans ve teklif aşamaları şirket içi prosedüre göre sonlandırılır.";
+
+function splitSentencesForInterview(text) {
+    return String(text || "")
+        .replace(/([.!?])\s+/g, "$1\n")
+        .split("\n")
+        .map(function(x) {
+            return x.trim();
+        })
+        .filter(Boolean);
+}
+
+/** Tek blok metni cümlelere veya uzunluğa göre tam 3 adıma böler */
+function splitIntoThreeBySentences(text) {
+    var sents = splitSentencesForInterview(text);
+    var n = sents.length;
+    if (n >= 3) {
+        var i1 = Math.ceil(n / 3);
+        var i2 = Math.ceil((n - i1) / 2) + i1;
+        return [sents.slice(0, i1).join(" "), sents.slice(i1, i2).join(" "), sents.slice(i2).join(" ")];
+    }
+    if (n === 2) {
+        return [sents[0], sents[1], AR_INTERVIEW_THIRD_PLACEHOLDER];
+    }
+    var t = sents[0] || String(text).trim();
+    if (!t) {
+        return [AR_INTERVIEW_THIRD_PLACEHOLDER, AR_INTERVIEW_THIRD_PLACEHOLDER, AR_INTERVIEW_THIRD_PLACEHOLDER];
+    }
+    if (t.length > 200) {
+        var third = Math.ceil(t.length / 3);
+        return [t.slice(0, third), t.slice(third, 2 * third), t.slice(2 * third)];
+    }
+    return [t, AR_INTERVIEW_THIRD_PLACEHOLDER, AR_INTERVIEW_THIRD_PLACEHOLDER];
+}
+
+/** Mülakat sürecini her zaman tam 3 adımda gösterir (boş girdi → []) */
+function normalizeInterviewStepsToThree(rawSteps) {
+    var list = rawSteps.map(function(x) {
+        return String(x).trim();
+    }).filter(Boolean);
+    if (list.length === 0) return [];
+
+    if (list.length >= 3) {
+        return [list[0], list[1], list.slice(2).join(" ")];
+    }
+    if (list.length === 2) {
+        return [list[0], list[1], AR_INTERVIEW_THIRD_PLACEHOLDER];
+    }
+
+    var one = list[0];
+    var expanded = one.length > 120 ? splitLongInterviewParagraph(one) : [one];
+
+    if (expanded.length >= 3) {
+        return [expanded[0], expanded[1], expanded.slice(2).join(" ")];
+    }
+    if (expanded.length === 2) {
+        return [expanded[0], expanded[1], AR_INTERVIEW_THIRD_PLACEHOLDER];
+    }
+    return splitIntoThreeBySentences(expanded[0]);
+}
+
 /** tech_stack maddesinin eşleşen / eksik yetenek satırlarıyla örtüşüp örtüşmediği */
 function arTechTokensOverlap(tech, phrase) {
     var a = String(tech).toLowerCase().trim();
@@ -213,23 +276,25 @@ function populateAnalysisResult() {
     var processRaw = companyProfile.interview_process;
     var interviewSteps = [];
     if (Array.isArray(processRaw)) {
-        interviewSteps = processRaw.map(function(p) { return String(p); });
+        interviewSteps = processRaw.map(function(p) {
+            return String(p);
+        });
     } else if (typeof processRaw === "string" && processRaw.trim()) {
-        interviewSteps = processRaw.split(/\r?\n+/).map(function(s) { return s.trim(); }).filter(Boolean);
-        if (interviewSteps.length === 1 && interviewSteps[0].length > 120) {
-            interviewSteps = splitLongInterviewParagraph(interviewSteps[0]);
-        }
+        interviewSteps = processRaw.split(/\r?\n+/).map(function(s) {
+            return s.trim();
+        }).filter(Boolean);
     }
+    interviewSteps = normalizeInterviewStepsToThree(interviewSteps);
     document.getElementById("interview-process").innerHTML = interviewSteps.length
         ? '<div class="ar-ip-plain">' +
           interviewSteps
               .map(function(p, i) {
                   return (
-                      '<div class="ar-ip-row pl-3 border-l-[3px] border-indigo-400">' +
-                      '<span class="text-[11px] font-semibold uppercase tracking-wide text-indigo-700">Adım ' +
+                      '<div class="ar-ip-row pl-2.5 border-l-2 border-indigo-400">' +
+                      '<span class="text-[10px] font-semibold uppercase tracking-wide text-indigo-700">Adım ' +
                       (i + 1) +
                       "</span>" +
-                      '<p class="mt-2 text-sm text-slate-700 leading-relaxed">' +
+                      '<p class="mt-1 text-slate-700 leading-snug">' +
                       escapeHtml(p) +
                       "</p></div>"
                   );

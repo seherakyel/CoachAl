@@ -171,24 +171,14 @@
   height:2.25rem;
   background:linear-gradient(to top,#fff 0%,rgba(255,255,255,0.97) 40%,transparent 100%);
 }
-/* Mülakat süreci — uzun metin kart içinde kayar; sağ sütunla alt hiza için yükseklik sınırlı */
-.ar-interview-scroll{
-  max-height:min(34vh,260px);
-  overflow-y:auto;
-  overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
-  scrollbar-width:thin;
-  scrollbar-color:#818cf8 #eef2f7;
+/* Mülakat süreci — kompakt (iç scroll yok; satır yüksekliği ~%30 azaltılmış) */
+#interview-process .ar-ip-row{
+  padding:0.77rem 0;
 }
-.ar-interview-scroll::-webkit-scrollbar{width:6px}
-.ar-interview-scroll::-webkit-scrollbar-track{background:#eef2f7;border-radius:99px;margin:4px 0}
-.ar-interview-scroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#a5b4fc,#6366f1);border-radius:99px}
-.ar-interview-scroll::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#818cf8,#4f46e5)}
-.ar-interview-fade{
-  pointer-events:none;
-  height:2rem;
-  background:linear-gradient(to top,#fff 0%,rgba(255,255,255,0.96) 45%,transparent 100%);
+#interview-process .ar-ip-row p{
+  margin-top:0.35rem;
+  font-size:0.8125rem;
+  line-height:1.45;
 }
 /* Eksik yetenekler — dikey kaydırma (scrollbar) */
 .ar-missing-scroll{
@@ -329,13 +319,12 @@
 
                     <div class="border-t border-slate-200/80 pt-6">
                         <h4 class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant mb-2">Mülakat süreci</h4>
-                        <div class="relative min-h-0 min-w-0">
+                        <div class="relative min-w-0">
                             <div class="ar-skel-wrap absolute inset-0 z-[1] space-y-2" aria-hidden="true">
                                 <div class="h-12 ar-skel w-full rounded-lg"></div>
                                 <div class="h-12 ar-skel w-full rounded-lg opacity-80"></div>
                             </div>
-                            <div class="ar-live relative z-[2] space-y-2.5 pr-1 ar-interview-scroll" id="interview-process"></div>
-                            <div class="ar-interview-fade absolute bottom-0 left-0 right-1 z-[3] rounded-b-lg" aria-hidden="true"></div>
+                            <div class="ar-live relative z-[2] space-y-2 pr-1" id="interview-process"></div>
                         </div>
                     </div>
                 </div>
