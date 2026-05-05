@@ -46,6 +46,7 @@ async def interview_list(
 class InterviewStartBody(BaseModel):
     cv_id: str = Field(..., min_length=1)
     profile_id: str = Field(..., min_length=1)
+    focus_topic: str | None = Field(default=None, max_length=220)
 
 
 class AnswerItem(BaseModel):
@@ -253,12 +254,14 @@ async def start_quiz(
     company_name = pr_data.get("company_name") or ""
     position = pr_data.get("position") or ""
 
+    focus = (body.focus_topic or "").strip() or None
     questions = generate_quiz_questions(
         company_name=company_name,
         position=position,
         tech_stack=pr_data.get("tech_stack") or [],
         key_traits=pr_data.get("key_traits") or [],
         cv_skills=cv_data.get("skills") or [],
+        focus_topic=focus,
     )
     if not questions:
         raise HTTPException(
@@ -274,6 +277,7 @@ async def start_quiz(
             "mode": "quiz",
             "company_name": company_name,
             "position": position,
+            "focus_topic": focus,
             "questions": questions,
             "user_answers": [],
             "total_score": None,

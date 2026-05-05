@@ -7,6 +7,20 @@ function safeParseJSON(raw, fallback) {
     }
 }
 
+function escapeHtmlStr(str) {
+    return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function escapeHtmlAttr(str) {
+    return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;");
+}
+
 function splitLongInterviewParagraph(text) {
     var s = (text || "").trim();
     if (s.length <= 120) return [s];
@@ -84,239 +98,500 @@ function learningResourcesForSkill(skillRaw) {
         return { label: label, href: href };
     }
     var generic = {
-        free: [L("freeCodeCamp", "https://www.freecodecamp.org/"), L("The Odin Project", "https://www.theodinproject.com/")],
-        docs: [L("MDN Web Docs", "https://developer.mozilla.org/"), L("DevDocs.io", "https://devdocs.io/")],
-        courses: [L("Coursera", "https://www.coursera.org/"), L("edX", "https://www.edx.org/")]
+        watch: [L("freeCodeCamp — video kurslar", "https://www.freecodecamp.org/"), L("The Odin Project", "https://www.theodinproject.com/")],
+        read: [L("MDN Web Docs", "https://developer.mozilla.org/"), L("DevDocs.io", "https://devdocs.io/")],
+        practice: [L("Exercism — kod alıştırması", "https://exercism.org/"), L("HackerRank", "https://www.hackerrank.com/")]
     };
     if (!s.trim()) return generic;
 
     if (/\baws\b|amazon web services/.test(s)) {
         return {
-            free: [L("AWS Skill Builder", "https://skillbuilder.aws/"), L("AWS Workshops", "https://workshops.aws/")],
-            docs: [L("AWS Dokümantasyonu", "https://docs.aws.amazon.com/")],
-            courses: [L("AWS Training & sertifikasyon", "https://aws.amazon.com/training/")]
+            watch: [L("AWS Skill Builder — videolar", "https://skillbuilder.aws/")],
+            read: [L("AWS Dokümantasyonu", "https://docs.aws.amazon.com/")],
+            practice: [L("AWS Workshops — eller serbest lab", "https://workshops.aws/"), L("AWS Hands-on training", "https://aws.amazon.com/training/")]
         };
     }
     if (/kubernetes|\bk8s\b/.test(s)) {
         return {
-            free: [L("Killercoda — Kubernetes", "https://killercoda.com/kubernetes"), L("Play with Kubernetes", "https://labs.play-with-k8s.com/")],
-            docs: [L("Kubernetes.io dokümantasyon", "https://kubernetes.io/docs/")],
-            courses: [L("CNCF eğitimler", "https://www.cncf.io/training/")]
+            watch: [L("Kubernetes — resmi YouTube kanalı", "https://www.youtube.com/c/KubernetesCommunity")],
+            read: [L("Kubernetes.io dokümantasyon", "https://kubernetes.io/docs/")],
+            practice: [
+                L("Killercoda — Kubernetes senaryoları", "https://killercoda.com/kubernetes"),
+                L("Play with Kubernetes", "https://labs.play-with-k8s.com/"),
+                L("CNCF eğitim ve etkinlikler", "https://www.cncf.io/training/")
+            ]
         };
     }
     if (/docker|\bcontainer\b/.test(s)) {
         return {
-            free: [L("Docker — başlangıç kılavuzu", "https://docs.docker.com/get-started/"), L("Play with Docker", "https://labs.play-with-docker.com/")],
-            docs: [L("Docker dokümantasyon", "https://docs.docker.com/")],
-            courses: [L("Docker Hub / resmi kaynaklar", "https://hub.docker.com/")]
+            watch: [L("Docker — resmi YouTube", "https://www.youtube.com/c/Dockerinc")],
+            read: [L("Docker — Get Started", "https://docs.docker.com/get-started/"), L("Docker dokümantasyon", "https://docs.docker.com/")],
+            practice: [L("Play with Docker", "https://labs.play-with-docker.com/"), L("Docker Hub", "https://hub.docker.com/")]
         };
     }
     if (/react|\bjsx\b/.test(s)) {
         return {
-            free: [L("React.dev — öğren", "https://react.dev/learn"), L("freeCodeCamp React", "https://www.freecodecamp.org/news/tag/react/")],
-            docs: [L("React dokümantasyon", "https://react.dev/")],
-            courses: [L("Full Stack Open (ücretsiz)", "https://fullstackopen.com/en/part1")]
+            watch: [L("freeCodeCamp React — içerik ve videolar", "https://www.freecodecamp.org/news/tag/react/")],
+            read: [L("React dokümantasyon", "https://react.dev/"), L("React.dev — Learn", "https://react.dev/learn")],
+            practice: [L("Full Stack Open — projeler", "https://fullstackopen.com/en/part1")]
         };
     }
     if (/vue\.?js|\bvue\b/.test(s)) {
         return {
-            free: [L("Vue.js — öğretici", "https://vuejs.org/tutorial/")],
-            docs: [L("Vue dokümantasyon", "https://vuejs.org/guide/introduction.html")],
-            courses: [L("Vue School ücretsiz içerikler", "https://vueschool.io/")]
+            watch: [L("Vue.js — resmi YouTube", "https://www.youtube.com/@VueJS")],
+            read: [L("Vue dokümantasyon", "https://vuejs.org/guide/introduction.html")],
+            practice: [L("Vue.js — interaktif öğretici", "https://vuejs.org/tutorial/"), L("Vue School pratik", "https://vueschool.io/")]
         };
     }
     if (/angular/.test(s)) {
         return {
-            free: [L("Angular — ilk uygulama", "https://angular.dev/tutorials/first-app")],
-            docs: [L("Angular dokümantasyon", "https://angular.dev/overview")],
-            courses: [L("Angular.io kaynaklar", "https://angular.dev/resources")]
+            watch: [L("Angular — YouTube (Google Developers)", "https://www.youtube.com/googledevelopers")],
+            read: [L("Angular dokümantasyon", "https://angular.dev/overview")],
+            practice: [L("Angular — ilk uygulama eğitimi", "https://angular.dev/tutorials/first-app"), L("Angular kaynaklar", "https://angular.dev/resources")]
         };
     }
     if (/\bnode\.?js\b|\bexpress\b/.test(s)) {
         return {
-            free: [L("Node.js — başlangıç", "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs")],
-            docs: [L("Node.js dokümantasyon", "https://nodejs.org/docs/")],
-            courses: [L("Express rehberi", "https://expressjs.com/en/starter/installing.html")]
+            watch: [L("freeCodeCamp Node.js içerikleri", "https://www.freecodecamp.org/news/tag/node-js/")],
+            read: [
+                L("Node.js dokümantasyon", "https://nodejs.org/docs/"),
+                L("Node.js — başlangıç metni", "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs")
+            ],
+            practice: [L("Express — ilk kurulum ve örnek", "https://expressjs.com/en/starter/installing.html")]
         };
     }
     if (/python|\bdjango\b|\bfastapi\b|\bflask\b/.test(s)) {
         return {
-            free: [L("Python.org öğretici", "https://docs.python.org/3/tutorial/"), L("Real Python (ücretsiz yazılar)", "https://realpython.com/")],
-            docs: [L("Python dokümantasyon", "https://docs.python.org/3/")],
-            courses: [L("PyData / Python eğitim kaynakları", "https://pydata.org/")]
+            watch: [L("freeCodeCamp Python haberleri / kurslar", "https://www.freecodecamp.org/news/tag/python/")],
+            read: [
+                L("Python.org öğretici", "https://docs.python.org/3/tutorial/"),
+                L("Python dokümantasyon", "https://docs.python.org/3/"),
+                L("Real Python yazıları", "https://realpython.com/")
+            ],
+            practice: [L("PyData — topluluk ve örnek projeler", "https://pydata.org/")]
         };
     }
     if (/\bjava\b|\bspring\b/.test(s)) {
         return {
-            free: [L("Oracle Java SE öğren", "https://dev.java/learn/")],
-            docs: [L("Java dokümantasyon", "https://docs.oracle.com/en/java/")],
-            courses: [L("Spring dokümantasyon", "https://spring.io/guides")]
+            watch: [L("Oracle Java SE öğren", "https://dev.java/learn/")],
+            read: [L("Java dokümantasyon", "https://docs.oracle.com/en/java/")],
+            practice: [L("Spring Guides — eller serbest örnekler", "https://spring.io/guides")]
         };
     }
     if (/terraform|\bhcl\b/.test(s)) {
         return {
-            free: [L("HashiCorp Learn", "https://developer.hashicorp.com/terraform/tutorials")],
-            docs: [L("Terraform dokümantasyon", "https://developer.hashicorp.com/terraform/docs")],
-            courses: [L("Terraform registry", "https://registry.terraform.io/")]
+            watch: [L("HashiCorp — YouTube kanalı", "https://www.youtube.com/c/HashiCorp")],
+            read: [L("Terraform dokümantasyon", "https://developer.hashicorp.com/terraform/docs")],
+            practice: [
+                L("HashiCorp Learn — Terraform tutorial’ları", "https://developer.hashicorp.com/terraform/tutorials"),
+                L("Terraform Registry", "https://registry.terraform.io/")
+            ]
         };
     }
     if (/ansible/.test(s)) {
         return {
-            free: [L("Ansible — ilk adımlar", "https://docs.ansible.com/ansible/latest/getting_started/index.html")],
-            docs: [L("Ansible dokümantasyon", "https://docs.ansible.com/")],
-            courses: [L("Ansible Galaxy", "https://galaxy.ansible.com/")]
+            watch: [L("Ansible — öğretici videolar", "https://www.ansible.com/resources/videos")],
+            read: [
+                L("Ansible — ilk adımlar", "https://docs.ansible.com/ansible/latest/getting_started/index.html"),
+                L("Ansible dokümantasyon", "https://docs.ansible.com/")
+            ],
+            practice: [L("Ansible Galaxy — roller ve koleksiyonlar", "https://galaxy.ansible.com/")]
         };
     }
     if (/\bgolang\b/.test(s) || /^go$/i.test(String(skillRaw || "").trim())) {
         return {
-            free: [L("A Tour of Go", "https://go.dev/tour/")],
-            docs: [L("Go dokümantasyon", "https://go.dev/doc/")],
-            courses: [L("Effective Go", "https://go.dev/doc/effective_go")]
+            watch: [L("Go — öğren sayfası", "https://go.dev/learn/")],
+            read: [L("Go dokümantasyon", "https://go.dev/doc/"), L("Effective Go", "https://go.dev/doc/effective_go")],
+            practice: [L("A Tour of Go — tarayıcıda alıştırma", "https://go.dev/tour/")]
         };
     }
     if (/rust|\bcargo\b/.test(s)) {
         return {
-            free: [L("Rust Book", "https://doc.rust-lang.org/book/"), L("Rustlings", "https://github.com/rust-lang/rustlings")],
-            docs: [L("Rust dokümantasyon", "https://doc.rust-lang.org/")],
-            courses: [L("Rust by Example", "https://doc.rust-lang.org/rust-by-example/")]
+            watch: [L("Rust — resmi YouTube", "https://www.youtube.com/c/RustProgramming")],
+            read: [L("The Rust Book", "https://doc.rust-lang.org/book/"), L("Rust dokümantasyon", "https://doc.rust-lang.org/")],
+            practice: [L("Rustlings — alıştırma seti", "https://github.com/rust-lang/rustlings"), L("Rust by Example", "https://doc.rust-lang.org/rust-by-example/")]
         };
     }
     if (/typescript|\bts\b/.test(s)) {
         return {
-            free: [L("TypeScript — el kitabı", "https://www.typescriptlang.org/docs/handbook/intro.html")],
-            docs: [L("TypeScript dokümantasyon", "https://www.typescriptlang.org/docs/")],
-            courses: [L("TS Deep Dive (basarat)", "https://basarat.gitbook.io/typescript/")]
+            watch: [L("TypeScript — resmi YouTube", "https://www.youtube.com/c/TypeScriptOfficial")],
+            read: [
+                L("TypeScript — el kitabı", "https://www.typescriptlang.org/docs/handbook/intro.html"),
+                L("TypeScript dokümantasyon", "https://www.typescriptlang.org/docs/")
+            ],
+            practice: [L("TS Deep Dive — örnekler", "https://basarat.gitbook.io/typescript/")]
         };
     }
     if (/javascript|\bjs\b|ecmascript/.test(s)) {
         return {
-            free: [L("JavaScript.info", "https://javascript.info/"), L("freeCodeCamp JS", "https://www.freecodecamp.org/news/tag/javascript/")],
-            docs: [L("MDN JavaScript", "https://developer.mozilla.org/en-US/docs/Web/JavaScript")],
-            courses: [L("Eloquent JavaScript (kitap)", "https://eloquentjavascript.net/")]
+            watch: [L("freeCodeCamp JavaScript", "https://www.freecodecamp.org/news/tag/javascript/")],
+            read: [L("MDN JavaScript", "https://developer.mozilla.org/en-US/docs/Web/JavaScript"), L("JavaScript.info", "https://javascript.info/")],
+            practice: [L("Eloquent JavaScript — interaktif kitap", "https://eloquentjavascript.net/")]
         };
     }
-    if (/sql|postgres|postgresql|mysql|sqlite|mongodb|redis/.test(s)) {
+    if (/sql|postgres|postgresql|mysql|sqlite|redis/.test(s)) {
         return {
-            free: [L("SQLBolt — interaktif SQL", "https://sqlbolt.com/"), L("PostgreSQL egzersizleri", "https://www.postgresql.org/docs/")],
-            docs: [L("PostgreSQL dokümantasyon", "https://www.postgresql.org/docs/"), L("MongoDB dokümantasyon", "https://www.mongodb.com/docs/")],
-            courses: [L("Use The Index, Luke! (SQL)", "https://use-the-index-luke.com/")]
+            watch: [L("Khan Academy — SQL", "https://www.khanacademy.org/computing/computer-programming/sql")],
+            read: [L("PostgreSQL dokümantasyon", "https://www.postgresql.org/docs/"), L("MongoDB dokümantasyon", "https://www.mongodb.com/docs/")],
+            practice: [L("SQLBolt — interaktif alıştırma", "https://sqlbolt.com/"), L("Use The Index, Luke! (SQL)", "https://use-the-index-luke.com/")]
         };
     }
     if (/kafka/.test(s)) {
         return {
-            free: [L("Kafka quickstart", "https://kafka.apache.org/quickstart")],
-            docs: [L("Apache Kafka dokümantasyon", "https://kafka.apache.org/documentation/")],
-            courses: [L("Confluent Kafka ücretsiz kurslar", "https://developer.confluent.io/learn-kafka/")]
+            watch: [L("Confluent — Kafka eğitim videoları", "https://developer.confluent.io/learn-kafka/")],
+            read: [L("Apache Kafka dokümantasyon", "https://kafka.apache.org/documentation/")],
+            practice: [L("Kafka quickstart — kurulum ve deneme", "https://kafka.apache.org/quickstart")]
         };
     }
     if (/graphql/.test(s)) {
         return {
-            free: [L("GraphQL öğren", "https://graphql.org/learn/")],
-            docs: [L("GraphQL spesifikasyon", "https://spec.graphql.org/")],
-            courses: [L("How to GraphQL", "https://www.howtographql.com/")]
+            watch: [L("Apollo GraphQL — YouTube", "https://www.youtube.com/c/ApolloGraphQL")],
+            read: [L("GraphQL öğren", "https://graphql.org/learn/"), L("GraphQL spesifikasyon", "https://spec.graphql.org/")],
+            practice: [L("How to GraphQL — adım adım", "https://www.howtographql.com/")]
         };
     }
     if (/nginx/.test(s)) {
         return {
-            free: [L("NGINX başlangıç", "https://docs.nginx.com/nginx/admin-guide/")],
-            docs: [L("NGINX dokümantasyon", "https://nginx.org/en/docs/")],
-            courses: [L("NGINX konfigürasyon örnekleri", "https://www.nginx.com/resources/wiki/")]
+            watch: [L("NGINX — resmi YouTube", "https://www.youtube.com/c/nginxinc")],
+            read: [L("NGINX dokümantasyon", "https://nginx.org/en/docs/"), L("NGINX başlangıç kılavuzu", "https://docs.nginx.com/nginx/admin-guide/")],
+            practice: [L("NGINX wiki örnekleri", "https://www.nginx.com/resources/wiki/")]
         };
     }
     if (/linux|\bbash\b|\bshell\b|unix/.test(s)) {
         return {
-            free: [L("Linux Journey", "https://linuxjourney.com/")],
-            docs: [L("GNU Bash manual", "https://www.gnu.org/software/bash/manual/")],
-            courses: [L("Arch Wiki (referans)", "https://wiki.archlinux.org/")]
+            watch: [L("freeCodeCamp Linux içerikleri", "https://www.freecodecamp.org/news/tag/linux/")],
+            read: [L("GNU Bash manual", "https://www.gnu.org/software/bash/manual/"), L("Arch Wiki (referans)", "https://wiki.archlinux.org/")],
+            practice: [L("Linux Journey — interaktif", "https://linuxjourney.com/")]
         };
     }
     if (/\bgit\b|github|gitlab/.test(s)) {
         return {
-            free: [L("GitHub Skills", "https://skills.github.com/"), L("Learn Git Branching", "https://learngitbranching.js.org/")],
-            docs: [L("Git dokümantasyon", "https://git-scm.com/doc")],
-            courses: [L("Pro Git kitap", "https://git-scm.com/book/en/v2")]
+            watch: [L("Git ve GitHub — video kurs (freeCodeCamp)", "https://www.youtube.com/watch?v=RGOj5yH7evk")],
+            read: [L("Git dokümantasyon", "https://git-scm.com/doc"), L("Pro Git kitap", "https://git-scm.com/book/en/v2")],
+            practice: [L("Learn Git Branching — interaktif", "https://learngitbranching.js.org/"), L("GitHub Skills — eller serbest lab", "https://skills.github.com/")]
         };
     }
     if (/jenkins|\bci\b|\bcd\b|pipeline|github actions/.test(s)) {
         return {
-            free: [L("GitHub Actions dokümantasyon", "https://docs.github.com/en/actions")],
-            docs: [L("Jenkins kullanıcı kılavuzu", "https://www.jenkins.io/doc/")],
-            courses: [L("CI/CD genel giriş", "https://about.gitlab.com/topics/ci-cd/")]
+            watch: [L("Jenkins — resmi YouTube", "https://www.youtube.com/c/JenkinsCI")],
+            read: [L("GitHub Actions dokümantasyon", "https://docs.github.com/en/actions"), L("Jenkins kullanıcı kılavuzu", "https://www.jenkins.io/doc/")],
+            practice: [L("GitLab CI/CD — pratik konular", "https://about.gitlab.com/topics/ci-cd/")]
         };
     }
     if (/microservice|micro-service|distributed/.test(s)) {
         return {
-            free: [L("Microservices.io kalıpları", "https://microservices.io/")],
-            docs: [L("Martin Fowler — mikroservis", "https://martinfowler.com/microservices/")],
-            courses: [L("12 Factor App", "https://12factor.net/")]
+            watch: [L("Microservices açıklayıcı videolar", "https://www.youtube.com/results?search_query=microservices+architecture+explained")],
+            read: [L("Microservices.io kalıpları", "https://microservices.io/"), L("Martin Fowler — mikroservis", "https://martinfowler.com/microservices/")],
+            practice: [L("12 Factor App — üretim pratikleri", "https://12factor.net/")]
         };
     }
     if (/oauth|jwt|security|ssl|tls|encryption/.test(s)) {
         return {
-            free: [L("OAuth 2.0 / OpenID connect", "https://oauth.net/2/")],
-            docs: [L("OWASP Top 10", "https://owasp.org/www-project-top-ten/")],
-            courses: [L("JWT giriş", "https://jwt.io/introduction")]
+            watch: [L("OAuth ve güvenlik videoları", "https://www.youtube.com/results?search_query=oauth+2.0+explained")],
+            read: [L("OAuth 2.0 / OpenID", "https://oauth.net/2/"), L("OWASP Top 10", "https://owasp.org/www-project-top-ten/")],
+            practice: [L("JWT.io — token oluştur ve doğrula", "https://jwt.io/")]
         };
     }
     if (/html|css|tailwind|frontend|web geliştir/.test(s)) {
         return {
-            free: [L("MDN HTML/CSS", "https://developer.mozilla.org/en-US/docs/Learn")],
-            docs: [L("Can I use", "https://caniuse.com/")],
-            courses: [L("web.dev öğren", "https://web.dev/learn")]
+            watch: [L("Kevin Powell — CSS ve HTML", "https://www.youtube.com/@KevinPowellDotCo")],
+            read: [L("MDN HTML/CSS öğren", "https://developer.mozilla.org/en-US/docs/Learn"), L("Can I use", "https://caniuse.com/")],
+            practice: [L("web.dev — öğren ve dene", "https://web.dev/learn")]
         };
     }
     if (/elastic|opensearch|solr/.test(s)) {
         return {
-            free: [L("Elastic başlangıç", "https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html")],
-            docs: [L("Elasticsearch kılavuzu", "https://www.elastic.co/guide/index.html")],
-            courses: [L("Elastic ücretsiz eğitimler", "https://www.elastic.co/training/free")]
+            watch: [L("Elastic — eğitim videoları", "https://www.elastic.co/explore/training")],
+            read: [
+                L("Elasticsearch referans", "https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html"),
+                L("Elastic dokümantasyon indeksi", "https://www.elastic.co/guide/index.html")
+            ],
+            practice: [L("Elastic ücretsiz hands-on", "https://www.elastic.co/training/free")]
         };
     }
 
     return generic;
 }
 
-function buildLearningResourcesInnerHtml(skillRaw, escapeHtml) {
-    var pack = learningResourcesForSkill(skillRaw);
-    function section(title, links) {
-        if (!links || !links.length) return "";
-        return (
-            '<div class="border-t border-slate-100 pt-2.5 mt-2.5 first:border-t-0 first:pt-0 first:mt-0">' +
-            '<p class="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">' +
-            escapeHtml(title) +
-            "</p>" +
-            '<ul class="m-0 list-none space-y-1 p-0">' +
-            links
-                .map(function(Li) {
-                    return (
-                        '<li><a class="block text-[11px] leading-snug text-indigo-600 underline decoration-indigo-200 underline-offset-2 transition-colors hover:text-indigo-800" href="' +
-                        escapeHtml(Li.href) +
-                        '" target="_blank" rel="noopener noreferrer">' +
-                        escapeHtml(Li.label) +
-                        "</a></li>"
-                    );
-                })
-                .join("") +
-            "</ul></div>"
-        );
+/** Konu başlığına göre sabit “canlı” içerik — İzle / Oku / Pratik üçlüsü */
+function arLearnCuratedTopics() {
+    function L(label, href) {
+        return { label: label, href: href };
     }
-    var headline = String(skillRaw || "Bu başlık").trim() || "Bu başlık";
+    return {
+        spring_boot: {
+            watch: [L("Spring Boot — hızlı başlangıç (video)", "https://www.youtube.com/watch?v=9SGDpanQsQg")],
+            read: [L("Spring Boot Reference Documentation", "https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/")],
+            practice: [L("Spring Boot ile REST web servisi — Building a RESTful Web Service", "https://spring.io/guides/gs/rest-service/")]
+        },
+        kafka: {
+            watch: [L("Kafka Temelleri — 10 dakika", "https://www.youtube.com/watch?v=Ch9V7JnfFkA")],
+            read: [L("Apache Kafka Resmi Dokümantasyonu", "https://kafka.apache.org/documentation/")],
+            practice: [L("Kafka ile Message Queue Uygulaması — Quickstart & örnekler", "https://kafka.apache.org/quickstart")]
+        },
+        aws: {
+            watch: [L("AWS Skill Builder — başlangıç videoları", "https://skillbuilder.aws/")],
+            read: [L("AWS Dokümantasyon Merkezi", "https://docs.aws.amazon.com/")],
+            practice: [L("AWS Workshops — eller serbest laboratuvar", "https://workshops.aws/")]
+        },
+        kubernetes: {
+            watch: [L("Kubernetes — giriş serisi (CNCF)", "https://www.youtube.com/c/KubernetesCommunity")],
+            read: [L("Kubernetes.io — Resmi Dokümantasyon", "https://kubernetes.io/docs/")],
+            practice: [L("Killercoda — Kubernetes senaryoları", "https://killercoda.com/kubernetes")]
+        },
+        docker: {
+            watch: [L("Docker — temeller (resmi kanal)", "https://www.youtube.com/c/Dockerinc")],
+            read: [L("Docker Dokümantasyon — Get Started", "https://docs.docker.com/get-started/")],
+            practice: [L("Play with Docker — Tarayıcıda pratik", "https://labs.play-with-docker.com/")]
+        },
+        react: {
+            watch: [L("React — tam kurs girişi (video)", "https://www.youtube.com/watch?v=SqcY0GlETPk")],
+            read: [L("React.dev — Resmi Dokümantasyon ve Learn", "https://react.dev/")],
+            practice: [L("React.dev — interaktif öğren", "https://react.dev/learn")]
+        },
+        python: {
+            watch: [L("Python — sıfırdan (video serisi)", "https://www.youtube.com/watch?v=kqtD5dpn9C8")],
+            read: [L("Python.org — Öğretici ve dil referansı", "https://docs.python.org/3/tutorial/")],
+            practice: [L("Exercism — Python alıştırmaları", "https://exercism.org/tracks/python")]
+        },
+        typescript: {
+            watch: [L("TypeScript — resmi kanal videoları", "https://www.youtube.com/c/TypeScriptOfficial")],
+            read: [L("TypeScript El Kitabı ve Dil Referansı", "https://www.typescriptlang.org/docs/")],
+            practice: [L("TypeScript Playground — Canlı dene", "https://www.typescriptlang.org/play")]
+        },
+        sql: {
+            watch: [L("SQL — Temeller (Khan Academy)", "https://www.khanacademy.org/computing/computer-programming/sql")],
+            read: [L("PostgreSQL Dokümantasyonu", "https://www.postgresql.org/docs/")],
+            practice: [L("SQLBolt — İnteraktif alıştırma", "https://sqlbolt.com/")]
+        },
+        terraform: {
+            watch: [L("Terraform — HashiCorp öğretici videoları", "https://www.youtube.com/c/HashiCorp")],
+            read: [L("Terraform Dokümantasyonu", "https://developer.hashicorp.com/terraform/docs")],
+            practice: [L("HashiCorp Learn — Terraform tutorial’ları", "https://developer.hashicorp.com/terraform/tutorials")]
+        },
+        git: {
+            watch: [L("Git ve GitHub — Komple kurs (video)", "https://www.youtube.com/watch?v=RGOj5yH7evk")],
+            read: [L("Git — Resmi dokümantasyon", "https://git-scm.com/doc")],
+            practice: [L("Learn Git Branching — İnteraktif", "https://learngitbranching.js.org/")]
+        },
+        graphql: {
+            watch: [L("GraphQL — Apollo kanalı", "https://www.youtube.com/c/ApolloGraphQL")],
+            read: [L("GraphQL — Öğren ve Spesifikasyon", "https://graphql.org/learn/")],
+            practice: [L("How to GraphQL — Adım adım pratik", "https://www.howtographql.com/")]
+        },
+        elasticsearch: {
+            watch: [L("Elastic — Video eğitim merkezi", "https://www.elastic.co/explore/training")],
+            read: [L("Elasticsearch Referans Kılavuzu", "https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html")],
+            practice: [L("Elastic — Ücretsiz hands-on lab", "https://www.elastic.co/training/free")]
+        },
+        mongodb: {
+            watch: [L("MongoDB — resmi YouTube", "https://www.youtube.com/user/MongoDB")],
+            read: [L("MongoDB Manual", "https://www.mongodb.com/docs/manual/")],
+            practice: [L("MongoDB University — ücretsiz kurslar", "https://learn.mongodb.com/")]
+        }
+    };
+}
+
+/** İlk eşleşen konunun sabit paketini döndürür */
+function matchCuratedLearningPack(skillRaw) {
+    var s = String(skillRaw || "");
+    var C = arLearnCuratedTopics();
+    var rules = [
+        [/spring\s*boot|springboot/i, "spring_boot"],
+        [/\bspring\b/i, "spring_boot"],
+        [/\bkafka\b/i, "kafka"],
+        [/\baws\b|amazon web services/i, "aws"],
+        [/kubernetes|\bk8s\b/i, "kubernetes"],
+        [/docker|\bcontainer\b/i, "docker"],
+        [/react|\bjsx\b/i, "react"],
+        [/python|\bdjango\b|\bfastapi\b|\bflask\b/i, "python"],
+        [/typescript|\bts\b/i, "typescript"],
+        [/mongodb/i, "mongodb"],
+        [/sql|postgres|postgresql|mysql|sqlite|redis/i, "sql"],
+        [/terraform|\bhcl\b/i, "terraform"],
+        [/\bgit\b|github|gitlab/i, "git"],
+        [/graphql/i, "graphql"],
+        [/elastic|opensearch|solr/i, "elasticsearch"]
+    ];
+    for (var i = 0; i < rules.length; i++) {
+        if (rules[i][0].test(s)) {
+            var pack = C[rules[i][1]];
+            if (pack) return pack;
+        }
+    }
+    return null;
+}
+
+/** Dinamik + sabit içeriği birleştirir; boş sekmeleri genel listeden doldurur */
+function resolveLearningPack(skillRaw) {
+    var dyn = learningResourcesForSkill(skillRaw);
+    var cur = matchCuratedLearningPack(skillRaw);
+    var gen = learningResourcesForSkill("");
+    function uniqMerge(a, b) {
+        var seen = {};
+        var out = [];
+        function add(arr) {
+            if (!arr || !arr.length) return;
+            arr.forEach(function(item) {
+                var h = item.href || "";
+                if (!h || seen[h]) return;
+                seen[h] = true;
+                out.push(item);
+            });
+        }
+        add(a);
+        add(b);
+        return out;
+    }
+    var pack = cur
+        ? {
+              watch: uniqMerge(cur.watch, dyn.watch),
+              read: uniqMerge(cur.read, dyn.read),
+              practice: uniqMerge(cur.practice, dyn.practice)
+          }
+        : dyn;
+    return {
+        watch: pack.watch && pack.watch.length ? pack.watch : gen.watch || [],
+        read: pack.read && pack.read.length ? pack.read : gen.read || [],
+        practice: pack.practice && pack.practice.length ? pack.practice : gen.practice || []
+    };
+}
+
+function linkListHtmlForLearnModal(links, esc, tabKind) {
+    var escapeHtml = esc || escapeHtmlStr;
+    var kind = tabKind || "read";
+    var iconVideo =
+        '<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>';
+    var iconBook =
+        '<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>';
+    var iconPractice =
+        '<svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
+    var lead = kind === "watch" ? iconVideo : kind === "practice" ? iconPractice : iconBook;
+    var emptyState =
+        '<div class="flex items-start gap-4 rounded-xl border border-slate-100 bg-slate-50/90 p-4 text-sm leading-relaxed text-slate-600">' +
+        '<svg class="h-5 w-5 shrink-0 animate-spin text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">' +
+        '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
+        '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>' +
+        "</svg>" +
+        "<span>Yapay zeka bu konu için en güncel kaynakları tarıyor<span class=\"text-indigo-400\">…</span></span>" +
+        "</div>";
+    if (!links || !links.length) {
+        return emptyState;
+    }
     return (
-        '<div class="p-3">' +
-        '<p class="mb-2.5 text-[11px] font-semibold leading-snug text-slate-800">' +
-        escapeHtml(headline) +
-        " — önerilen kaynaklar</p>" +
-        section("Ücretsiz eğitimler", pack.free) +
-        section("Dokümantasyon", pack.docs) +
-        section("Önerilen kurslar", pack.courses) +
-        "</div>"
+        '<ul class="m-0 list-none space-y-3 p-0">' +
+        links
+            .map(function(Li) {
+                return (
+                    '<li><a class="group flex items-start gap-4 rounded-xl border border-transparent bg-gray-50 p-4 text-sm leading-snug text-slate-800 shadow-sm transition hover:border-indigo-500 hover:bg-gray-50" href="' +
+                    escapeHtml(Li.href) +
+                    '" target="_blank" rel="noopener noreferrer">' +
+                    lead +
+                    '<span class="min-w-0 flex-1 pt-0.5 text-slate-800 group-hover:text-indigo-900">' +
+                    escapeHtml(Li.label) +
+                    '</span><span class="mt-1 shrink-0 text-xs text-slate-400 group-hover:text-indigo-600" aria-hidden="true">↗</span></a></li>'
+                );
+            })
+            .join("") +
+        "</ul>"
     );
+}
+
+function setArLearnModalTab(tab) {
+    ["watch", "read", "practice"].forEach(function(t) {
+        var panel = document.getElementById("ar-learn-panel-" + t);
+        var btn = document.getElementById("ar-learn-tab-" + t);
+        var sel = t === tab;
+        if (panel) {
+            panel.classList.toggle("hidden", !sel);
+            panel.hidden = !sel;
+        }
+        if (btn) btn.setAttribute("aria-selected", sel ? "true" : "false");
+    });
+}
+
+function closeArLearnModal() {
+    var modal = document.getElementById("ar-learn-modal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+}
+
+function openArLearnModal(skillRaw) {
+    var esc = escapeHtmlStr;
+    var pack = resolveLearningPack(skillRaw);
+    var skillTrim = String(skillRaw || "").trim() || "Bu konu";
+    var titleEl = document.getElementById("ar-learn-modal-title");
+    var watchEl = document.getElementById("ar-learn-panel-watch");
+    var readEl = document.getElementById("ar-learn-panel-read");
+    var practiceEl = document.getElementById("ar-learn-panel-practice");
+    var simEl = document.getElementById("ar-learn-sim-cta");
+    if (titleEl) titleEl.textContent = skillTrim + " Gelişim Rehberi";
+    if (watchEl) watchEl.innerHTML = linkListHtmlForLearnModal(pack.watch, esc, "watch");
+    if (readEl) readEl.innerHTML = linkListHtmlForLearnModal(pack.read, esc, "read");
+    if (practiceEl) practiceEl.innerHTML = linkListHtmlForLearnModal(pack.practice, esc, "practice");
+    if (simEl)
+        simEl.href =
+            "interviews.html?topic=" +
+            encodeURIComponent(skillTrim) +
+            "&mode=fast-track";
+    var modal = document.getElementById("ar-learn-modal");
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    setArLearnModalTab("watch");
+}
+
+/** Tek modal — backdrop, X, Escape, sekme geçişleri */
+function initArLearnModalUi() {
+    if (initArLearnModalUi._done) return;
+    initArLearnModalUi._done = true;
+
+    document.addEventListener("click", function(e) {
+        var trig = e.target.closest(".ar-missing-learn-btn");
+        var ms = document.getElementById("missing-skills");
+        if (trig && ms && ms.contains(trig)) {
+            e.preventDefault();
+            var sk = trig.getAttribute("data-ar-skill");
+            if (sk != null && sk !== "") openArLearnModal(sk);
+            return;
+        }
+        if (e.target.id === "ar-learn-modal-backdrop") {
+            closeArLearnModal();
+        }
+    });
+
+    var closeBtn = document.getElementById("ar-learn-modal-close");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", function() {
+            closeArLearnModal();
+        });
+    }
+
+    document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") {
+            var modal = document.getElementById("ar-learn-modal");
+            if (modal && !modal.classList.contains("hidden")) closeArLearnModal();
+        }
+    });
+
+    ["watch", "read", "practice"].forEach(function(t) {
+        var btn = document.getElementById("ar-learn-tab-" + t);
+        if (btn) {
+            btn.addEventListener("click", function() {
+                setArLearnModalTab(t);
+            });
+        }
+    });
 }
 
 function missingSkillRowHtml(label, detail, index, escapeHtml) {
     var d = (detail || "").trim();
     var safeLabel = escapeHtml(label);
-    var inner = buildLearningResourcesInnerHtml(label, escapeHtml);
     var leftEdge = "border-b border-solid border-slate-100 border-l-[4px] border-indigo-200 [border-left-style:dashed]";
     var iconHtml =
         '<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-indigo-200 bg-slate-50 text-slate-400">' +
@@ -341,106 +616,18 @@ function missingSkillRowHtml(label, detail, index, escapeHtml) {
         (d ? '<span class="ar-skill-detail block text-xs leading-snug text-slate-600">' + escapeHtml(d) + "</span>" : "") +
         '<div class="mt-1.5">' +
         '<div class="ar-missing-learn-wrap relative inline-block max-w-full">' +
-        '<button type="button" class="ar-missing-learn-btn inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-transparent px-2 py-1 text-[10px] font-light leading-none text-indigo-500 transition-colors hover:bg-indigo-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-200/90 focus-visible:ring-offset-1" title="Ücretsiz eğitim, dokümantasyon ve kurs linkleri" aria-expanded="false" aria-haspopup="dialog" aria-controls="ar-learn-panel-' +
-        index +
+        '<button type="button" class="ar-missing-learn-btn inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-transparent px-2 py-1 text-[10px] font-light leading-none text-indigo-500 transition-colors hover:bg-indigo-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-200/90 focus-visible:ring-offset-1" title="Gelişim rehberi ve kaynaklar" aria-haspopup="dialog" aria-controls="ar-learn-modal" data-ar-skill="' +
+        escapeHtmlAttr(label) +
         '" id="ar-learn-btn-' +
         index +
         '">' +
         bookOpenSvg +
         '<span class="whitespace-nowrap">Kaynakları Gör</span>' +
         "</button>" +
-        '<div id="ar-learn-panel-' +
-        index +
-        '" role="dialog" tabindex="-1" class="ar-missing-learn-panel fixed z-[200] hidden max-h-[min(70vh,320px)] overflow-y-auto overflow-x-hidden overscroll-contain rounded-xl border border-slate-200 bg-white p-0 text-left shadow-xl ring-1 ring-slate-900/[0.06]">' +
-        inner +
-        "</div>" +
         "</div>" +
         "</div>" +
         "</div></div></div></li>"
     );
-}
-
-/** Eksik yetenek — kaynak paneli: tek seferlik dinleyiciler + kaydırınca kapanma */
-function initMissingSkillLearnResourcesUi() {
-    if (initMissingSkillLearnResourcesUi._docBound) return;
-    initMissingSkillLearnResourcesUi._docBound = true;
-
-    function closeAllLearnPanels() {
-        document.querySelectorAll(".ar-missing-learn-panel").forEach(function(p) {
-            p.classList.add("hidden");
-        });
-        document.querySelectorAll(".ar-missing-learn-btn").forEach(function(b) {
-            b.setAttribute("aria-expanded", "false");
-        });
-    }
-
-    function positionLearnPanel(panel, anchorBtn) {
-        var margin = 8;
-        var width = 272;
-        panel.style.width = width + "px";
-        panel.classList.remove("hidden");
-        var r = anchorBtn.getBoundingClientRect();
-        var ph = panel.offsetHeight || 0;
-        var top = r.bottom + margin;
-        if (top + ph > window.innerHeight - margin) {
-            top = Math.max(margin, r.top - ph - margin);
-        }
-        var left = r.right - width;
-        if (left < margin) left = margin;
-        if (left + width > window.innerWidth - margin) left = window.innerWidth - width - margin;
-        panel.style.left = left + "px";
-        panel.style.top = top + "px";
-    }
-
-    document.addEventListener("click", function(e) {
-        var ms = document.getElementById("missing-skills");
-        if (!ms) return;
-        var btn = e.target.closest(".ar-missing-learn-btn");
-        if (btn && ms.contains(btn)) {
-            e.preventDefault();
-            var panel = document.getElementById(btn.getAttribute("aria-controls"));
-            if (!panel) return;
-            var wasHidden = panel.classList.contains("hidden");
-            closeAllLearnPanels();
-            if (wasHidden) {
-                requestAnimationFrame(function() {
-                    requestAnimationFrame(function() {
-                        btn.setAttribute("aria-expanded", "true");
-                        positionLearnPanel(panel, btn);
-                    });
-                });
-            }
-            return;
-        }
-        if (e.target.closest(".ar-missing-learn-panel")) return;
-        closeAllLearnPanels();
-    });
-
-    document.addEventListener("keydown", function(e) {
-        if (e.key === "Escape") closeAllLearnPanels();
-    });
-
-    window.addEventListener(
-        "resize",
-        function() {
-            var open = document.querySelector(".ar-missing-learn-panel:not(.hidden)");
-            var activeBtn = document.querySelector('.ar-missing-learn-btn[aria-expanded="true"]');
-            if (open && activeBtn) positionLearnPanel(open, activeBtn);
-        },
-        { passive: true }
-    );
-
-    var scrollEl = document.getElementById("missing-skills-scroll");
-    if (scrollEl && !scrollEl.dataset.arLearnScrollBound) {
-        scrollEl.dataset.arLearnScrollBound = "1";
-        scrollEl.addEventListener(
-            "scroll",
-            function() {
-                closeAllLearnPanels();
-            },
-            { passive: true }
-        );
-    }
 }
 
 /** tech_stack maddesinin eşleşen / eksik yetenek satırlarıyla örtüşüp örtüşmediği */
@@ -807,7 +994,7 @@ function populateAnalysisResult() {
         })
         .join("") || "<li class='border-b border-slate-100 py-4 text-sm text-slate-500 last:border-0'>Gelişim alanı listesi için analizi yeniden çalıştırın.</li>";
 
-    initMissingSkillLearnResourcesUi();
+    initArLearnModalUi();
 
     var root = document.getElementById("analysis-root");
     if (root) root.classList.add("analysis-ready");

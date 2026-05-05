@@ -30,22 +30,22 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="group bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col h-full hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-primary-fixed-dim transition-all duration-300 relative overflow-hidden">
+    <div id="mode-selection-root" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="card-classic-exam" class="group bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col h-full hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-primary-fixed-dim transition-all duration-300 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/5 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
             <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary mb-6"><span class="material-symbols-outlined text-3xl">code</span></div>
             <h3 class="font-h3 text-h3 text-on-surface mb-3">Klasik Sınav</h3>
             <p class="font-body-md text-body-md text-on-surface-variant mb-8 flex-grow">Açık uçlu, algoritma ve sistem tasarımı ağırlıklı klasik teknik mülakat formatı.</p>
             <a href="exam.html" class="block w-full text-center bg-primary-container text-on-primary font-label-sm text-label-sm py-3 rounded-lg hover:bg-primary transition-colors duration-200">Başla</a>
         </div>
-        <div class="group bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col h-full hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-primary-fixed-dim transition-all duration-300 relative overflow-hidden">
+        <div id="card-tech-quiz" class="group bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col h-full hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-primary-fixed-dim transition-all duration-300 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-32 h-32 bg-secondary-container/20 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
             <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary mb-6"><span class="material-symbols-outlined text-3xl">timer</span></div>
             <h3 class="font-h3 text-h3 text-on-surface mb-3">Teknik Quiz</h3>
             <p class="font-body-md text-body-md text-on-surface-variant mb-8 flex-grow">60 saniyelik çoktan seçmeli hızlı test. Temel konseptleri ve bilgi düzeyini ölçer.</p>
-            <a href="quiz.html" class="block w-full text-center bg-surface-container-lowest border border-outline-variant text-on-surface font-label-sm text-label-sm py-3 rounded-lg hover:bg-surface-container hover:text-primary transition-colors duration-200">Başla</a>
+            <a id="link-tech-quiz" href="quiz.html" class="block w-full text-center bg-surface-container-lowest border border-outline-variant text-on-surface font-label-sm text-label-sm py-3 rounded-lg hover:bg-surface-container hover:text-primary transition-colors duration-200">Başla</a>
         </div>
-        <div class="bg-surface-container-lowest/50 border border-outline-variant/50 rounded-xl p-6 flex flex-col h-full relative overflow-hidden opacity-60">
+        <div id="card-voice-interview" class="bg-surface-container-lowest/50 border border-outline-variant/50 rounded-xl p-6 flex flex-col h-full relative overflow-hidden opacity-60">
             <div class="absolute top-4 right-4 bg-surface-variant text-on-surface-variant font-label-sm text-[10px] uppercase tracking-widest px-3 py-1 rounded-full font-bold">Yakında</div>
             <div class="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center text-outline mb-6"><span class="material-symbols-outlined text-3xl">mic</span></div>
             <h3 class="font-h3 text-h3 text-on-surface/60 mb-3">Sesli Mülakat</h3>
@@ -62,7 +62,7 @@
 <script src="../js/firebase-config.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/ui.js"></script>
-<script>initLayout("interviews");</script>
 <script src="../js/interviews.js"></script>
+<script>initLayout("interviews");</script>
 </body>
 </html>

@@ -14,6 +14,7 @@
 <div id="sidebar-container"></div>
 <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
 <div id="header-container"></div>
+<div id="topic-focus-banner" class="hidden shrink-0 px-4 md:px-8 py-2.5 bg-primary-fixed border-b border-primary-fixed-dim text-sm text-on-surface text-center font-medium" role="status"></div>
 <main class="flex-1 overflow-y-auto p-8 lg:p-xl bg-background">
 <div class="max-w-[700px] mx-auto space-y-lg">
 
@@ -23,17 +24,39 @@
         <p class="font-body-lg text-body-lg text-on-surface-variant">Hızlı çoktan seçmeli test — her soru için 60 saniye.</p>
     </div>
     <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 space-y-6">
-        <div class="flex flex-col gap-2">
-            <label class="font-label-sm text-label-sm text-on-surface">CV Seç</label>
-            <select id="cv-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">CV yükleniyor…</option></select>
+        <div id="setup-dropdowns" class="space-y-6">
+            <div class="flex flex-col gap-2">
+                <label class="font-label-sm text-label-sm text-on-surface">CV Seç</label>
+                <select id="cv-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">CV yükleniyor…</option></select>
+            </div>
+            <div class="flex flex-col gap-2">
+                <label class="font-label-sm text-label-sm text-on-surface">Şirket Profili Seç</label>
+                <select id="profile-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">Şirket profili yükleniyor…</option></select>
+            </div>
         </div>
-        <div class="flex flex-col gap-2">
-            <label class="font-label-sm text-label-sm text-on-surface">Şirket Profili Seç</label>
-            <select id="profile-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">Şirket profili yükleniyor…</option></select>
+
+        <div id="topic-quick-panel" class="hidden rounded-xl border border-primary/15 bg-gradient-to-br from-primary-fixed/90 via-surface-container-lowest to-surface-container-low p-6 md:p-8 shadow-[0_8px_40px_rgba(53,37,205,0.08)]">
+            <div class="flex items-start gap-4 mb-6">
+                <div class="w-12 h-12 rounded-xl bg-primary-container/90 flex items-center justify-center text-on-primary shrink-0 shadow-sm">
+                    <span class="material-symbols-outlined text-[28px]">bolt</span>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Odaklı simülasyon</p>
+                    <h2 id="topic-quick-title" class="font-h3 text-h3 text-on-surface leading-snug">—</h2>
+                </div>
+            </div>
+            <ul id="topic-quick-bullets" class="space-y-3 text-sm text-on-surface-variant border-t border-outline-variant/60 pt-5">
+                <li class="flex gap-3"><span class="material-symbols-outlined text-primary text-[20px] shrink-0">check_circle</span><span>10 çoktan seçmeli soru</span></li>
+                <li class="flex gap-3"><span class="material-symbols-outlined text-primary text-[20px] shrink-0">schedule</span><span>Her soru için 60 saniye süre</span></li>
+                <li class="flex gap-3"><span class="material-symbols-outlined text-primary text-[20px] shrink-0">bar_chart</span><span>Zorluk: kolay, orta ve zor karışık</span></li>
+                <li class="flex gap-3"><span class="material-symbols-outlined text-primary text-[20px] shrink-0">target</span><span>Bu konuya ağırlıklı soru dağılımı</span></li>
+            </ul>
+            <p id="topic-flow-error" class="hidden mt-4 text-sm text-on-surface-variant bg-surface-container rounded-lg px-4 py-3 border border-outline-variant/80"></p>
         </div>
+
         <div id="setup-error" class="hidden p-3 bg-error-container text-on-error-container text-sm rounded-lg border border-error/20"></div>
-        <button id="btn-start-quiz" class="w-full bg-primary-container text-on-primary py-4 rounded-lg font-semibold text-sm hover:bg-primary transition-colors flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined">timer</span>Quizi Başlat
+        <button id="btn-start-quiz" type="button" class="w-full bg-primary-container text-on-primary py-4 rounded-lg font-semibold text-sm hover:bg-primary transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">timer</span><span id="btn-start-quiz-label">Quizi Başlat</span>
         </button>
     </div>
 </div>
@@ -85,7 +108,7 @@
 <script src="../js/firebase-config.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/ui.js"></script>
-<script>initLayout("interviews");</script>
 <script src="../js/quiz.js"></script>
+<script>initLayout("interviews");</script>
 </body>
 </html>

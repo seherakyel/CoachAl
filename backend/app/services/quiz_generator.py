@@ -13,6 +13,7 @@ def generate_quiz_questions(
     tech_stack: list,
     key_traits: list,
     cv_skills: list,
+    focus_topic: str | None = None,
 ) -> list:
     model = get_model()
     if not model:
@@ -20,6 +21,14 @@ def generate_quiz_questions(
     tech = ", ".join(tech_stack[:15]) if tech_stack else "—"
     traits = ", ".join(key_traits[:10]) if key_traits else "—"
     have = ", ".join(cv_skills[:15]) if cv_skills else "—"
+    focus_block = ""
+    if focus_topic and str(focus_topic).strip():
+        ft = str(focus_topic).strip()
+        focus_block = f"""
+ÖNEMLİ — ODAK KONU: "{ft}"
+- En az 5 soruyu doğrudan bu konuyla ilişkilendir (terminoloji, pratik, tuzaklar, best practice).
+- Kalan soruları şirket tech stack ve pozisyona göre tamamla.
+"""
     prompt = f"""CoachAI uygulaması için çoktan seçmeli teknik quiz soruları üret.
 Sadece geçerli JSON dizisi döndür, başka metin yazma.
 
@@ -39,7 +48,7 @@ Pozisyon: {position}
 Şirket teknolojileri: {tech}
 Aranan özellikler: {traits}
 Adayın CV yetenekleri: {have}
-
+{focus_block}
 Soruları şirketin tech stack'ine ve pozisyona uygun hazırla.
 """
     try:
