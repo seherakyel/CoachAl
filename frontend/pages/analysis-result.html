@@ -180,16 +180,18 @@
   font-size:0.8125rem;
   line-height:1.45;
 }
-/* Eksik yetenekler — dikey kaydırma (scrollbar) */
+/* Eksik yetenekler — dikey kaydırma; kart ile CTA arasında dolu görünüm */
 .ar-missing-scroll{
-  max-height:min(52vh,380px);
+  min-height:240px;
+  flex:1 1 auto;
+  max-height:min(62vh,560px);
   overflow-y:auto;
   overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   border-radius:14px;
   border:1px solid #e2e8f0;
-  background:linear-gradient(to bottom,#fafbfc 0%,#fff 12%);
+  background:linear-gradient(to bottom,#fafbfc 0%,#fff 18%,#fafbfc 100%);
 }
 .ar-missing-scroll::-webkit-scrollbar{width:9px}
 .ar-missing-scroll::-webkit-scrollbar-track{background:#f1f5f9;border-radius:99px;margin:6px 0}
@@ -359,9 +361,11 @@
                 </div>
             </div>
 
-            <!-- Yetenekler: üstte eşleşen, altta eksik — ekstra dikey alanı doldurur (CTA alta hizalı) -->
-            <div class="ar-surface-card flex min-h-0 min-w-0 flex-1 flex-col gap-0 overflow-hidden">
-                <div class="ar-skills-col-matched pb-8 border-b border-slate-100">
+            <!-- Yetenekler + CTA: dar boşluk, liste alanı flex ile uzar -->
+            <div class="flex min-h-0 flex-1 flex-col gap-2.5 min-h-[min(44vh,420px)] xl:min-h-[min(50vh,520px)]">
+            <!-- Yetenekler: üstte eşleşen, altta eksik — ekstra dikey alanı doldurur -->
+            <div class="ar-surface-card flex min-h-0 min-w-0 flex-1 flex-col gap-0 overflow-hidden min-h-[280px] xl:min-h-[320px]">
+                <div class="ar-skills-col-matched shrink-0 pb-8 border-b border-slate-100">
                     <div class="flex flex-wrap items-center gap-3 mb-6 pb-4 border-b border-slate-100">
                         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 shadow-sm ring-1 ring-indigo-200/90">
                             <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 1,'wght' 500">check_circle</span>
@@ -381,8 +385,8 @@
                     </div>
                 </div>
 
-                <div class="ar-skills-col-missing pt-8">
-                    <div class="flex flex-wrap items-center gap-3 mb-4 pb-4 border-b border-slate-100">
+                <div class="ar-skills-col-missing flex flex-1 flex-col min-h-0 pt-8">
+                    <div class="flex flex-wrap items-center gap-3 mb-4 shrink-0 pb-4 border-b border-slate-100">
                         <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-dashed border-indigo-200 bg-slate-50 text-slate-400">
                             <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 0,'wght' 400">change_circle</span>
                         </div>
@@ -391,13 +395,13 @@
                             <p class="text-xs text-slate-500 mt-0.5">Liste uzunsa sağdaki kaydırma çubuğuyla inebilirsiniz.</p>
                         </div>
                     </div>
-                    <div class="relative min-h-[100px]">
+                    <div class="relative flex flex-1 flex-col min-h-[180px]">
                         <div class="ar-skel-wrap absolute inset-0 space-y-3 z-[1]" aria-hidden="true">
                             <div class="h-14 ar-skel rounded-xl w-full"></div>
                             <div class="h-14 ar-skel rounded-xl w-full opacity-90"></div>
                             <div class="h-14 ar-skel rounded-xl w-full opacity-80"></div>
                         </div>
-                        <div id="missing-skills-scroll" class="ar-missing-scroll relative z-[2] px-1">
+                        <div id="missing-skills-scroll" class="ar-missing-scroll relative z-[2] flex-1 px-1.5 py-2.5">
                             <ul id="missing-skills" class="ar-live list-none p-0 m-0"></ul>
                         </div>
                     </div>
@@ -409,6 +413,7 @@
                     <span class="material-symbols-outlined text-[20px] transition group-hover:scale-105" style="font-variation-settings:'FILL' 0">record_voice_over</span>
                     Mülakata geç
                 </a>
+            </div>
             </div>
         </div>
     </div>
