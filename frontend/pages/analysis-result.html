@@ -468,13 +468,13 @@
             <div class="flex gap-0.5 rounded-t-lg" role="tablist" aria-label="Kaynak türleri">
                 <button type="button" role="tab" id="ar-learn-tab-watch" class="ar-learn-tab flex-1 rounded-t-md border-b-2 px-3 py-2.5 text-center text-sm font-medium transition border-transparent text-slate-500 hover:text-slate-700" aria-selected="true" aria-controls="ar-learn-panel-watch" data-ar-tab="watch">İzle</button>
                 <button type="button" role="tab" id="ar-learn-tab-read" class="ar-learn-tab flex-1 rounded-t-md border-b-2 px-3 py-2.5 text-center text-sm font-medium transition border-transparent text-slate-500 hover:text-slate-700" aria-selected="false" aria-controls="ar-learn-panel-read" data-ar-tab="read">Oku</button>
-                <button type="button" role="tab" id="ar-learn-tab-practice" class="ar-learn-tab flex-1 rounded-t-md border-b-2 px-3 py-2.5 text-center text-sm font-medium transition border-transparent text-slate-500 hover:text-slate-700" aria-selected="false" aria-controls="ar-learn-panel-practice" data-ar-tab="practice">Pratik Yap</button>
+                <button type="button" role="tab" id="ar-learn-tab-cheatsheet" class="ar-learn-tab flex-1 rounded-t-md border-b-2 px-2 py-2.5 text-center text-xs font-medium transition border-transparent text-slate-500 hover:text-slate-700 sm:px-3 sm:text-sm" aria-selected="false" aria-controls="ar-learn-panel-cheatsheet" data-ar-tab="cheatsheet" title="Mülakat Hazırlık Notları">Mülakat Hazırlık Notları</button>
             </div>
         </div>
         <div class="ar-learn-modal-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
             <div id="ar-learn-panel-watch" role="tabpanel" aria-labelledby="ar-learn-tab-watch" class="ar-learn-tab-panel"></div>
             <div id="ar-learn-panel-read" role="tabpanel" aria-labelledby="ar-learn-tab-read" class="ar-learn-tab-panel hidden" hidden></div>
-            <div id="ar-learn-panel-practice" role="tabpanel" aria-labelledby="ar-learn-tab-practice" class="ar-learn-tab-panel hidden" hidden></div>
+            <div id="ar-learn-panel-cheatsheet" role="tabpanel" aria-labelledby="ar-learn-tab-cheatsheet" class="ar-learn-tab-panel hidden" hidden></div>
         </div>
         <div class="sticky bottom-0 z-20 shrink-0 border-t border-slate-200/90 bg-white/95 px-5 py-4 shadow-[0_-10px_40px_-12px_rgba(15,23,42,0.12)] backdrop-blur-md supports-[backdrop-filter]:bg-white/90">
             <a id="ar-learn-sim-cta" href="interviews.html" class="coachai-cta-primary inline-flex w-full origin-center items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold no-underline shadow-sm transition-transform duration-200 ease-out hover:scale-105 hover:opacity-95">
@@ -490,6 +490,7 @@
 <script src="../js/firebase-config.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/ui.js"></script>
+<script src="../data/coaching-content.js"></script>
 <script src="../js/analysis-result.js"></script>
 <script>initLayout("cv-analysis");</script>
 </body>
