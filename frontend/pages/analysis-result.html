@@ -198,6 +198,14 @@
 @supports (scrollbar-color: auto){
   .ar-missing-scroll{scrollbar-color:#818cf8 #f1f5f9;scrollbar-width:thin}
 }
+/* Eksik yetenek — kaynak kartı (fixed pop-over) */
+.ar-missing-learn-panel{
+  scrollbar-width:thin;
+  scrollbar-color:#818cf8 #eef2f7;
+}
+.ar-missing-learn-panel::-webkit-scrollbar{width:6px}
+.ar-missing-learn-panel::-webkit-scrollbar-track{background:#eef2f7;border-radius:99px;margin:3px 0}
+.ar-missing-learn-panel::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#a5b4fc,#6366f1);border-radius:99px}
 </style>
 </head>
 <body class="bg-[#F8FAFC] text-on-background font-body-md flex h-screen overflow-hidden antialiased">

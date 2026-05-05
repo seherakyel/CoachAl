@@ -77,6 +77,372 @@ function normalizeInterviewStepsToThree(rawSteps) {
     return splitIntoThreeBySentences(expanded[0]);
 }
 
+/** Eksik yetenek satırı için anahtar kelimeye göre öğrenme bağlantıları (harici URL’ler sabit) */
+function learningResourcesForSkill(skillRaw) {
+    var s = String(skillRaw || "").toLowerCase();
+    function L(label, href) {
+        return { label: label, href: href };
+    }
+    var generic = {
+        free: [L("freeCodeCamp", "https://www.freecodecamp.org/"), L("The Odin Project", "https://www.theodinproject.com/")],
+        docs: [L("MDN Web Docs", "https://developer.mozilla.org/"), L("DevDocs.io", "https://devdocs.io/")],
+        courses: [L("Coursera", "https://www.coursera.org/"), L("edX", "https://www.edx.org/")]
+    };
+    if (!s.trim()) return generic;
+
+    if (/\baws\b|amazon web services/.test(s)) {
+        return {
+            free: [L("AWS Skill Builder", "https://skillbuilder.aws/"), L("AWS Workshops", "https://workshops.aws/")],
+            docs: [L("AWS Dokümantasyonu", "https://docs.aws.amazon.com/")],
+            courses: [L("AWS Training & sertifikasyon", "https://aws.amazon.com/training/")]
+        };
+    }
+    if (/kubernetes|\bk8s\b/.test(s)) {
+        return {
+            free: [L("Killercoda — Kubernetes", "https://killercoda.com/kubernetes"), L("Play with Kubernetes", "https://labs.play-with-k8s.com/")],
+            docs: [L("Kubernetes.io dokümantasyon", "https://kubernetes.io/docs/")],
+            courses: [L("CNCF eğitimler", "https://www.cncf.io/training/")]
+        };
+    }
+    if (/docker|\bcontainer\b/.test(s)) {
+        return {
+            free: [L("Docker — başlangıç kılavuzu", "https://docs.docker.com/get-started/"), L("Play with Docker", "https://labs.play-with-docker.com/")],
+            docs: [L("Docker dokümantasyon", "https://docs.docker.com/")],
+            courses: [L("Docker Hub / resmi kaynaklar", "https://hub.docker.com/")]
+        };
+    }
+    if (/react|\bjsx\b/.test(s)) {
+        return {
+            free: [L("React.dev — öğren", "https://react.dev/learn"), L("freeCodeCamp React", "https://www.freecodecamp.org/news/tag/react/")],
+            docs: [L("React dokümantasyon", "https://react.dev/")],
+            courses: [L("Full Stack Open (ücretsiz)", "https://fullstackopen.com/en/part1")]
+        };
+    }
+    if (/vue\.?js|\bvue\b/.test(s)) {
+        return {
+            free: [L("Vue.js — öğretici", "https://vuejs.org/tutorial/")],
+            docs: [L("Vue dokümantasyon", "https://vuejs.org/guide/introduction.html")],
+            courses: [L("Vue School ücretsiz içerikler", "https://vueschool.io/")]
+        };
+    }
+    if (/angular/.test(s)) {
+        return {
+            free: [L("Angular — ilk uygulama", "https://angular.dev/tutorials/first-app")],
+            docs: [L("Angular dokümantasyon", "https://angular.dev/overview")],
+            courses: [L("Angular.io kaynaklar", "https://angular.dev/resources")]
+        };
+    }
+    if (/\bnode\.?js\b|\bexpress\b/.test(s)) {
+        return {
+            free: [L("Node.js — başlangıç", "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs")],
+            docs: [L("Node.js dokümantasyon", "https://nodejs.org/docs/")],
+            courses: [L("Express rehberi", "https://expressjs.com/en/starter/installing.html")]
+        };
+    }
+    if (/python|\bdjango\b|\bfastapi\b|\bflask\b/.test(s)) {
+        return {
+            free: [L("Python.org öğretici", "https://docs.python.org/3/tutorial/"), L("Real Python (ücretsiz yazılar)", "https://realpython.com/")],
+            docs: [L("Python dokümantasyon", "https://docs.python.org/3/")],
+            courses: [L("PyData / Python eğitim kaynakları", "https://pydata.org/")]
+        };
+    }
+    if (/\bjava\b|\bspring\b/.test(s)) {
+        return {
+            free: [L("Oracle Java SE öğren", "https://dev.java/learn/")],
+            docs: [L("Java dokümantasyon", "https://docs.oracle.com/en/java/")],
+            courses: [L("Spring dokümantasyon", "https://spring.io/guides")]
+        };
+    }
+    if (/terraform|\bhcl\b/.test(s)) {
+        return {
+            free: [L("HashiCorp Learn", "https://developer.hashicorp.com/terraform/tutorials")],
+            docs: [L("Terraform dokümantasyon", "https://developer.hashicorp.com/terraform/docs")],
+            courses: [L("Terraform registry", "https://registry.terraform.io/")]
+        };
+    }
+    if (/ansible/.test(s)) {
+        return {
+            free: [L("Ansible — ilk adımlar", "https://docs.ansible.com/ansible/latest/getting_started/index.html")],
+            docs: [L("Ansible dokümantasyon", "https://docs.ansible.com/")],
+            courses: [L("Ansible Galaxy", "https://galaxy.ansible.com/")]
+        };
+    }
+    if (/\bgolang\b/.test(s) || /^go$/i.test(String(skillRaw || "").trim())) {
+        return {
+            free: [L("A Tour of Go", "https://go.dev/tour/")],
+            docs: [L("Go dokümantasyon", "https://go.dev/doc/")],
+            courses: [L("Effective Go", "https://go.dev/doc/effective_go")]
+        };
+    }
+    if (/rust|\bcargo\b/.test(s)) {
+        return {
+            free: [L("Rust Book", "https://doc.rust-lang.org/book/"), L("Rustlings", "https://github.com/rust-lang/rustlings")],
+            docs: [L("Rust dokümantasyon", "https://doc.rust-lang.org/")],
+            courses: [L("Rust by Example", "https://doc.rust-lang.org/rust-by-example/")]
+        };
+    }
+    if (/typescript|\bts\b/.test(s)) {
+        return {
+            free: [L("TypeScript — el kitabı", "https://www.typescriptlang.org/docs/handbook/intro.html")],
+            docs: [L("TypeScript dokümantasyon", "https://www.typescriptlang.org/docs/")],
+            courses: [L("TS Deep Dive (basarat)", "https://basarat.gitbook.io/typescript/")]
+        };
+    }
+    if (/javascript|\bjs\b|ecmascript/.test(s)) {
+        return {
+            free: [L("JavaScript.info", "https://javascript.info/"), L("freeCodeCamp JS", "https://www.freecodecamp.org/news/tag/javascript/")],
+            docs: [L("MDN JavaScript", "https://developer.mozilla.org/en-US/docs/Web/JavaScript")],
+            courses: [L("Eloquent JavaScript (kitap)", "https://eloquentjavascript.net/")]
+        };
+    }
+    if (/sql|postgres|postgresql|mysql|sqlite|mongodb|redis/.test(s)) {
+        return {
+            free: [L("SQLBolt — interaktif SQL", "https://sqlbolt.com/"), L("PostgreSQL egzersizleri", "https://www.postgresql.org/docs/")],
+            docs: [L("PostgreSQL dokümantasyon", "https://www.postgresql.org/docs/"), L("MongoDB dokümantasyon", "https://www.mongodb.com/docs/")],
+            courses: [L("Use The Index, Luke! (SQL)", "https://use-the-index-luke.com/")]
+        };
+    }
+    if (/kafka/.test(s)) {
+        return {
+            free: [L("Kafka quickstart", "https://kafka.apache.org/quickstart")],
+            docs: [L("Apache Kafka dokümantasyon", "https://kafka.apache.org/documentation/")],
+            courses: [L("Confluent Kafka ücretsiz kurslar", "https://developer.confluent.io/learn-kafka/")]
+        };
+    }
+    if (/graphql/.test(s)) {
+        return {
+            free: [L("GraphQL öğren", "https://graphql.org/learn/")],
+            docs: [L("GraphQL spesifikasyon", "https://spec.graphql.org/")],
+            courses: [L("How to GraphQL", "https://www.howtographql.com/")]
+        };
+    }
+    if (/nginx/.test(s)) {
+        return {
+            free: [L("NGINX başlangıç", "https://docs.nginx.com/nginx/admin-guide/")],
+            docs: [L("NGINX dokümantasyon", "https://nginx.org/en/docs/")],
+            courses: [L("NGINX konfigürasyon örnekleri", "https://www.nginx.com/resources/wiki/")]
+        };
+    }
+    if (/linux|\bbash\b|\bshell\b|unix/.test(s)) {
+        return {
+            free: [L("Linux Journey", "https://linuxjourney.com/")],
+            docs: [L("GNU Bash manual", "https://www.gnu.org/software/bash/manual/")],
+            courses: [L("Arch Wiki (referans)", "https://wiki.archlinux.org/")]
+        };
+    }
+    if (/\bgit\b|github|gitlab/.test(s)) {
+        return {
+            free: [L("GitHub Skills", "https://skills.github.com/"), L("Learn Git Branching", "https://learngitbranching.js.org/")],
+            docs: [L("Git dokümantasyon", "https://git-scm.com/doc")],
+            courses: [L("Pro Git kitap", "https://git-scm.com/book/en/v2")]
+        };
+    }
+    if (/jenkins|\bci\b|\bcd\b|pipeline|github actions/.test(s)) {
+        return {
+            free: [L("GitHub Actions dokümantasyon", "https://docs.github.com/en/actions")],
+            docs: [L("Jenkins kullanıcı kılavuzu", "https://www.jenkins.io/doc/")],
+            courses: [L("CI/CD genel giriş", "https://about.gitlab.com/topics/ci-cd/")]
+        };
+    }
+    if (/microservice|micro-service|distributed/.test(s)) {
+        return {
+            free: [L("Microservices.io kalıpları", "https://microservices.io/")],
+            docs: [L("Martin Fowler — mikroservis", "https://martinfowler.com/microservices/")],
+            courses: [L("12 Factor App", "https://12factor.net/")]
+        };
+    }
+    if (/oauth|jwt|security|ssl|tls|encryption/.test(s)) {
+        return {
+            free: [L("OAuth 2.0 / OpenID connect", "https://oauth.net/2/")],
+            docs: [L("OWASP Top 10", "https://owasp.org/www-project-top-ten/")],
+            courses: [L("JWT giriş", "https://jwt.io/introduction")]
+        };
+    }
+    if (/html|css|tailwind|frontend|web geliştir/.test(s)) {
+        return {
+            free: [L("MDN HTML/CSS", "https://developer.mozilla.org/en-US/docs/Learn")],
+            docs: [L("Can I use", "https://caniuse.com/")],
+            courses: [L("web.dev öğren", "https://web.dev/learn")]
+        };
+    }
+    if (/elastic|opensearch|solr/.test(s)) {
+        return {
+            free: [L("Elastic başlangıç", "https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html")],
+            docs: [L("Elasticsearch kılavuzu", "https://www.elastic.co/guide/index.html")],
+            courses: [L("Elastic ücretsiz eğitimler", "https://www.elastic.co/training/free")]
+        };
+    }
+
+    return generic;
+}
+
+function buildLearningResourcesInnerHtml(skillRaw, escapeHtml) {
+    var pack = learningResourcesForSkill(skillRaw);
+    function section(title, links) {
+        if (!links || !links.length) return "";
+        return (
+            '<div class="border-t border-slate-100 pt-2.5 mt-2.5 first:border-t-0 first:pt-0 first:mt-0">' +
+            '<p class="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">' +
+            escapeHtml(title) +
+            "</p>" +
+            '<ul class="m-0 list-none space-y-1 p-0">' +
+            links
+                .map(function(Li) {
+                    return (
+                        '<li><a class="block text-[11px] leading-snug text-indigo-600 underline decoration-indigo-200 underline-offset-2 transition-colors hover:text-indigo-800" href="' +
+                        escapeHtml(Li.href) +
+                        '" target="_blank" rel="noopener noreferrer">' +
+                        escapeHtml(Li.label) +
+                        "</a></li>"
+                    );
+                })
+                .join("") +
+            "</ul></div>"
+        );
+    }
+    var headline = String(skillRaw || "Bu başlık").trim() || "Bu başlık";
+    return (
+        '<div class="p-3">' +
+        '<p class="mb-2.5 text-[11px] font-semibold leading-snug text-slate-800">' +
+        escapeHtml(headline) +
+        " — önerilen kaynaklar</p>" +
+        section("Ücretsiz eğitimler", pack.free) +
+        section("Dokümantasyon", pack.docs) +
+        section("Önerilen kurslar", pack.courses) +
+        "</div>"
+    );
+}
+
+function missingSkillRowHtml(label, detail, index, escapeHtml) {
+    var d = (detail || "").trim();
+    var safeLabel = escapeHtml(label);
+    var inner = buildLearningResourcesInnerHtml(label, escapeHtml);
+    var leftEdge = "border-b border-solid border-slate-100 border-l-[4px] border-indigo-200 [border-left-style:dashed]";
+    var iconHtml =
+        '<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-indigo-200 bg-slate-50 text-slate-400">' +
+        '<span class="material-symbols-outlined text-[20px]" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">change_circle</span></div>';
+    /** Lucide BookOpen — inline SVG (font bağımlılığı yok) */
+    var bookOpenSvg =
+        '<svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5 shrink-0" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M12 7v14"/>' +
+        '<path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>' +
+        "</svg>";
+    return (
+        '<li class="border-b border-slate-100 py-3 pl-4 ' +
+        leftEdge +
+        ' last:border-b-0">' +
+        '<div class="flex items-start gap-3">' +
+        iconHtml +
+        '<div class="min-w-0 flex-1">' +
+        '<div class="flex flex-col gap-0">' +
+        '<span class="block text-sm font-semibold text-slate-800">' +
+        safeLabel +
+        "</span>" +
+        (d ? '<span class="ar-skill-detail block text-xs leading-snug text-slate-600">' + escapeHtml(d) + "</span>" : "") +
+        '<div class="mt-1.5">' +
+        '<div class="ar-missing-learn-wrap relative inline-block max-w-full">' +
+        '<button type="button" class="ar-missing-learn-btn inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-transparent px-2 py-1 text-[10px] font-light leading-none text-indigo-500 transition-colors hover:bg-indigo-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-200/90 focus-visible:ring-offset-1" title="Ücretsiz eğitim, dokümantasyon ve kurs linkleri" aria-expanded="false" aria-haspopup="dialog" aria-controls="ar-learn-panel-' +
+        index +
+        '" id="ar-learn-btn-' +
+        index +
+        '">' +
+        bookOpenSvg +
+        '<span class="whitespace-nowrap">Kaynakları Gör</span>' +
+        "</button>" +
+        '<div id="ar-learn-panel-' +
+        index +
+        '" role="dialog" tabindex="-1" class="ar-missing-learn-panel fixed z-[200] hidden max-h-[min(70vh,320px)] overflow-y-auto overflow-x-hidden overscroll-contain rounded-xl border border-slate-200 bg-white p-0 text-left shadow-xl ring-1 ring-slate-900/[0.06]">' +
+        inner +
+        "</div>" +
+        "</div>" +
+        "</div>" +
+        "</div></div></div></li>"
+    );
+}
+
+/** Eksik yetenek — kaynak paneli: tek seferlik dinleyiciler + kaydırınca kapanma */
+function initMissingSkillLearnResourcesUi() {
+    if (initMissingSkillLearnResourcesUi._docBound) return;
+    initMissingSkillLearnResourcesUi._docBound = true;
+
+    function closeAllLearnPanels() {
+        document.querySelectorAll(".ar-missing-learn-panel").forEach(function(p) {
+            p.classList.add("hidden");
+        });
+        document.querySelectorAll(".ar-missing-learn-btn").forEach(function(b) {
+            b.setAttribute("aria-expanded", "false");
+        });
+    }
+
+    function positionLearnPanel(panel, anchorBtn) {
+        var margin = 8;
+        var width = 272;
+        panel.style.width = width + "px";
+        panel.classList.remove("hidden");
+        var r = anchorBtn.getBoundingClientRect();
+        var ph = panel.offsetHeight || 0;
+        var top = r.bottom + margin;
+        if (top + ph > window.innerHeight - margin) {
+            top = Math.max(margin, r.top - ph - margin);
+        }
+        var left = r.right - width;
+        if (left < margin) left = margin;
+        if (left + width > window.innerWidth - margin) left = window.innerWidth - width - margin;
+        panel.style.left = left + "px";
+        panel.style.top = top + "px";
+    }
+
+    document.addEventListener("click", function(e) {
+        var ms = document.getElementById("missing-skills");
+        if (!ms) return;
+        var btn = e.target.closest(".ar-missing-learn-btn");
+        if (btn && ms.contains(btn)) {
+            e.preventDefault();
+            var panel = document.getElementById(btn.getAttribute("aria-controls"));
+            if (!panel) return;
+            var wasHidden = panel.classList.contains("hidden");
+            closeAllLearnPanels();
+            if (wasHidden) {
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        btn.setAttribute("aria-expanded", "true");
+                        positionLearnPanel(panel, btn);
+                    });
+                });
+            }
+            return;
+        }
+        if (e.target.closest(".ar-missing-learn-panel")) return;
+        closeAllLearnPanels();
+    });
+
+    document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") closeAllLearnPanels();
+    });
+
+    window.addEventListener(
+        "resize",
+        function() {
+            var open = document.querySelector(".ar-missing-learn-panel:not(.hidden)");
+            var activeBtn = document.querySelector('.ar-missing-learn-btn[aria-expanded="true"]');
+            if (open && activeBtn) positionLearnPanel(open, activeBtn);
+        },
+        { passive: true }
+    );
+
+    var scrollEl = document.getElementById("missing-skills-scroll");
+    if (scrollEl && !scrollEl.dataset.arLearnScrollBound) {
+        scrollEl.dataset.arLearnScrollBound = "1";
+        scrollEl.addEventListener(
+            "scroll",
+            function() {
+                closeAllLearnPanels();
+            },
+            { passive: true }
+        );
+    }
+}
+
 /** tech_stack maddesinin eşleşen / eksik yetenek satırlarıyla örtüşüp örtüşmediği */
 function arTechTokensOverlap(tech, phrase) {
     var a = String(tech).toLowerCase().trim();
@@ -433,11 +799,15 @@ function populateAnalysisResult() {
         return rowHtml("matched", lab, det);
     }).join("") || "<li class='border-b border-slate-100 py-4 text-sm text-slate-500 last:border-0'>Eşleşen yetenek listesi için analizi yeniden çalıştırın.</li>";
 
-    document.getElementById("missing-skills").innerHTML = missingUi.map(function(row) {
-        var lab = row.skill != null ? String(row.skill) : "";
-        var det = row.detail != null ? String(row.detail) : "";
-        return rowHtml("missing", lab, det);
-    }).join("") || "<li class='border-b border-slate-100 py-4 text-sm text-slate-500 last:border-0'>Gelişim alanı listesi için analizi yeniden çalıştırın.</li>";
+    document.getElementById("missing-skills").innerHTML = missingUi
+        .map(function(row, idx) {
+            var lab = row.skill != null ? String(row.skill) : "";
+            var det = row.detail != null ? String(row.detail) : "";
+            return missingSkillRowHtml(lab, det, idx, escapeHtml);
+        })
+        .join("") || "<li class='border-b border-slate-100 py-4 text-sm text-slate-500 last:border-0'>Gelişim alanı listesi için analizi yeniden çalıştırın.</li>";
+
+    initMissingSkillLearnResourcesUi();
 
     var root = document.getElementById("analysis-root");
     if (root) root.classList.add("analysis-ready");
