@@ -596,12 +596,9 @@ function missingSkillRowHtml(label, detail, index, escapeHtml) {
     var iconHtml =
         '<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-indigo-200 bg-slate-50 text-slate-400">' +
         '<span class="material-symbols-outlined text-[20px]" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">change_circle</span></div>';
-    /** Lucide BookOpen — inline SVG (font bağımlılığı yok) */
-    var bookOpenSvg =
-        '<svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5 shrink-0" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-        '<path d="M12 7v14"/>' +
-        '<path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>' +
-        "</svg>";
+    /** Koç önerisi — Material sparkles (yol gösteren) */
+    var coachSuggestIcon =
+        '<span class="material-symbols-outlined shrink-0 text-[16px] leading-none text-indigo-500" style="font-variation-settings:\'FILL\' 1,\'wght\' 500" aria-hidden="true">auto_awesome</span>';
     return (
         '<li class="border-b border-slate-100 py-3 pl-4 ' +
         leftEdge +
@@ -616,13 +613,13 @@ function missingSkillRowHtml(label, detail, index, escapeHtml) {
         (d ? '<span class="ar-skill-detail block text-xs leading-snug text-slate-600">' + escapeHtml(d) + "</span>" : "") +
         '<div class="mt-1.5">' +
         '<div class="ar-missing-learn-wrap relative inline-block max-w-full">' +
-        '<button type="button" class="ar-missing-learn-btn inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-transparent px-2 py-1 text-[10px] font-light leading-none text-indigo-500 transition-colors hover:bg-indigo-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-200/90 focus-visible:ring-offset-1" title="Gelişim rehberi ve kaynaklar" aria-haspopup="dialog" aria-controls="ar-learn-modal" data-ar-skill="' +
+        '<button type="button" class="ar-missing-learn-btn inline-flex items-center justify-center gap-2 rounded-full border border-indigo-500 bg-transparent px-3 py-1.5 text-[11px] font-medium leading-none tracking-tight text-indigo-600 transition-colors hover:bg-indigo-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/40 focus-visible:ring-offset-1" title="Eksiklerini kapatmak için tıkla" aria-label="Koç önerisi: Eksiklerini kapatmak için tıkla" aria-haspopup="dialog" aria-controls="ar-learn-modal" data-ar-skill="' +
         escapeHtmlAttr(label) +
         '" id="ar-learn-btn-' +
         index +
         '">' +
-        bookOpenSvg +
-        '<span class="whitespace-nowrap">Kaynakları Gör</span>' +
+        coachSuggestIcon +
+        '<span class="whitespace-nowrap">Koç Öneriyor</span>' +
         "</button>" +
         "</div>" +
         "</div>" +
