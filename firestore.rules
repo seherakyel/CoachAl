@@ -1,0 +1,11 @@
+rules_version = '2';
+// Firebase konsolunda Rules sekmesine yapıştırın: coaching_content genel okuma (anonim kullanıcılar gelişim rehberini görebilsin).
+// Yazma yalnızca Admin SDK / konsol üzerinden önerilir.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /coaching_content/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

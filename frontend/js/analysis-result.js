@@ -91,37 +91,27 @@ function normalizeInterviewStepsToThree(rawSteps) {
     return splitIntoThreeBySentences(expanded[0]);
 }
 
-/** Gelişim rehberi — tamamen data/coaching-content.js (coachingData / coachingAliases) üzerinden */
-function normalizeCoachingLookupKey(skillRaw) {
-    return String(skillRaw || "")
-        .trim()
-        .toLowerCase()
-        .replace(/\./g, "_")
-        .replace(/\s+/g, "_")
-        .replace(/[^a-z0-9_+#]/g, "")
-        .replace(/_+/g, "_")
-        .replace(/^_|_$/g, "");
-}
-
-function resolveCoachingEntry(skillRaw) {
-    var data = typeof window !== "undefined" && window.coachingData ? window.coachingData : {};
-    var aliases = typeof window !== "undefined" && window.coachingAliases ? window.coachingAliases : {};
-    var key = normalizeCoachingLookupKey(skillRaw);
-    if (data[key]) return data[key];
-    var mapped = aliases[key];
-    if (mapped && data[mapped]) return data[mapped];
-    var lower = String(skillRaw || "").trim().toLowerCase();
-    if (aliases[lower] && data[aliases[lower]]) return data[aliases[lower]];
-    return null;
-}
+/** Gelişim rehberi — Firestore `coaching_content` + localStorage önbellek (coaching-firestore.js) */
 
 function coachingTopicMissingHtml() {
     return (
         '<div class="flex flex-col items-center justify-center gap-3 rounded-xl border border-indigo-100 bg-gradient-to-b from-indigo-50/90 to-white px-5 py-8 text-center">' +
         '<span class="material-symbols-outlined text-[40px] text-indigo-400" aria-hidden="true">hourglass_empty</span>' +
         '<p class="m-0 max-w-[28ch] text-sm leading-relaxed text-slate-700">' +
-        "Bu konu için koç notları şu an yapay zeka tarafından hazırlanıyor, lütfen takipte kalın." +
+        "Koç bu konu üzerinde çalışıyor." +
         "</p></div>"
+    );
+}
+
+function coachingLoadingHtml() {
+    return (
+        '<div class="flex items-start gap-4 rounded-xl border border-slate-100 bg-slate-50/90 p-4 text-sm leading-relaxed text-slate-600">' +
+        '<svg class="h-5 w-5 shrink-0 animate-spin text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">' +
+        '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
+        '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>' +
+        "</svg>" +
+        "<span>Kaynaklar yükleniyor<span class=\"text-indigo-400\">…</span></span>" +
+        "</div>"
     );
 }
 
@@ -254,9 +244,8 @@ function closeArLearnModal() {
     document.documentElement.style.overflow = "";
 }
 
-function openArLearnModal(skillRaw) {
+async function openArLearnModal(skillRaw) {
     var esc = escapeHtmlStr;
-    var entry = resolveCoachingEntry(skillRaw);
     var skillTrim = String(skillRaw || "").trim() || "Bu konu";
     var titleEl = document.getElementById("ar-learn-modal-title");
     var watchEl = document.getElementById("ar-learn-panel-watch");
@@ -264,16 +253,10 @@ function openArLearnModal(skillRaw) {
     var cheatEl = document.getElementById("ar-learn-panel-cheatsheet");
     var simEl = document.getElementById("ar-learn-sim-cta");
     if (titleEl) titleEl.textContent = skillTrim + " — Gelişim rehberi";
-    if (!entry) {
-        var missing = coachingTopicMissingHtml();
-        if (watchEl) watchEl.innerHTML = missing;
-        if (readEl) readEl.innerHTML = missing;
-        if (cheatEl) cheatEl.innerHTML = missing;
-    } else {
-        if (watchEl) watchEl.innerHTML = coachingWatchListHtml(entry.watch, esc);
-        if (readEl) readEl.innerHTML = coachingReadListHtml(entry.read, esc);
-        if (cheatEl) cheatEl.innerHTML = coachingCheatSheetAccordionHtml(entry.cheatSheet, esc);
-    }
+    var loading = coachingLoadingHtml();
+    if (watchEl) watchEl.innerHTML = loading;
+    if (readEl) readEl.innerHTML = loading;
+    if (cheatEl) cheatEl.innerHTML = loading;
     if (simEl)
         simEl.href =
             "quiz.html?topic=" +
@@ -286,6 +269,36 @@ function openArLearnModal(skillRaw) {
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
     setArLearnModalTab("watch");
+
+    var fetchFn = typeof fetchCoachingEntryForSkill === "function" ? fetchCoachingEntryForSkill : null;
+    if (!fetchFn) {
+        var missingSdk = coachingTopicMissingHtml();
+        if (watchEl) watchEl.innerHTML = missingSdk;
+        if (readEl) readEl.innerHTML = missingSdk;
+        if (cheatEl) cheatEl.innerHTML = missingSdk;
+        return;
+    }
+
+    try {
+        var result = await fetchFn(skillRaw);
+        var entry = result && result.entry;
+        if (!entry) {
+            var missing = coachingTopicMissingHtml();
+            if (watchEl) watchEl.innerHTML = missing;
+            if (readEl) readEl.innerHTML = missing;
+            if (cheatEl) cheatEl.innerHTML = missing;
+            return;
+        }
+        if (watchEl) watchEl.innerHTML = coachingWatchListHtml(entry.watch, esc);
+        if (readEl) readEl.innerHTML = coachingReadListHtml(entry.read, esc);
+        if (cheatEl) cheatEl.innerHTML = coachingCheatSheetAccordionHtml(entry.cheatSheet, esc);
+    } catch (err) {
+        console.error("[CoachAI] Gelişim rehberi yüklenemedi:", err);
+        var errHtml = coachingTopicMissingHtml();
+        if (watchEl) watchEl.innerHTML = errHtml;
+        if (readEl) readEl.innerHTML = errHtml;
+        if (cheatEl) cheatEl.innerHTML = errHtml;
+    }
 }
 
 /** Tek modal — backdrop, X, Escape, sekme geçişleri */
@@ -299,7 +312,7 @@ function initArLearnModalUi() {
         if (trig && ms && ms.contains(trig)) {
             e.preventDefault();
             var sk = trig.getAttribute("data-ar-skill");
-            if (sk != null && sk !== "") openArLearnModal(sk);
+            if (sk != null && sk !== "") void openArLearnModal(sk);
             return;
         }
         if (e.target.id === "ar-learn-modal-backdrop") {
