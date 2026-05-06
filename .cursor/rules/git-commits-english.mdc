@@ -1,0 +1,9 @@
+---
+description: Git commit messages must be written in English only.
+alwaysApply: true
+---
+
+# Git commits
+
+- Write **all** commit titles and bodies in **English** (clear, imperative or conventional style as the repo uses).
+- Do not use Turkish or mixed-language commit messages unless the user explicitly overrides for a one-off commit.
