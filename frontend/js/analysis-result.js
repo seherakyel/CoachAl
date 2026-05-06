@@ -344,6 +344,84 @@ function initArLearnModalUi() {
     });
 }
 
+/** Eksik yetenek satırı için tahmini puan kazancı (API weight varsa onu kullanır). */
+function gapLiftPointsForMissing(row, indexInTop3) {
+    if (row && row.weight != null) {
+        var v = Number(row.weight);
+        if (!Number.isNaN(v) && v >= 0) {
+            if (v > 1) return Math.min(25, Math.round(v));
+            if (v > 0) return Math.min(15, Math.max(1, Math.round(v * 12)));
+        }
+    }
+    if (row && row.impact != null) {
+        var im = Number(row.impact);
+        if (!Number.isNaN(im) && im >= 0) return Math.min(25, Math.round(im));
+    }
+    var tier = [7, 6, 5];
+    return tier[indexInTop3] != null ? tier[indexInTop3] : 4;
+}
+
+/** Koçun işaret ettiği ilk 3 eksik yeteneğin ağırlıklarını toplayıp skora ekler; üst sınır %100. */
+function computePotentialMatchScore(currentScore, missingRows) {
+    var rows = Array.isArray(missingRows) ? missingRows : [];
+    var top = rows.slice(0, 3);
+    if (!top.length) {
+        return { potential: currentScore, gain: 0 };
+    }
+    var gain = 0;
+    for (var i = 0; i < top.length; i++) {
+        gain += gapLiftPointsForMissing(top[i], i);
+    }
+    var room = Math.max(0, 100 - currentScore);
+    gain = Math.min(gain, room);
+    var potential = Math.min(100, Math.round(currentScore + gain));
+    if (top.length && potential <= currentScore) {
+        potential = Math.min(100, currentScore + Math.min(1, room));
+    }
+    return { potential: potential, gain: potential - currentScore };
+}
+
+/** Dış kesikli potansiyel halkası + gelişim kapsülü (eksik yeteneklerden). */
+function updateGrowthPotentialUi(score, missingUi) {
+    var POT_R = 49;
+    var circPot = 2 * Math.PI * POT_R;
+    var arcPot = document.getElementById("score-potential-arc");
+    var pill = document.getElementById("ar-growth-pill");
+    var pillPct = document.getElementById("ar-growth-pill-pct");
+    if (!arcPot || !pill || !pillPct) return;
+
+    var rows = Array.isArray(missingUi) ? missingUi : [];
+    if (!rows.length) {
+        arcPot.style.strokeDashoffset = String(circPot);
+        pill.classList.add("hidden");
+        return;
+    }
+
+    var comp = computePotentialMatchScore(score, rows);
+    var pot = comp.potential;
+    var gain = Math.max(0, pot - score);
+
+    if (gain <= 0) {
+        arcPot.style.strokeDashoffset = String(circPot);
+        pill.classList.add("hidden");
+        return;
+    }
+
+    arcPot.setAttribute("stroke-dasharray", "4 8");
+    arcPot.style.strokeDashoffset = String(circPot - (pot / 100) * circPot);
+
+    pillPct.textContent = String(pot);
+    pill.classList.remove("hidden");
+
+    if (!pill._arPotentialScrollBound) {
+        pill._arPotentialScrollBound = true;
+        pill.addEventListener("click", function () {
+            var anchor = document.getElementById("ar-missing-skills-anchor");
+            if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    }
+}
+
 function missingSkillRowHtml(label, detail, index, escapeHtml) {
     var d = (detail || "").trim();
     var safeLabel = escapeHtml(label);
@@ -503,54 +581,27 @@ function populateAnalysisResult() {
     var score = Math.round(rawPct);
 
     var scoreValEl = document.getElementById("score-value");
-    var riskBadgeEl = document.getElementById("score-risk-badge");
-    var riskIconEl = document.getElementById("score-risk-icon");
-    var riskLabelEl = document.getElementById("score-risk-label");
     var glowWrap = document.getElementById("score-glow-wrap");
     var arcEl = document.getElementById("score-arc");
     if (scoreValEl) scoreValEl.textContent = score;
 
-    var risk = score >= 80 ? "Düşük Risk" : score >= 60 ? "Orta Risk" : "Yüksek Risk";
-    var badgeBase =
-        "mt-6 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold border border-slate-200 bg-white text-slate-700";
-    if (riskLabelEl) riskLabelEl.textContent = risk;
-    if (riskIconEl) {
-        riskIconEl.setAttribute("style", "font-variation-settings:'FILL' 1,'wght' 500");
-    }
-    if (riskBadgeEl && riskIconEl) {
-        if (score >= 80) {
-            riskBadgeEl.className = badgeBase;
-            riskIconEl.textContent = "verified";
-            riskIconEl.className = "material-symbols-outlined text-[18px] text-emerald-600";
-        } else if (score >= 60) {
-            riskBadgeEl.className = badgeBase;
-            riskIconEl.textContent = "priority_high";
-            riskIconEl.className = "material-symbols-outlined text-[18px] text-amber-500";
-        } else {
-            riskBadgeEl.className = badgeBase;
-            riskIconEl.textContent = "warning";
-            riskIconEl.className = "material-symbols-outlined text-[18px] text-rose-600";
-        }
-    }
     if (glowWrap) {
-        glowWrap.className = "ar-score-glow-wrap relative flex items-center justify-center w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72";
-        if (score >= 80) glowWrap.classList.add("ar-glow-indigo");
-        else if (score >= 60) glowWrap.classList.add("ar-glow-amber");
-        else glowWrap.classList.add("ar-glow-red");
+        glowWrap.className =
+            "ar-score-glow-wrap ar-glow-indigo relative flex items-center justify-center w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72";
     }
     if (scoreValEl) {
-        if (score >= 80) scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-indigo-600 leading-none";
-        else if (score >= 60) scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-amber-600 leading-none";
-        else scoreValEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-rose-600 leading-none";
+        scoreValEl.className =
+            "ar-score-value-lift text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-indigo-700 leading-none";
+    }
+    var matchLbl = document.getElementById("score-match-label");
+    if (matchLbl) {
+        matchLbl.className = "text-[11px] font-semibold uppercase tracking-widest text-indigo-700 opacity-90";
     }
 
     if (arcEl) {
         var circumference = 283;
         var offset = circumference - (score / 100) * circumference;
         arcEl.style.strokeDashoffset = offset;
-        if (score >= 80) arcEl.style.stroke = "#4f46e5";
-        else if (score >= 60) arcEl.style.stroke = "#f59e0b";
-        else arcEl.style.stroke = "#f43f5e";
     }
 
     var company = companyProfile.company_name || sessionStorage.getItem("coachai_company_name") || "—";
@@ -745,6 +796,8 @@ function populateAnalysisResult() {
             return missingSkillRowHtml(lab, det, idx, escapeHtml);
         })
         .join("") || "<li class='border-b border-slate-100 py-4 text-sm text-slate-500 last:border-0'>Gelişim alanı listesi için analizi yeniden çalıştırın.</li>";
+
+    updateGrowthPotentialUi(score, missingUi);
 
     initArLearnModalUi();
 

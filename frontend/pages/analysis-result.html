@@ -58,16 +58,21 @@
   transition:filter .6s ease;
 }
 .ar-score-glow-wrap.ar-glow-indigo{
-  filter:drop-shadow(0 0 28px rgba(79,70,229,0.35)) drop-shadow(0 0 56px rgba(99,102,241,0.12));
-}
-.ar-score-glow-wrap.ar-glow-amber{
-  filter:drop-shadow(0 0 28px rgba(245,158,11,0.45)) drop-shadow(0 0 56px rgba(245,158,11,0.14));
-}
-.ar-score-glow-wrap.ar-glow-red{
-  filter:drop-shadow(0 0 28px rgba(239,68,68,0.45)) drop-shadow(0 0 56px rgba(239,68,68,0.14));
+  filter:drop-shadow(0 0 16px rgba(79,70,229,0.2)) drop-shadow(0 0 32px rgba(129,140,248,0.12));
 }
 .ar-score-glow-wrap.ar-glow-muted{
-  filter:drop-shadow(0 0 20px rgba(148,163,184,0.35));
+  filter:drop-shadow(0 0 14px rgba(79,70,229,0.12)) drop-shadow(0 0 28px rgba(129,140,248,0.06));
+}
+/* Skor rakamı — hafif yükselme */
+.ar-score-value-lift{
+  text-shadow:
+    0 1px 0 rgba(255,255,255,0.95),
+    0 2px 6px rgba(79,70,229,0.14),
+    0 1px 2px rgba(67,56,202,0.08);
+}
+/* Grafik odağı — kart içinde hafif radyal vurgu */
+.ar-gauge-radial-bg{
+  background:radial-gradient(ellipse 78% 62% at 50% 46%,rgba(99,102,241,0.1) 0%,rgba(129,140,248,0.045) 45%,transparent 70%);
 }
 /* Trendyol markası — PNG yok, düzen (turuncu / siyah şerit / wordmark) */
 .ar-logo-trendyol{
@@ -237,6 +242,7 @@
 .ar-learn-tab[aria-selected="true"]{color:#4f46e5;border-bottom-color:#4f46e5}
 .ar-learn-tab[aria-selected="false"]{color:#64748b;border-bottom-color:transparent}
 @keyframes ar-modal-fade-in{from{opacity:0}to{opacity:1}}
+.ar-growth-pill{cursor:pointer}
 </style>
 </head>
 <body class="bg-[#F8FAFC] text-on-background font-body-md flex h-screen overflow-hidden antialiased">
@@ -255,25 +261,36 @@
         </div>
 
         <div class="relative flex flex-col items-center justify-center min-h-[280px] sm:min-h-[300px] md:min-h-[320px]">
+            <div class="pointer-events-none absolute inset-0 ar-gauge-radial-bg z-0" aria-hidden="true"></div>
             <div class="ar-skel-wrap absolute inset-0 flex flex-col items-center justify-center gap-5 z-0" aria-hidden="true">
                 <div class="w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 rounded-full ar-skel opacity-90"></div>
-                <div class="h-9 w-36 ar-skel rounded-full mx-auto"></div>
             </div>
-            <div class="ar-live relative z-10 flex flex-col items-center justify-center">
-                <div id="score-glow-wrap" class="ar-score-glow-wrap ar-glow-muted relative flex items-center justify-center w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100" aria-hidden="true">
-                        <circle cx="50" cy="50" fill="none" r="45" stroke="#e2e8f0" stroke-width="7"></circle>
-                        <circle id="score-arc" class="transition-all duration-1000 ease-out" cx="50" cy="50" fill="none" r="45" stroke="#4f46e5" stroke-dasharray="283" stroke-dashoffset="283" stroke-width="7" stroke-linecap="round"></circle>
+            <div class="ar-live relative z-10 flex w-full flex-col items-center justify-center">
+                <div id="score-glow-wrap" class="ar-score-glow-wrap ar-glow-muted relative mx-auto flex shrink-0 items-center justify-center overflow-visible w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72">
+                    <svg class="h-full w-full -rotate-90 transform overflow-visible" viewBox="0 0 100 100" aria-hidden="true">
+                        <defs>
+                            <!-- Üst→alt (SVG); -rotate-90 ile ekranda soldan sağa: indigo-500 → purple-600 -->
+                            <linearGradient id="score-arc-gradient" x1="50%" y1="0%" x2="50%" y2="100%">
+                                <stop offset="0%" stop-color="#6366f1"/>
+                                <stop offset="100%" stop-color="#9333ea"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- Potansiyel: dışta çok soluk ince kesikli yol -->
+                        <circle id="score-potential-arc" cx="50" cy="50" fill="none" r="49" stroke="rgba(79, 70, 229, 0.2)" stroke-width="1.65" stroke-dasharray="4 8" stroke-linecap="round" stroke-dashoffset="308" style="transition: stroke-dashoffset 1s ease-out"></circle>
+                        <circle cx="50" cy="50" fill="none" r="45" stroke="rgba(79, 70, 229, 0.1)" stroke-width="7"></circle>
+                        <circle id="score-arc" class="transition-all duration-1000 ease-out" cx="50" cy="50" fill="none" r="45" stroke="url(#score-arc-gradient)" stroke-dasharray="283" stroke-dashoffset="283" stroke-width="7" stroke-linecap="round"></circle>
                     </svg>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 pt-1">
-                        <span class="text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-indigo-600 leading-none" id="score-value">—</span>
-                        <span class="text-[11px] font-semibold uppercase tracking-widest text-slate-400">eşleşme</span>
+                    <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 pt-1">
+                        <span class="ar-score-value-lift text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-indigo-700 leading-none" id="score-value">—</span>
+                        <span class="text-[11px] font-semibold uppercase tracking-widest text-indigo-700 opacity-90" id="score-match-label">eşleşme</span>
                     </div>
                 </div>
-                <div id="score-risk-badge" class="mt-6 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600" role="status" aria-live="polite">
-                    <span class="material-symbols-outlined text-[18px] opacity-80" id="score-risk-icon" style="font-variation-settings:'FILL' 1,'wght' 500">progress_activity</span>
-                    <span id="score-risk-label">Hesaplanıyor</span>
-                </div>
+                <button type="button" id="ar-growth-pill" class="ar-growth-pill hidden mt-5 mx-auto inline-flex max-w-[min(100%,28rem)] items-center justify-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-5 py-2.5 text-center shadow-sm transition-colors transition-shadow duration-200 hover:bg-indigo-100 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 sm:max-w-2xl sm:px-8 sm:py-3" aria-label="Potansiyeli keşfet — koç önerilerine git">
+                    <span class="select-none text-[15px] leading-none text-indigo-400 sm:text-base" aria-hidden="true"></span>
+                    <span class="text-[13px] font-bold leading-snug text-indigo-600 sm:text-sm">
+                        Potansiyelini Keşfet: Hedef Skor %<span id="ar-growth-pill-pct" class="tabular-nums">—</span>
+                    </span>
+                </button>
             </div>
         </div>
     </section>
@@ -416,7 +433,7 @@
                     </div>
                 </div>
 
-                <div class="ar-skills-col-missing flex flex-1 flex-col min-h-0 pt-8">
+                <div id="ar-missing-skills-anchor" class="ar-skills-col-missing flex flex-1 flex-col min-h-0 pt-8 scroll-mt-24">
                     <div class="flex flex-wrap items-center gap-3 mb-4 shrink-0 pb-4 border-b border-slate-100">
                         <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-dashed border-indigo-200 bg-slate-50 text-slate-400">
                             <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 0,'wght' 400">change_circle</span>
