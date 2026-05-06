@@ -563,23 +563,24 @@ function populateAnalysisResult() {
         var v = alignment[t.key];
         var p = pct01(v);
         return (
-            '<div data-ar-score-row class="flex gap-3 rounded-xl border border-slate-100/95 bg-white px-3.5 py-2.5 shadow-sm ring-1 ring-slate-900/[0.03] transition-shadow duration-300 hover:shadow-md">' +
-            '<div class="ar-score-row-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-600 ring-1 ring-indigo-100 self-start mt-0.5">' +
-            '<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:\'FILL\' 1">' +
+            '<div data-ar-score-row class="flex gap-2.5 items-start">' +
+            '<div class="ar-score-row-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-50 text-slate-500">' +
+            '<span class="material-symbols-outlined text-[16px]" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">' +
             t.icon +
             "</span></div>" +
-            '<div class="min-w-0 flex-1">' +
-            '<div class="flex items-baseline justify-between gap-2 mb-1">' +
-            '<span class="text-sm font-semibold text-slate-800 leading-tight">' +
+            '<div class="min-w-0 flex-1 pt-0.5">' +
+            '<div class="flex items-baseline justify-between gap-2">' +
+            '<span class="text-sm font-semibold text-slate-900 leading-tight">' +
             escapeHtml(t.label) +
-            '</span><span class="ar-score-pct text-sm font-bold tabular-nums tracking-tight text-indigo-700" data-target="' +
+            '</span><span class="ar-score-pct text-sm font-bold tabular-nums tracking-tight text-indigo-600" data-target="' +
             p +
             '">0%</span></div>' +
-            '<div class="ar-score-bar-track mb-1.5">' +
-            '<div class="ar-score-bar-fill"></div></div>' +
-            '<p class="text-[11px] leading-snug text-slate-600">' +
+            '<p class="mt-0.5 text-xs leading-snug text-slate-400">' +
             escapeHtml(t.hint) +
-            "</p></div></div>"
+            "</p>" +
+            '<div class="ar-score-bar-track mt-2 h-1.5 w-full max-w-full rounded-full overflow-hidden">' +
+            '<div class="ar-score-bar-fill h-full rounded-full"></div></div>' +
+            "</div></div>"
         );
     }).join("");
     requestAnimationFrame(function() {
@@ -594,11 +595,11 @@ function populateAnalysisResult() {
                 var raw = String(t);
                 var tipId = "ar-trait-tip-" + idx;
                 return (
-                    '<span class="ar-trait-badge-shell group relative inline-flex max-w-full align-top">' +
-                    '<span class="ar-trait-badge inline-flex max-w-full items-center rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs font-medium leading-snug text-indigo-600" aria-describedby="' +
+                    '<span class="ar-trait-badge-shell group relative inline-flex max-w-full align-top" role="listitem">' +
+                    '<span class="ar-trait-badge inline-flex max-w-full items-center rounded-full border border-slate-200/70 bg-slate-100 px-3 py-1 text-xs font-medium leading-snug text-slate-600" aria-describedby="' +
                     tipId +
                     '">' +
-                    '<span class="min-w-0 max-w-[14rem] truncate sm:max-w-[18rem]">' +
+                    '<span class="min-w-0 max-w-[min(100%,16rem)] break-words text-left">' +
                     escapeHtml(raw) +
                     "</span></span>" +
                     '<span id="' +
