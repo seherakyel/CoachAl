@@ -258,13 +258,6 @@
   transform:scale(0.96);
   transform-origin:center;
 }
-/* Mülakat süreci — düz liste, kutu yok */
-.ar-ip-plain{border-top:1px solid rgb(241 245 249)}
-.ar-ip-row{
-  padding:1.1rem 0;
-  border-bottom:1px solid rgb(243 244 246);
-}
-.ar-ip-row:last-child{border-bottom:none}
 /* Yetenek sütunları — düz beyaz; renk sadece kenarda */
 .ar-skills-col-matched.ar-surface-card,
 .ar-skills-col-missing.ar-surface-card{
@@ -394,15 +387,6 @@
   height:2.25rem;
   background:linear-gradient(to top,#fff 0%,rgba(255,255,255,0.97) 40%,transparent 100%);
 }
-/* Mülakat süreci — kompakt (iç scroll yok; satır yüksekliği ~%30 azaltılmış) */
-#interview-process .ar-ip-row{
-  padding:0.77rem 0;
-}
-#interview-process .ar-ip-row p{
-  margin-top:0.35rem;
-  font-size:0.8125rem;
-  line-height:1.45;
-}
 /* Gelişim rehberi — ortalanmış modal */
 #ar-learn-modal[aria-hidden="true"]{pointer-events:none}
 #ar-learn-modal-backdrop{animation:ar-modal-fade-in 0.2s ease}
@@ -523,7 +507,7 @@
     </section>
     </aside>
 
-        <!-- Sağ kolon: CoachAI → Eşleşen → Eksik → Mülakat → CTA -->
+        <!-- Sağ kolon: CoachAI → Eşleşen → Eksik → CTA -->
         <div class="ar-dashboard-col-right flex min-h-0 min-w-0 flex-col gap-8 h-full xl:h-full">
             <div class="ar-surface-card relative shrink-0 overflow-hidden">
                 <div class="absolute top-0 right-0 w-40 h-40 bg-indigo-100/35 rounded-bl-full blur-3xl pointer-events-none"></div>
@@ -587,19 +571,8 @@
                 </div>
             </div>
 
-            <div class="ar-surface-card">
-                <h4 class="mb-3 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Mülakat süreci</h4>
-                <div class="relative min-w-0">
-                    <div class="ar-skel-wrap absolute inset-0 z-[1] space-y-2" aria-hidden="true">
-                        <div class="h-12 w-full rounded-lg ar-skel"></div>
-                        <div class="h-12 w-full rounded-lg opacity-80 ar-skel"></div>
-                    </div>
-                    <div class="ar-live relative z-[2] space-y-2 pr-1" id="interview-process"></div>
-                </div>
-            </div>
-
             <div class="ar-surface-card shrink-0">
-                <a href="interviews.html" class="coachai-cta-primary group flex w-full items-center justify-center gap-2 rounded-[14px] px-5 py-3.5 text-sm font-semibold no-underline">
+                <a href="interview-prep.html" class="coachai-cta-primary group flex w-full items-center justify-center gap-2 rounded-[14px] px-5 py-3.5 text-sm font-semibold no-underline">
                     <span class="material-symbols-outlined text-[20px] transition group-hover:scale-105" style="font-variation-settings:'FILL' 0">record_voice_over</span>
                     Mülakata geç
                 </a>

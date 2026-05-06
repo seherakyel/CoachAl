@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoachAI - Mülakat hazırlığı</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{fontFamily:{sans:["Inter","system-ui","sans-serif"],display:["Plus Jakarta Sans","Inter","system-ui","sans-serif"]}}}}</script>
+<style>
+body{font-family:Inter,system-ui,sans-serif}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+/* Timeline: ince bağlantı çizgisi satır hizası */
+.ip-timeline-row{align-items:flex-start}
+@media (max-width:767px){
+  .ip-timeline-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:0.5rem}
+  .ip-timeline-inner{min-width:min(100%,520px)}
+}
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased flex h-screen overflow-hidden">
+<div id="sidebar-container"></div>
+<div class="flex flex-1 flex-col min-w-0 overflow-hidden">
+<div id="header-container"></div>
+<main class="flex-1 overflow-y-auto overflow-x-hidden">
+<div class="max-w-6xl mx-auto px-6 sm:px-10 lg:px-14 py-10 sm:py-14 lg:py-16 pb-20">
+
+    <header class="mb-12 sm:mb-14 lg:mb-16">
+        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mb-3">Mülakat hazırlığı</p>
+        <h1 class="font-display text-3xl sm:text-4xl lg:text-[2.5rem] font-bold tracking-tight text-slate-900 leading-[1.15] max-w-3xl">
+            Mülakat yol haritası
+        </h1>
+        <div class="mt-5 flex flex-wrap items-center gap-3">
+            <span id="ip-company-badge" class="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-800 shadow-sm" aria-live="polite">
+                Hazırlık planı
+            </span>
+            <span class="text-sm text-slate-500 hidden sm:inline" id="ip-page-subtitle" aria-hidden="true"></span>
+        </div>
+        <a href="analysis-result.html" class="inline-block mt-6 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors border-b border-transparent hover:border-indigo-600">
+            ← Eşleşme analizine dön
+        </a>
+    </header>
+
+    <section class="mb-12 sm:mb-16" aria-labelledby="ip-roadmap-heading">
+        <div class="flex items-end justify-between gap-4 flex-wrap mb-6">
+            <h2 id="ip-roadmap-heading" class="text-sm font-semibold uppercase tracking-wider text-slate-500">Yol haritası</h2>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-8 sm:px-8 sm:py-10">
+            <div class="ip-timeline-scroll">
+                <div id="ip-roadmap" class="ip-timeline-inner ip-timeline-row flex w-full items-start" aria-label="Mülakat adımları"></div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-slate-100 flex justify-end">
+                <a href="interviews.html" class="group inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-slate-700 shadow-sm transition-colors hover:border-indigo-300 hover:bg-white hover:text-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" aria-label="Mülakat modu seçimine geç" title="Mülakat modu seçimine geç">
+                    <span class="material-symbols-outlined text-[24px] transition-transform group-hover:translate-x-0.5" aria-hidden="true">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+</div>
+</main>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/interview-prep.js"></script>
+<script>initLayout("interviews");</script>
+<script>onInterviewPrepReady();</script>
+</body>
+</html>
