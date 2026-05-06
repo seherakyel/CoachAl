@@ -5,7 +5,7 @@
 <title>CoachAI - Eşleşme Analizi</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 <script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"primary":"#3525cd","primary-container":"#4f46e5","on-primary":"#ffffff","on-primary-container":"#dad7ff","primary-fixed":"#e2dfff","primary-fixed-dim":"#c3c0ff","secondary":"#545f73","on-secondary":"#ffffff","secondary-container":"#d5e0f8","on-secondary-container":"#586377","tertiary":"#7e3000","error":"#ba1a1a","on-error":"#ffffff","error-container":"#ffdad6","on-error-container":"#93000a","background":"#fcf8ff","on-background":"#1b1b24","surface":"#fcf8ff","surface-container-lowest":"#ffffff","surface-container-low":"#f5f2ff","surface-container":"#f0ecf9","surface-container-high":"#eae6f4","surface-container-highest":"#e4e1ee","on-surface":"#1b1b24","on-surface-variant":"#464555","surface-variant":"#e4e1ee","outline":"#777587","outline-variant":"#c7c4d8"},borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},spacing:{"xs":"4px","sm":"12px","md":"24px","lg":"40px","xl":"64px","gutter":"24px","base":"8px","container-max":"1280px"},fontFamily:{"body-md":["Inter"],"h1":["Inter"],"h2":["Inter"],"h3":["Inter"],"body-lg":["Inter"],"label-sm":["Inter"]},fontSize:{"body-md":["16px",{"lineHeight":"1.65","fontWeight":"400"}],"h1":["40px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"h2":["30px",{"lineHeight":"1.35","letterSpacing":"-0.01em","fontWeight":"600"}],"h3":["24px",{"lineHeight":"1.45","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.65","fontWeight":"400"}],"label-sm":["14px",{"lineHeight":"1.5","fontWeight":"500"}]}}}}</script>
 <style>
@@ -84,49 +84,39 @@
   position:static;
   z-index:auto;
 }
-.ar-dashboard-col-left .ar-left-gauge-card{
-  background-color:#fff;
-  background-image:
-    linear-gradient(to bottom,rgba(238,242,255,0.55),transparent 52%),
-    radial-gradient(ellipse 78% 62% at 50% 46%,rgba(99,102,241,0.08) 0%,rgba(129,140,248,0.04) 45%,transparent 70%);
-}
-/* Gösterge: iç içerik grid ile üst üste (absolute yok) */
-.ar-left-gauge-card .ar-gauge-stack{
-  width:100%;
-  max-width:min(100%,12rem);
-  margin-left:auto;
-  margin-right:auto;
-  aspect-ratio:1;
-  min-height:0;
-}
-.ar-left-gauge-card #score-glow-wrap{
-  display:grid;
-  grid-template-columns:1fr;
-  grid-template-rows:1fr;
-  width:100%;
-  height:100%;
-  min-height:0;
-  min-width:0;
-}
-.ar-left-gauge-card #score-glow-wrap > svg{
-  grid-column:1;
-  grid-row:1;
-  width:100%;
-  height:100%;
-  align-self:center;
-  justify-self:center;
-}
-.ar-left-gauge-card #score-glow-wrap > .ar-gauge-score-overlay{
-  grid-column:1;
-  grid-row:1;
-  z-index:1;
+/* Coach kartı — skor widget float-right; metin üstte sarar, altta tam genişlik */
+.ar-coach-match-block{
   display:flex;
   flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:0.25rem;
-  padding-top:0.25rem;
-  pointer-events:none;
+  overflow:hidden;
+  min-width:10rem;
+  max-width:13rem;
+}
+@media (min-width:768px){
+  .ar-coach-advice-flow::after{
+    content:"";
+    display:block;
+    clear:both;
+  }
+}
+.ar-coach-score-track-flush{
+  margin-top:0;
+  width:100%;
+  height:2px;
+  flex-shrink:0;
+  background:#e2e8f0;
+  overflow:hidden;
+  border-radius:0 0 0.5rem 0.5rem;
+}
+.ar-coach-score-fill-flush{
+  height:100%;
+  background:#4f46e5;
+  width:0%;
+  border-radius:0 0 0 0.5rem;
+  transition:width 1s cubic-bezier(0.33,1,0.68,1);
+}
+.ar-coach-score-fill-flush[data-ar-fill-wide="1"]{
+  border-radius:0 0 0.5rem 0.5rem;
 }
 /* Skor bileşenleri — sol sütunda kompakt; üç satır dikey, her satırda ikon + metin yatay */
 .ar-dashboard-col-left #score-breakdown{
@@ -190,38 +180,6 @@
   justify-content:flex-start;
   padding:0.35rem 0.65rem;
   font-size:0.68rem;
-}
-.ar-dashboard-col-left #score-value{
-  font-size:clamp(1.65rem,4.5vw,2.15rem)!important;
-}
-.ar-dashboard-col-left #ar-growth-pill{
-  max-width:100%;
-  flex-wrap:wrap;
-  justify-content:center;
-  padding-left:0.65rem;
-  padding-right:0.65rem;
-}
-/* Skor gauge parlama (renk JS ile eşlenir) */
-.ar-score-glow-wrap{
-  border-radius:9999px;
-  transition:filter .6s ease;
-}
-.ar-score-glow-wrap.ar-glow-indigo{
-  filter:drop-shadow(0 0 16px rgba(79,70,229,0.2)) drop-shadow(0 0 32px rgba(129,140,248,0.12));
-}
-.ar-score-glow-wrap.ar-glow-muted{
-  filter:drop-shadow(0 0 14px rgba(79,70,229,0.12)) drop-shadow(0 0 28px rgba(129,140,248,0.06));
-}
-/* Skor rakamı — hafif yükselme */
-.ar-score-value-lift{
-  text-shadow:
-    0 1px 0 rgba(255,255,255,0.95),
-    0 2px 6px rgba(79,70,229,0.14),
-    0 1px 2px rgba(67,56,202,0.08);
-}
-/* Grafik odağı — kart içinde hafif radyal vurgu */
-.ar-gauge-radial-bg{
-  background:radial-gradient(ellipse 78% 62% at 50% 46%,rgba(99,102,241,0.1) 0%,rgba(129,140,248,0.045) 45%,transparent 70%);
 }
 /* Trendyol markası — PNG yok, düzen (turuncu / siyah şerit / wordmark) */
 .ar-logo-trendyol{
@@ -393,7 +351,6 @@
 .ar-learn-tab[aria-selected="true"]{color:#4f46e5;border-bottom-color:#4f46e5}
 .ar-learn-tab[aria-selected="false"]{color:#64748b;border-bottom-color:transparent}
 @keyframes ar-modal-fade-in{from{opacity:0}to{opacity:1}}
-.ar-growth-pill{cursor:pointer}
 </style>
 </head>
 <body class="bg-[#F8FAFC] text-on-background font-body-md flex h-screen overflow-hidden antialiased">
@@ -409,7 +366,7 @@
     </header>
 
     <div class="ar-dashboard-split">
-    <aside class="ar-dashboard-col-left flex w-full min-w-0 flex-col" aria-label="Özet ve eşleşme skoru">
+    <aside class="ar-dashboard-col-left flex w-full min-w-0 flex-col" aria-label="Özet ve skor bileşenleri">
     <article class="ar-surface-card flex w-full flex-col gap-6">
                 <div class="grid grid-cols-1">
                     <div class="col-start-1 row-start-1 ar-skel-wrap flex items-center gap-4 py-1 sm:gap-5" aria-hidden="true">
@@ -456,40 +413,6 @@
                 </div>
     </article>
 
-    <section class="ar-surface-card ar-left-gauge-card w-full min-w-0 overflow-x-clip">
-        <div class="grid grid-cols-1">
-            <div class="col-start-1 row-start-1 ar-skel-wrap flex justify-center py-10" aria-hidden="true">
-                <div class="aspect-square w-[min(100%,11rem)] max-w-full rounded-full ar-skel opacity-90"></div>
-            </div>
-            <div class="col-start-1 row-start-1 ar-live flex w-full flex-col items-center gap-6 px-1 py-8">
-                <div class="ar-gauge-stack">
-                    <div id="score-glow-wrap" class="ar-score-glow-wrap ar-glow-muted min-h-0 min-w-0 overflow-hidden rounded-full">
-                        <svg class="h-full w-full -rotate-90 transform" viewBox="0 0 100 100" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
-                        <defs>
-                            <linearGradient id="score-arc-gradient" x1="50%" y1="0%" x2="50%" y2="100%">
-                                <stop offset="0%" stop-color="#6366f1"/>
-                                <stop offset="100%" stop-color="#9333ea"/>
-                            </linearGradient>
-                        </defs>
-                        <circle id="score-potential-arc" cx="50" cy="50" fill="none" r="49" stroke="rgba(79, 70, 229, 0.2)" stroke-width="1.65" stroke-dasharray="4 8" stroke-linecap="round" stroke-dashoffset="308" style="transition: stroke-dashoffset 1s ease-out"></circle>
-                        <circle cx="50" cy="50" fill="none" r="45" stroke="rgba(79, 70, 229, 0.1)" stroke-width="7"></circle>
-                        <circle id="score-arc" class="transition-all duration-1000 ease-out" cx="50" cy="50" fill="none" r="45" stroke="url(#score-arc-gradient)" stroke-dasharray="283" stroke-dashoffset="283" stroke-width="7" stroke-linecap="round"></circle>
-                    </svg>
-                    <div class="ar-gauge-score-overlay">
-                        <span class="ar-score-value-lift text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-indigo-700 leading-none" id="score-value">—</span>
-                        <span class="text-[11px] font-semibold uppercase tracking-widest text-indigo-700 opacity-90" id="score-match-label">eşleşme</span>
-                    </div>
-                </div>
-                </div>
-                <button type="button" id="ar-growth-pill" class="ar-growth-pill hidden mt-1 inline-flex max-w-full items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-center text-sm transition-colors duration-200 hover:bg-indigo-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2" aria-label="Potansiyeli keşfet — koç önerilerine git">
-                    <span class="text-[12px] font-bold leading-snug text-indigo-600 sm:text-[13px]">
-                        Potansiyelini Keşfet: Hedef Skor %<span id="ar-growth-pill-pct" class="tabular-nums">—</span>
-                    </span>
-                </button>
-            </div>
-        </div>
-    </section>
-
     <section class="ar-surface-card flex w-full flex-col gap-6">
                     <div id="score-breakdown-section">
                         <h4 class="mb-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Skorun bileşenleri</h4>
@@ -511,19 +434,36 @@
         <div class="ar-dashboard-col-right flex min-h-0 min-w-0 flex-col gap-8 h-full xl:h-full">
             <div class="ar-surface-card relative shrink-0 overflow-hidden">
                 <div class="absolute top-0 right-0 w-40 h-40 bg-indigo-100/35 rounded-bl-full blur-3xl pointer-events-none"></div>
-                <div class="relative flex gap-5">
+                <div class="relative flex items-start gap-4 sm:gap-5">
                     <div class="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-indigo-600/20">
                         <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 1">lightbulb</span>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <h3 class="text-sm font-semibold text-indigo-950 mb-2 tracking-tight">CoachAI tavsiyesi</h3>
-                        <div class="relative min-h-[4.5rem]">
-                            <div class="ar-skel-wrap absolute inset-0 space-y-2" aria-hidden="true">
-                                <div class="h-3 ar-skel w-full rounded"></div>
-                                <div class="h-3 ar-skel w-full rounded opacity-90"></div>
-                                <div class="h-3 ar-skel w-4/5 rounded opacity-80"></div>
+                        <div class="ar-coach-advice-flow flex min-w-0 flex-col gap-4 md:block md:gap-0">
+                            <aside class="ar-coach-match-block order-2 w-full max-w-full shrink-0 rounded-lg border border-slate-200/90 bg-slate-50/90 shadow-sm md:order-none md:float-right md:mb-4 md:ml-8 md:mt-0 md:w-auto md:max-w-[13rem]" aria-label="Genel eşleşme skoru">
+                            <div class="flex h-auto items-center gap-3 px-6 py-3">
+                                <div class="flex shrink-0 items-baseline gap-0.5">
+                                    <span class="text-2xl font-bold tabular-nums leading-none tracking-tight text-slate-900" id="score-value">—</span>
+                                    <span class="text-xs font-medium text-slate-500">%</span>
+                                </div>
+                                <div class="min-w-0 flex flex-1 flex-col gap-0 leading-tight">
+                                    <p class="text-[9px] font-medium uppercase leading-tight tracking-[0.12em] text-slate-500" id="score-match-label">Eşleşme</p>
+                                    <p id="coach-potential-line" class="mt-0.5 hidden text-left text-[11px] italic leading-snug text-slate-400" aria-live="polite">Hedef: %<span id="coach-potential-pct" class="tabular-nums">—</span></p>
+                                </div>
                             </div>
-                            <p class="ar-live text-[15px] text-slate-700 leading-relaxed" id="ai-advice">Analiz hazırlanıyor…</p>
+                            <div class="ar-coach-score-track-flush" role="presentation">
+                                <div id="coach-headline-score-bar" class="ar-coach-score-fill-flush"></div>
+                            </div>
+                            </aside>
+                            <h3 class="order-1 mb-2.5 text-sm font-semibold leading-snug tracking-tight text-slate-900 md:order-none">CoachAI tavsiyesi</h3>
+                            <div class="relative order-3 min-h-[3rem] min-w-0 w-full max-w-none md:order-none md:pr-1.5">
+                                <div class="ar-skel-wrap absolute inset-0 space-y-2" aria-hidden="true">
+                                    <div class="h-3 ar-skel w-full rounded"></div>
+                                    <div class="h-3 ar-skel w-full rounded opacity-90"></div>
+                                    <div class="h-3 ar-skel w-4/5 rounded opacity-80"></div>
+                                </div>
+                                <p class="ar-live w-full max-w-none text-[15px] font-normal leading-relaxed text-slate-700" id="ai-advice">Analiz hazırlanıyor…</p>
+                            </div>
                         </div>
                     </div>
                 </div>

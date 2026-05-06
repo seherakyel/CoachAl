@@ -346,19 +346,15 @@ function computePotentialMatchScore(currentScore, missingRows) {
     return { potential: potential, gain: potential - currentScore };
 }
 
-/** Dış kesikli potansiyel halkası + gelişim kapsülü (eksik yeteneklerden). */
+/** Skor kutusunda 'Hedef: %…' satırı (eksik yeteneklerden potansiyel). */
 function updateGrowthPotentialUi(score, missingUi) {
-    var POT_R = 49;
-    var circPot = 2 * Math.PI * POT_R;
-    var arcPot = document.getElementById("score-potential-arc");
-    var pill = document.getElementById("ar-growth-pill");
-    var pillPct = document.getElementById("ar-growth-pill-pct");
-    if (!arcPot || !pill || !pillPct) return;
+    var line = document.getElementById("coach-potential-line");
+    var pctEl = document.getElementById("coach-potential-pct");
+    if (!line || !pctEl) return;
 
     var rows = Array.isArray(missingUi) ? missingUi : [];
     if (!rows.length) {
-        arcPot.style.strokeDashoffset = String(circPot);
-        pill.classList.add("hidden");
+        line.classList.add("hidden");
         return;
     }
 
@@ -367,24 +363,12 @@ function updateGrowthPotentialUi(score, missingUi) {
     var gain = Math.max(0, pot - score);
 
     if (gain <= 0) {
-        arcPot.style.strokeDashoffset = String(circPot);
-        pill.classList.add("hidden");
+        line.classList.add("hidden");
         return;
     }
 
-    arcPot.setAttribute("stroke-dasharray", "4 8");
-    arcPot.style.strokeDashoffset = String(circPot - (pot / 100) * circPot);
-
-    pillPct.textContent = String(pot);
-    pill.classList.remove("hidden");
-
-    if (!pill._arPotentialScrollBound) {
-        pill._arPotentialScrollBound = true;
-        pill.addEventListener("click", function () {
-            var anchor = document.getElementById("ar-missing-skills-anchor");
-            if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-    }
+    pctEl.textContent = String(pot);
+    line.classList.remove("hidden");
 }
 
 /**
@@ -525,27 +509,24 @@ function populateAnalysisResult() {
     var score = Math.round(rawPct);
 
     var scoreValEl = document.getElementById("score-value");
-    var glowWrap = document.getElementById("score-glow-wrap");
-    var arcEl = document.getElementById("score-arc");
     if (scoreValEl) scoreValEl.textContent = score;
 
-    if (glowWrap) {
-        glowWrap.className =
-            "ar-score-glow-wrap ar-glow-indigo min-h-0 min-w-0 overflow-hidden rounded-full";
-    }
-    if (scoreValEl) {
-        scoreValEl.className =
-            "ar-score-value-lift text-4xl sm:text-5xl md:text-6xl font-bold tabular-nums tracking-tight text-indigo-700 leading-none";
-    }
-    var matchLbl = document.getElementById("score-match-label");
-    if (matchLbl) {
-        matchLbl.className = "text-[11px] font-semibold uppercase tracking-widest text-indigo-700 opacity-90";
+    var coachBar = document.getElementById("coach-headline-score-bar");
+    if (coachBar) {
+        coachBar.style.width = "0%";
+        coachBar.removeAttribute("data-ar-fill-wide");
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                var w = Math.min(100, Math.max(0, score));
+                coachBar.style.width = w + "%";
+                if (w >= 100) coachBar.setAttribute("data-ar-fill-wide", "1");
+            });
+        });
     }
 
-    if (arcEl) {
-        var circumference = 283;
-        var offset = circumference - (score / 100) * circumference;
-        arcEl.style.strokeDashoffset = offset;
+    var matchLbl = document.getElementById("score-match-label");
+    if (matchLbl) {
+        matchLbl.textContent = "Eşleşme";
     }
 
     var company = companyProfile.company_name || sessionStorage.getItem("coachai_company_name") || "—";
