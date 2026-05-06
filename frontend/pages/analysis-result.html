@@ -189,7 +189,7 @@
   -webkit-box-orient:vertical;
   overflow:hidden;
 }
-/* Aranan profil — sol sütunda sade dikey rozetler */
+/* Aranan profil — sol sütunda wrap satırı rozetler */
 .ar-dashboard-col-left #key-traits.ar-key-traits-scroll{
   max-height:none;
   overflow:visible;
@@ -199,10 +199,10 @@
   margin:0;
 }
 .ar-dashboard-col-left #key-traits .ar-trait-badge{
-  width:100%;
+  width:auto;
   max-width:100%;
   justify-content:flex-start;
-  padding:0.35rem 0.55rem;
+  padding:0.35rem 0.65rem;
   font-size:0.68rem;
 }
 .ar-dashboard-col-left #score-value{
@@ -285,9 +285,6 @@
   background:#fff;
   border-color:#e2e8f0;
 }
-.ar-skill-detail{
-  line-height:1.6;
-}
 /* Skor bileşenleri — premium bar & ikon */
 .ar-score-bar-track{
   height:8px;
@@ -314,33 +311,98 @@
   box-shadow:0 8px 22px rgba(79,70,229,0.14),0 2px 8px rgba(15,23,42,0.06);
 }
 .ar-trait-badge{
-  transition:background-color 0.2s ease,border-color 0.2s ease,box-shadow 0.2s ease;
+  transition:background-color 0.2s ease;
 }
 .ar-trait-badge:hover{
-  background-color:rgba(238,242,255,0.65);
-  border-color:rgba(165,180,252,0.85);
-  box-shadow:0 2px 8px rgba(79,70,229,0.08);
+  background-color:rgba(224,231,255,0.92);
 }
-/* Aranan profil — uzun rozet listesi kart içinde kayar */
+/* Yetenek accordion — eşleşen + eksik (aynı indigo ailesi; yalnızca ikon tipi/opacity farkı) */
+.ar-trait-badge-shell{
+  position:relative;
+}
+.ar-skill-acc-panel{
+  display:grid;
+  grid-template-rows:0fr;
+  transition:grid-template-rows 0.32s ease;
+}
+.ar-skill-acc-item--open .ar-skill-acc-panel{
+  grid-template-rows:1fr;
+}
+.ar-skill-acc-panel-sizer{
+  min-height:0;
+  overflow:hidden;
+}
+.ar-skill-acc-item--gap.ar-skill-acc-item--open,
+.ar-skill-acc-item--matched.ar-skill-acc-item--open{
+  border-color:rgba(165,180,252,0.75);
+  box-shadow:0 1px 3px rgba(15,23,42,0.06);
+}
+.ar-skill-acc-item--gap.ar-skill-acc-item--open .ar-skill-acc-trigger,
+.ar-skill-acc-item--matched.ar-skill-acc-item--open .ar-skill-acc-trigger{
+  background-color:rgb(238 242 255);
+}
+.ar-skill-acc-item--open .ar-skill-acc-chevron{
+  transform:rotate(180deg);
+}
+/* Aranan profil rozeti — hover tooltip balonu */
+.ar-missing-tooltip{
+  position:absolute;
+  bottom:calc(100% + 12px);
+  left:50%;
+  z-index:60;
+  width:max-content;
+  max-width:min(18rem,calc(100vw - 2rem));
+  padding:0.55rem 0.75rem;
+  border-radius:0.75rem;
+  border:1px solid #e0e7ff;
+  background:#fff;
+  box-shadow:0 12px 40px -12px rgba(15,23,42,0.18),0 0 0 1px rgba(99,102,241,0.06);
+  font-size:0.75rem;
+  line-height:1.45;
+  color:#475569;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .18s ease,visibility .18s ease;
+}
+.ar-missing-tooltip::after{
+  content:"";
+  position:absolute;
+  top:100%;
+  left:50%;
+  margin-left:-6px;
+  border:6px solid transparent;
+  border-top-color:#fff;
+  filter:drop-shadow(0 2px 2px rgba(15,23,42,0.06));
+}
+.ar-trait-badge-shell:hover .ar-missing-tooltip,
+.ar-trait-badge-shell:focus-within .ar-missing-tooltip{
+  opacity:1;
+  visibility:visible;
+}
+@media (hover:none){
+  .ar-missing-tooltip{
+    bottom:auto;
+    top:calc(100% + 10px);
+    padding-top:0.65rem;
+  }
+  .ar-missing-tooltip::after{
+    top:auto;
+    bottom:100%;
+    border-top-color:transparent;
+    border-bottom-color:#fff;
+    filter:none;
+  }
+}
+/* Aranan profil — modern rozet satırı (sol kart ile uyumlu) */
 .ar-key-traits-scroll{
-  max-height:min(30vh,220px);
-  overflow-y:auto;
-  overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
-  padding:10px 8px 10px 4px;
-  margin:0 -4px 0 0;
-  border-radius:14px;
-  border:1px solid rgb(241 245 249);
-  background:linear-gradient(to bottom,#fafbfc 0%,#fff 40%);
-  scrollbar-width:thin;
-  scrollbar-color:#818cf8 #eef2f7;
-  align-content:flex-start;
+  max-height:none;
+  overflow:visible;
+  padding:0;
+  margin:0;
+  border:none;
+  background:transparent;
 }
-.ar-key-traits-scroll::-webkit-scrollbar{width:6px}
-.ar-key-traits-scroll::-webkit-scrollbar-track{background:#eef2f7;border-radius:99px;margin:4px 0}
-.ar-key-traits-scroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#a5b4fc,#6366f1);border-radius:99px}
-.ar-key-traits-scroll::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#818cf8,#4f46e5)}
 .ar-key-traits-fade{
   pointer-events:none;
   height:2.25rem;
@@ -354,50 +416,6 @@
   margin-top:0.35rem;
   font-size:0.8125rem;
   line-height:1.45;
-}
-/* Eksik liste: grid satırıyla hizalı yükseklik, iç scroll + gri scrollbar + alt fade */
-.ar-missing-scroll-wrap{
-  position:relative;
-  display:flex;
-  flex-direction:column;
-  flex:1 1 0;
-  min-height:0;
-}
-.ar-missing-scroll{
-  min-height:0;
-  flex:1 1 auto;
-  overflow-y:auto;
-  overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
-  border-radius:14px;
-  border:1px solid #e2e8f0;
-  background:linear-gradient(to bottom,#fafbfc 0%,#fff 18%,#fafbfc 100%);
-  max-height:100%;
-}
-.ar-missing-scroll-fade{
-  pointer-events:none;
-  position:absolute;
-  bottom:1px;
-  left:1px;
-  right:10px;
-  height:2.75rem;
-  z-index:3;
-  border-bottom-left-radius:12px;
-  border-bottom-right-radius:12px;
-  background:linear-gradient(to top,#fff 0%,rgba(255,255,255,0.96) 38%,rgba(255,255,255,0) 100%);
-}
-@media (min-width:768px){
-  .ar-missing-scroll-wrap{
-    max-height:min(58vh,640px);
-  }
-}
-.ar-missing-scroll::-webkit-scrollbar{width:6px}
-.ar-missing-scroll::-webkit-scrollbar-track{background:#f1f5f9;border-radius:99px;margin:6px 0}
-.ar-missing-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
-.ar-missing-scroll::-webkit-scrollbar-thumb:hover{background:#94a3b8}
-@supports (scrollbar-color: auto){
-  .ar-missing-scroll{scrollbar-color:#cbd5e1 #f1f5f9;scrollbar-width:thin}
 }
 /* Gelişim rehberi — ortalanmış modal */
 #ar-learn-modal[aria-hidden="true"]{pointer-events:none}
@@ -507,8 +525,7 @@
                     </div>
                 </div>
                 </div>
-                <button type="button" id="ar-growth-pill" class="ar-growth-pill hidden mt-1 inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-center text-sm shadow-sm transition-colors transition-shadow duration-200 hover:bg-indigo-100 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2" aria-label="Potansiyeli keşfet — koç önerilerine git">
-                    <span class="select-none text-[15px] leading-none text-indigo-400" aria-hidden="true">✨</span>
+                <button type="button" id="ar-growth-pill" class="ar-growth-pill hidden mt-1 inline-flex max-w-full items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-center text-sm transition-colors duration-200 hover:bg-indigo-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2" aria-label="Potansiyeli keşfet — koç önerilerine git">
                     <span class="text-[12px] font-bold leading-snug text-indigo-600 sm:text-[13px]">
                         Potansiyelini Keşfet: Hedef Skor %<span id="ar-growth-pill-pct" class="tabular-nums">—</span>
                     </span>
@@ -556,47 +573,44 @@
                 </div>
             </div>
 
-            <div class="ar-surface-card flex min-h-0 min-w-0 flex-col overflow-hidden">
-                <div class="flex flex-wrap items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 shadow-sm ring-1 ring-indigo-200/90">
-                        <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 1,'wght' 500">check_circle</span>
+            <div class="flex min-w-0 flex-col gap-6">
+                <div class="ar-surface-card ar-skills-col-matched flex min-h-0 min-w-0 flex-col overflow-visible">
+                    <div class="flex flex-wrap items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 text-indigo-600">
+                            <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 0,'wght' 400">check_circle</span>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-semibold text-slate-900 tracking-tight">Eşleşen yetenekler</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Satıra tıklayıp CoachAI yorumunu görün.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-base font-semibold text-slate-900 tracking-tight">Eşleşen yetenekler</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Profilinizle örtüşen başlıklar</p>
+                    <div class="relative min-h-[120px]">
+                        <div class="ar-skel-wrap absolute inset-0 space-y-3 z-[1]" aria-hidden="true">
+                            <div class="h-11 ar-skel rounded-xl w-full"></div>
+                            <div class="h-11 ar-skel rounded-xl w-full opacity-90"></div>
+                            <div class="h-11 ar-skel rounded-xl w-full opacity-80"></div>
+                        </div>
+                        <div id="matched-skills" class="ar-live relative z-[2] space-y-2"></div>
                     </div>
                 </div>
-                <div class="relative min-h-[120px]">
-                    <div class="ar-skel-wrap absolute inset-0 space-y-3 z-[1]" aria-hidden="true">
-                        <div class="h-14 ar-skel rounded-xl w-full"></div>
-                        <div class="h-14 ar-skel rounded-xl w-full opacity-90"></div>
-                        <div class="h-14 ar-skel rounded-xl w-full opacity-80"></div>
-                    </div>
-                    <ul id="matched-skills" class="ar-live list-none p-0 m-0 relative z-[2]"></ul>
-                </div>
-            </div>
 
-            <div class="ar-surface-card flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                <div id="ar-missing-skills-anchor" class="ar-skills-col-missing flex flex-1 flex-col min-h-0 scroll-mt-24">
+                <div id="ar-missing-skills-anchor" class="ar-surface-card ar-skills-col-missing flex min-h-0 min-w-0 shrink-0 flex-col overflow-visible scroll-mt-24">
                     <div class="flex flex-wrap items-center gap-3 mb-4 shrink-0 pb-4 border-b border-slate-100">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-dashed border-indigo-200 bg-slate-50 text-slate-400">
-                            <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 0,'wght' 400">change_circle</span>
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-dashed border-indigo-200 bg-white text-indigo-600">
+                            <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 0,'wght' 400">trending_up</span>
                         </div>
                         <div class="min-w-0 flex-1">
                             <h3 class="text-base font-semibold text-slate-800 tracking-tight">Eksik / geliştirilebilir</h3>
-                            <p class="text-xs text-slate-500 mt-0.5">Liste uzunsa aşağı kaydırarak inebilirsiniz.</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Satıra tıklayıp CoachAI önerisini açın; kaynaklar için gelişim rehberine geçin.</p>
                         </div>
                     </div>
-                    <div class="ar-missing-scroll-wrap flex-1 min-h-[140px]">
-                        <div class="ar-skel-wrap absolute inset-0 space-y-3 z-[1]" aria-hidden="true">
-                            <div class="h-14 ar-skel rounded-xl w-full"></div>
-                            <div class="h-14 ar-skel rounded-xl w-full opacity-90"></div>
-                            <div class="h-14 ar-skel rounded-xl w-full opacity-80"></div>
+                    <div class="relative min-h-[3.5rem]">
+                        <div class="ar-skel-wrap absolute inset-0 z-[1] space-y-2" aria-hidden="true">
+                            <div class="h-11 w-full rounded-xl ar-skel"></div>
+                            <div class="h-11 w-full rounded-xl ar-skel opacity-90"></div>
+                            <div class="h-11 w-full rounded-xl ar-skel opacity-85"></div>
                         </div>
-                        <div id="missing-skills-scroll" class="ar-missing-scroll relative z-[2] min-h-0 flex-1 px-1.5 py-2.5">
-                            <ul id="missing-skills" class="ar-live list-none p-0 m-0"></ul>
-                        </div>
-                        <div class="ar-missing-scroll-fade" aria-hidden="true"></div>
+                        <div id="missing-skills" class="ar-live relative z-[2] space-y-2"></div>
                     </div>
                 </div>
             </div>

@@ -301,6 +301,41 @@ async function openArLearnModal(skillRaw) {
     }
 }
 
+/** Eşleşen + eksik yetenek accordion — liste başına tek açık satır */
+function initSkillAccordionsUi() {
+    if (initSkillAccordionsUi._done) return;
+    initSkillAccordionsUi._done = true;
+
+    document.addEventListener("click", function(e) {
+        if (e.target.closest(".ar-missing-learn-btn")) return;
+
+        var trig = e.target.closest(".ar-skill-acc-trigger");
+        if (!trig) return;
+
+        var item = trig.closest(".ar-skill-acc-item");
+        if (!item) return;
+
+        var wrap = item.closest("#matched-skills, #missing-skills");
+        if (!wrap) return;
+
+        var wasOpen = item.classList.contains("ar-skill-acc-item--open");
+        wrap.querySelectorAll(".ar-skill-acc-item").forEach(function(other) {
+            other.classList.remove("ar-skill-acc-item--open");
+            var t = other.querySelector(".ar-skill-acc-trigger");
+            var p = other.querySelector(".ar-skill-acc-panel");
+            if (t) t.setAttribute("aria-expanded", "false");
+            if (p) p.setAttribute("aria-hidden", "true");
+        });
+
+        if (!wasOpen) {
+            item.classList.add("ar-skill-acc-item--open");
+            trig.setAttribute("aria-expanded", "true");
+            var panel = item.querySelector(".ar-skill-acc-panel");
+            if (panel) panel.setAttribute("aria-hidden", "false");
+        }
+    });
+}
+
 /** Tek modal — backdrop, X, Escape, sekme geçişleri */
 function initArLearnModalUi() {
     if (initArLearnModalUi._done) return;
@@ -422,41 +457,79 @@ function updateGrowthPotentialUi(score, missingUi) {
     }
 }
 
-function missingSkillRowHtml(label, detail, index, escapeHtml) {
+/**
+ * Eşleşen (matched) ve eksik (gap) yetenekler — aynı accordion bileşeni.
+ * variant: "matched" | "gap"
+ */
+function skillAccordionHtml(variant, label, detail, index, escapeHtml) {
+    var isMatched = variant === "matched";
     var d = (detail || "").trim();
     var safeLabel = escapeHtml(label);
-    var leftEdge = "border-b border-solid border-slate-100 border-l-[4px] border-indigo-200 [border-left-style:dashed]";
-    var iconHtml =
-        '<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-indigo-200 bg-slate-50 text-slate-400">' +
-        '<span class="material-symbols-outlined text-[20px]" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">change_circle</span></div>';
-    /** Koç önerisi — Material sparkles (yol gösteren) */
-    var coachSuggestIcon =
-        '<span class="material-symbols-outlined shrink-0 text-[16px] leading-none text-indigo-500" style="font-variation-settings:\'FILL\' 1,\'wght\' 500" aria-hidden="true">auto_awesome</span>';
+    var emptyCopy = isMatched
+        ? "Bu başlık için CoachAI yorumu henüz eklenmemiş."
+        : "Bu başlık için kısa özet henüz eklenmemiş. Tam kaynaklar için gelişim rehberini açabilirsiniz.";
+    var bodyHtml = d
+        ? "<p class=\"mb-0 text-sm leading-relaxed text-slate-600\">" + escapeHtml(d) + "</p>"
+        : "<p class=\"mb-0 text-sm leading-relaxed text-slate-500\">" + escapeHtml(emptyCopy) + "</p>";
+
+    var itemMod = isMatched ? " ar-skill-acc-item--matched" : " ar-skill-acc-item--gap";
+    var panelId = isMatched ? "ar-matched-panel-" + index : "ar-missing-panel-" + index;
+    var headId = isMatched ? "ar-matched-acc-head-" + index : "ar-missing-acc-head-" + index;
+
+    var triggerRing = "hover:bg-indigo-50 focus-visible:ring-indigo-400";
+
+    var iconHtml = isMatched
+        ? '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-100 bg-indigo-50 text-indigo-600" aria-hidden="true">' +
+          '<span class="material-symbols-outlined text-[19px]" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">check_circle</span></span>'
+        : '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-indigo-200 bg-white text-indigo-600" aria-hidden="true">' +
+          '<span class="material-symbols-outlined text-[19px]" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">trending_up</span></span>';
+
+    var rightTone = "text-indigo-900";
+    var chevronTone = "text-indigo-600";
+    var borderTop = "border-indigo-100";
+
+    var learnBtn = isMatched
+        ? ""
+        : '<button type="button" class="ar-missing-learn-btn mt-3 inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400" data-ar-skill="' +
+          escapeHtmlAttr(label) +
+          '" aria-haspopup="dialog" aria-controls="ar-learn-modal">' +
+          '<span class="material-symbols-outlined text-[16px]" aria-hidden="true">menu_book</span>Gelişim rehberi</button>';
+
     return (
-        '<li class="border-b border-slate-100 py-3 pl-4 ' +
-        leftEdge +
-        ' last:border-b-0">' +
-        '<div class="flex items-start gap-3">' +
+        '<div class="ar-skill-acc-item rounded-xl border border-slate-200/90 bg-white transition-all duration-300 ease-out' +
+        itemMod +
+        '">' +
+        '<button type="button" class="ar-skill-acc-trigger flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-colors duration-200 ' +
+        triggerRing +
+        ' focus-visible:ring-2 focus-visible:ring-offset-2" aria-expanded="false" aria-controls="' +
+        panelId +
+        '" id="' +
+        headId +
+        '">' +
         iconHtml +
-        '<div class="min-w-0 flex-1">' +
-        '<div class="flex flex-col gap-0">' +
-        '<span class="block text-sm font-semibold text-slate-800">' +
+        '<span class="min-w-0 flex-1 text-sm font-medium tracking-tight text-indigo-950">' +
         safeLabel +
         "</span>" +
-        (d ? '<span class="ar-skill-detail block text-xs leading-snug text-slate-600">' + escapeHtml(d) + "</span>" : "") +
-        '<div class="mt-1.5">' +
-        '<div class="ar-missing-learn-wrap relative inline-block max-w-full">' +
-        '<button type="button" class="ar-missing-learn-btn inline-flex items-center justify-center gap-2 rounded-full border border-indigo-500 bg-transparent px-3 py-1.5 text-[11px] font-medium leading-none tracking-tight text-indigo-600 transition-colors hover:bg-indigo-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/40 focus-visible:ring-offset-1" title="Eksiklerini kapatmak için tıkla" aria-label="Koç önerisi: Eksiklerini kapatmak için tıkla" aria-haspopup="dialog" aria-controls="ar-learn-modal" data-ar-skill="' +
-        escapeHtmlAttr(label) +
-        '" id="ar-learn-btn-' +
-        index +
+        '<span class="flex shrink-0 items-center gap-1.5 text-xs font-medium ' +
+        rightTone +
         '">' +
-        coachSuggestIcon +
-        '<span class="whitespace-nowrap">Koç Öneriyor</span>' +
-        "</button>" +
-        "</div>" +
-        "</div>" +
-        "</div></div></div></li>"
+        '<span class="hidden sm:inline">Detay</span>' +
+        '<span class="ar-skill-acc-chevron material-symbols-outlined text-[20px] transition-transform duration-300 ease-out ' +
+        chevronTone +
+        '" aria-hidden="true">expand_more</span>' +
+        "</span></button>" +
+        '<div id="' +
+        panelId +
+        '" class="ar-skill-acc-panel" role="region" aria-labelledby="' +
+        headId +
+        '" aria-hidden="true">' +
+        '<div class="ar-skill-acc-panel-sizer">' +
+        '<div class="ar-skill-acc-panel-inner border-t px-3 pb-3 pt-2 ' +
+        borderTop +
+        '">' +
+        bodyHtml +
+        learnBtn +
+        "</div></div></div></div>"
     );
 }
 
@@ -523,30 +596,6 @@ function animateScoreBreakdownPcts() {
         }
         requestAnimationFrame(step);
     });
-}
-
-/** Aranan profil rozeti — minik Material ikon veya yıldız */
-function traitBadgeLeadingGraphic(label) {
-    var s = String(label).toLowerCase();
-    function matIcon(name, fillOne) {
-        return (
-            '<span class="material-symbols-outlined text-[15px] text-indigo-500 shrink-0" style="font-variation-settings:\'FILL\' ' +
-            (fillOne ? "1" : "0") +
-            ',\'wght\' 500">' +
-            name +
-            "</span>"
-        );
-    }
-    if (/react|vue|angular|svelte|javascript|typescript|css|html|web|ui|ux|geliştir|website|frontend/.test(s)) return matIcon("code", true);
-    if (/python|java|go|rust|kotlin|php|ruby|backend|api|microservice|spring|node/.test(s)) return matIcon("terminal", true);
-    if (/cloud|aws|azure|gcp|docker|kubernetes|devops|infra|sunucu/.test(s)) return matIcon("cloud", false);
-    if (/sql|nosql|data|analytics|machine|learning|\bai\b|ml|veri|kafka/.test(s)) return matIcon("database", false);
-    if (/lead|manager|takım|team|iletişim|communication|english|soft|collaboration|agile|scrum/.test(s)) return matIcon("groups", true);
-    if (/güvenlik|security|auth|oauth|encrypt/.test(s)) return matIcon("shield", false);
-    if (/tasarım|design|figma|mobil|mobile|ios|android/.test(s)) return matIcon("palette", false);
-    return (
-        '<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100/90 text-[12px] leading-none text-indigo-600" aria-hidden="true">\u2726</span>'
-    );
 }
 
 function populateAnalysisResult() {
@@ -695,47 +744,25 @@ function populateAnalysisResult() {
     if (Array.isArray(traits) && traits.length) {
         document.getElementById("key-traits-section").classList.remove("hidden");
         document.getElementById("key-traits").innerHTML = traits
-            .map(function(t) {
+            .map(function(t, idx) {
                 var raw = String(t);
+                var tipId = "ar-trait-tip-" + idx;
                 return (
-                    '<span class="ar-trait-badge inline-flex max-w-full items-center gap-2 rounded-full border border-indigo-200/75 bg-indigo-50/30 px-3.5 py-2 text-left text-xs font-medium text-slate-700">' +
-                    traitBadgeLeadingGraphic(raw) +
-                    "<span class=\"min-w-0 break-words leading-snug\">" +
+                    '<span class="ar-trait-badge-shell group relative inline-flex max-w-full align-top">' +
+                    '<span class="ar-trait-badge inline-flex max-w-full items-center rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs font-medium leading-snug text-indigo-600" aria-describedby="' +
+                    tipId +
+                    '">' +
+                    '<span class="min-w-0 max-w-[14rem] truncate sm:max-w-[18rem]">' +
+                    escapeHtml(raw) +
+                    "</span></span>" +
+                    '<span id="' +
+                    tipId +
+                    '" class="ar-missing-tooltip ar-trait-tooltip" role="tooltip">' +
                     escapeHtml(raw) +
                     "</span></span>"
                 );
             })
             .join("");
-    }
-
-    function rowHtml(kind, label, detail) {
-        var d = (detail || "").trim();
-        var leftEdge =
-            kind === "matched"
-                ? "border-b border-solid border-slate-100 border-l-[4px] border-indigo-600"
-                : "border-b border-solid border-slate-100 border-l-[4px] border-indigo-200 [border-left-style:dashed]";
-        var iconHtml =
-            kind === "matched"
-                ? '<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 shadow-sm ring-1 ring-indigo-200/90">' +
-                  '<span class="material-symbols-outlined text-[22px]" style="font-variation-settings:\'FILL\' 1,\'wght\' 500">check_circle</span></div>'
-                : '<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-indigo-200 bg-slate-50 text-slate-400">' +
-                  '<span class="material-symbols-outlined text-[20px]" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">change_circle</span></div>';
-        return (
-            '<li class="border-b border-slate-100 py-4 pl-4 ' +
-            leftEdge +
-            ' last:border-b-0">' +
-            '<div class="flex items-start gap-3">' +
-            iconHtml +
-            '<div class="min-w-0"><span class="block text-sm font-semibold text-slate-800">' +
-            escapeHtml(label) +
-            "</span>" +
-            (d
-                ? '<span class="ar-skill-detail mt-2 block text-xs text-slate-600">' +
-                  escapeHtml(d) +
-                  "</span>"
-                : "") +
-            "</div></div></li>"
-        );
     }
 
     var matchedUi = alignment.matched_skills_ui;
@@ -783,22 +810,27 @@ function populateAnalysisResult() {
         })
         .join("") || "<span class='text-on-surface-variant text-sm'>—</span>";
 
-    document.getElementById("matched-skills").innerHTML = matchedUi.map(function(row) {
-        var lab = row.skill != null ? String(row.skill) : "";
-        var det = row.detail != null ? String(row.detail) : "";
-        return rowHtml("matched", lab, det);
-    }).join("") || "<li class='border-b border-slate-100 py-4 text-sm text-slate-500 last:border-0'>Eşleşen yetenek listesi için analizi yeniden çalıştırın.</li>";
+    document.getElementById("matched-skills").innerHTML = matchedUi
+        .map(function(row, idx) {
+            var lab = row.skill != null ? String(row.skill) : "";
+            var det = row.detail != null ? String(row.detail) : "";
+            return skillAccordionHtml("matched", lab, det, idx, escapeHtml);
+        })
+        .join("") ||
+        "<p class='text-sm text-slate-500'>Eşleşen yetenek listesi için analizi yeniden çalıştırın.</p>";
 
     document.getElementById("missing-skills").innerHTML = missingUi
         .map(function(row, idx) {
             var lab = row.skill != null ? String(row.skill) : "";
             var det = row.detail != null ? String(row.detail) : "";
-            return missingSkillRowHtml(lab, det, idx, escapeHtml);
+            return skillAccordionHtml("gap", lab, det, idx, escapeHtml);
         })
-        .join("") || "<li class='border-b border-slate-100 py-4 text-sm text-slate-500 last:border-0'>Gelişim alanı listesi için analizi yeniden çalıştırın.</li>";
+        .join("") ||
+        "<p class='text-sm text-slate-500'>Gelişim alanı listesi için analizi yeniden çalıştırın.</p>";
 
     updateGrowthPotentialUi(score, missingUi);
 
+    initSkillAccordionsUi();
     initArLearnModalUi();
 
     var root = document.getElementById("analysis-root");
