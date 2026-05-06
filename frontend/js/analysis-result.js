@@ -587,7 +587,7 @@ function populateAnalysisResult() {
 
     if (glowWrap) {
         glowWrap.className =
-            "ar-score-glow-wrap ar-glow-indigo relative flex items-center justify-center w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72";
+            "ar-score-glow-wrap ar-glow-indigo min-h-0 min-w-0 overflow-hidden rounded-full";
     }
     if (scoreValEl) {
         scoreValEl.className =
