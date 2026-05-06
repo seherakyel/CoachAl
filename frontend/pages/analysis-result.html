@@ -128,20 +128,6 @@
   padding-top:0.25rem;
   pointer-events:none;
 }
-/* Teknoloji rozetleri sol sütunda daha küçük */
-.ar-dashboard-col-left #tech-stack{
-  gap:0.375rem;
-  max-width:100%;
-}
-.ar-dashboard-col-left #tech-stack > span{
-  max-width:100%;
-  padding:0.28rem 0.45rem!important;
-  font-size:0.65rem!important;
-  line-height:1.25;
-}
-.ar-dashboard-col-left #tech-stack .material-symbols-outlined{
-  font-size:13px!important;
-}
 /* Skor bileşenleri — sol sütunda kompakt; üç satır dikey, her satırda ikon + metin yatay */
 .ar-dashboard-col-left #score-breakdown{
   display:flex;
@@ -473,29 +459,15 @@
                     </div>
                 </div>
 
-                <div class="flex w-full flex-col gap-6">
-                    <div class="grid grid-cols-1">
-                        <div class="col-start-1 row-start-1 ar-skel-wrap space-y-2 py-1 min-h-[4rem]" aria-hidden="true">
-                            <div class="h-3 ar-skel w-full"></div>
-                            <div class="h-3 ar-skel w-11/12"></div>
-                            <div class="h-3 ar-skel w-4/5"></div>
-                        </div>
-                        <div class="col-start-1 row-start-1 w-full">
-                            <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Kültür özeti</h4>
-                            <p class="ar-live text-[15px] leading-relaxed text-on-surface-variant" id="company-culture">—</p>
-                        </div>
+                <div class="grid grid-cols-1">
+                    <div class="col-start-1 row-start-1 ar-skel-wrap space-y-2 py-1 min-h-[4rem]" aria-hidden="true">
+                        <div class="h-3 ar-skel w-full"></div>
+                        <div class="h-3 ar-skel w-11/12"></div>
+                        <div class="h-3 ar-skel w-4/5"></div>
                     </div>
-
-                    <div class="grid grid-cols-1">
-                        <div class="col-start-1 row-start-1 ar-skel-wrap flex min-h-[2rem] flex-wrap gap-2 py-1" aria-hidden="true">
-                            <div class="h-8 w-16 ar-skel rounded-full"></div>
-                            <div class="h-8 w-20 ar-skel rounded-full"></div>
-                            <div class="h-8 w-14 ar-skel rounded-full"></div>
-                        </div>
-                        <div class="col-start-1 row-start-1 w-full">
-                            <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Teknoloji seti</h4>
-                            <div class="ar-live flex max-w-full flex-wrap gap-1.5 sm:gap-2" id="tech-stack"></div>
-                        </div>
+                    <div class="col-start-1 row-start-1 w-full">
+                        <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Kültür özeti</h4>
+                        <p class="ar-live text-[15px] leading-relaxed text-on-surface-variant" id="company-culture">—</p>
                     </div>
                 </div>
     </article>

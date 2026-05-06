@@ -533,41 +533,6 @@ function skillAccordionHtml(variant, label, detail, index, escapeHtml) {
     );
 }
 
-/** tech_stack maddesinin eşleşen / eksik yetenek satırlarıyla örtüşüp örtüşmediği */
-function arTechTokensOverlap(tech, phrase) {
-    var a = String(tech).toLowerCase().trim();
-    var b = String(phrase).toLowerCase().trim();
-    if (!a || !b) return false;
-    if (b.indexOf(a) !== -1 || a.indexOf(b) !== -1) return true;
-    var strip = function(s) {
-        return s.replace(/[^a-z0-9+#.]/g, "");
-    };
-    var sa = strip(a);
-    var sb = strip(b);
-    if (sa.length >= 3 && sb.indexOf(sa) !== -1) return true;
-    if (sb.length >= 3 && sa.indexOf(sb) !== -1) return true;
-    var words = a.split(/[\s,/]+/).filter(function(w) {
-        return w.length > 2;
-    });
-    return words.some(function(w) {
-        return b.indexOf(w) !== -1;
-    });
-}
-
-function arTechBadgeKind(tech, matchedUi, missingUi) {
-    var m = matchedUi.some(function(row) {
-        var lab = row.skill != null ? String(row.skill) : "";
-        return arTechTokensOverlap(tech, lab);
-    });
-    if (m) return "matched";
-    var g = missingUi.some(function(row) {
-        var lab = row.skill != null ? String(row.skill) : "";
-        return arTechTokensOverlap(tech, lab);
-    });
-    if (g) return "gap";
-    return "gap";
-}
-
 /** Skor bileşenleri: yüzde ve bar 0'dan hedefe animasyon */
 function animateScoreBreakdownPcts() {
     var rows = document.querySelectorAll("[data-ar-score-row]");
@@ -784,31 +749,6 @@ function populateAnalysisResult() {
             return { skill: lab, detail: "Bu alanı güçlendirmek mülakatta öne çıkmanıza yardımcı olur." };
         });
     }
-
-    var techStack = companyProfile.tech_stack || [];
-    document.getElementById("tech-stack").innerHTML = techStack
-        .map(function(t) {
-            var raw = String(t);
-            var kind = arTechBadgeKind(raw, matchedUi, missingUi);
-            var check =
-                '<span class="material-symbols-outlined text-[15px] text-indigo-600 shrink-0" style="font-variation-settings:\'FILL\' 1,\'wght\' 500">check_circle</span>';
-            var plus =
-                '<span class="material-symbols-outlined text-[15px] text-indigo-300 shrink-0" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">add_circle</span>';
-            var shell =
-                kind === "matched"
-                    ? "inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700"
-                    : "inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600";
-            return (
-                "<span class='" +
-                shell +
-                "'>" +
-                (kind === "matched" ? check : plus) +
-                "<span>" +
-                escapeHtml(raw) +
-                "</span></span>"
-            );
-        })
-        .join("") || "<span class='text-on-surface-variant text-sm'>—</span>";
 
     document.getElementById("matched-skills").innerHTML = matchedUi
         .map(function(row, idx) {
