@@ -477,6 +477,21 @@ function animateScoreBreakdownPcts() {
     });
 }
 
+/** Aranan profil — yinelenen beklenti metinlerini tekilleştir */
+function dedupeKeyTraits(arr) {
+    var seen = {};
+    var out = [];
+    (arr || []).forEach(function(t) {
+        var raw = String(t == null ? "" : t).trim();
+        if (!raw) return;
+        var k = raw.toLowerCase().replace(/\s+/g, " ");
+        if (seen[k]) return;
+        seen[k] = true;
+        out.push(raw);
+    });
+    return out;
+}
+
 function populateAnalysisResult() {
     var alignment = safeParseJSON(sessionStorage.getItem("coachai_alignment"), null);
     var companyProfile = safeParseJSON(sessionStorage.getItem("coachai_company_profile"), null);
@@ -589,24 +604,20 @@ function populateAnalysisResult() {
         });
     }
 
-    var traits = companyProfile.key_traits || [];
-    if (Array.isArray(traits) && traits.length) {
+    var traits = dedupeKeyTraits(companyProfile.key_traits || []);
+    if (traits.length) {
         document.getElementById("key-traits-section").classList.remove("hidden");
         document.getElementById("key-traits").innerHTML = traits
             .map(function(t, idx) {
                 var raw = String(t);
-                var tipId = "ar-trait-tip-" + idx;
+                var iconPart =
+                    idx % 2 === 0
+                        ? '<span class="material-symbols-outlined shrink-0 text-[14px] leading-none text-slate-500" style="font-variation-settings:\'FILL\' 1,\'wght\' 500" aria-hidden="true">check</span>'
+                        : '<span class="h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" aria-hidden="true"></span>';
                 return (
-                    '<span class="ar-trait-badge-shell group relative inline-flex max-w-full align-top" role="listitem">' +
-                    '<span class="ar-trait-badge inline-flex max-w-full items-center rounded-full border border-slate-200/70 bg-slate-100 px-3 py-1 text-xs font-medium leading-snug text-slate-600" aria-describedby="' +
-                    tipId +
-                    '">' +
-                    '<span class="min-w-0 max-w-[min(100%,16rem)] break-words text-left">' +
-                    escapeHtml(raw) +
-                    "</span></span>" +
-                    '<span id="' +
-                    tipId +
-                    '" class="ar-missing-tooltip ar-trait-tooltip" role="tooltip">' +
+                    '<span role="listitem" class="ap-profil-chip inline-flex max-w-full min-w-0 cursor-default items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left text-xs font-medium leading-snug text-slate-700 shadow-sm transition-colors duration-150 hover:border-slate-300 hover:bg-white">' +
+                    iconPart +
+                    '<span class="min-w-0 break-words">' +
                     escapeHtml(raw) +
                     "</span></span>"
                 );

@@ -130,10 +130,13 @@
   position:static;
   z-index:auto;
 }
-/* Skor / aranan profil — sol stack içi sadece rozet sarmalayıcı */
-.ar-left-column-stack #key-traits-section .ar-key-traits-wrap{
+/* Aranan profil — yetenek chip’leri (yalnızca #key-traits içi) */
+.ar-left-column-stack #key-traits-section{
   margin:0;
-  padding:0;
+}
+#key-traits .ap-profil-chip{
+  max-width:100%;
+  box-sizing:border-box;
 }
 .ar-left-panel-surface.ar-surface-card{
   width:100%;
@@ -259,27 +262,6 @@
 .ar-score-detail-popover .ar-score-pct{
   font-size:0.75rem!important;
 }
-/* Aranan profil — sol sütunda wrap satırı rozetler */
-.ar-dashboard-col-left #key-traits.ar-key-traits-scroll{
-  max-height:none;
-  overflow:visible;
-  border:none;
-  background:transparent;
-  padding:0;
-  margin:0;
-  width:100%;
-  max-width:100%;
-  min-width:0;
-  box-sizing:border-box;
-}
-.ar-dashboard-col-left #key-traits .ar-trait-badge{
-  width:auto;
-  max-width:100%;
-  justify-content:flex-start;
-  padding:0.25rem 0.75rem;
-  font-size:0.75rem;
-  line-height:1.35;
-}
 /* Trendyol markası — PNG yok, düzen (turuncu / siyah şerit / wordmark) */
 .ar-logo-trendyol{
   display:flex;
@@ -340,22 +322,7 @@
 .ar-score-row-icon{
   transition:opacity 0.2s ease;
 }
-.ar-trait-badge{
-  transition:background-color 0.2s ease,border-color 0.2s ease;
-}
-.ar-trait-badge:hover{
-  background-color:#e2e8f0;
-  border-color:rgba(148,163,184,0.55);
-}
-/* Aranan profil — tooltip nötr ton */
-.ar-trait-badge-shell .ar-trait-tooltip.ar-missing-tooltip{
-  border-color:#e2e8f0;
-  box-shadow:0 10px 28px -12px rgba(15,23,42,0.14),0 0 0 1px rgba(15,23,42,0.04);
-}
 /* Yetenek accordion — eşleşen + eksik (aynı indigo ailesi; yalnızca ikon tipi/opacity farkı) */
-.ar-trait-badge-shell{
-  position:relative;
-}
 .ar-skill-acc-panel{
   display:grid;
   grid-template-rows:0fr;
@@ -379,74 +346,6 @@
 }
 .ar-skill-acc-item--open .ar-skill-acc-chevron{
   transform:rotate(180deg);
-}
-/* Aranan profil rozeti — hover tooltip balonu */
-.ar-missing-tooltip{
-  position:absolute;
-  bottom:calc(100% + 12px);
-  left:50%;
-  z-index:60;
-  width:max-content;
-  max-width:min(18rem,calc(100vw - 2rem));
-  padding:0.55rem 0.75rem;
-  border-radius:0.75rem;
-  border:1px solid #e0e7ff;
-  background:#fff;
-  box-shadow:0 12px 40px -12px rgba(15,23,42,0.18),0 0 0 1px rgba(99,102,241,0.06);
-  font-size:0.75rem;
-  line-height:1.45;
-  color:#475569;
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
-  transition:opacity .18s ease,visibility .18s ease;
-}
-.ar-missing-tooltip::after{
-  content:"";
-  position:absolute;
-  top:100%;
-  left:50%;
-  margin-left:-6px;
-  border:6px solid transparent;
-  border-top-color:#fff;
-  filter:drop-shadow(0 2px 2px rgba(15,23,42,0.06));
-}
-.ar-trait-badge-shell:hover .ar-missing-tooltip,
-.ar-trait-badge-shell:focus-within .ar-missing-tooltip{
-  opacity:1;
-  visibility:visible;
-}
-@media (hover:none){
-  .ar-missing-tooltip{
-    bottom:auto;
-    top:calc(100% + 10px);
-    padding-top:0.65rem;
-  }
-  .ar-missing-tooltip::after{
-    top:auto;
-    bottom:100%;
-    border-top-color:transparent;
-    border-bottom-color:#fff;
-    filter:none;
-  }
-}
-/* Aranan profil — modern rozet satırı (sol kart ile uyumlu) */
-.ar-key-traits-scroll{
-  max-height:none;
-  overflow:visible;
-  padding:0;
-  margin:0;
-  border:none;
-  background:transparent;
-  width:100%;
-  max-width:100%;
-  min-width:0;
-  box-sizing:border-box;
-}
-.ar-key-traits-fade{
-  pointer-events:none;
-  height:2.25rem;
-  background:linear-gradient(to top,#fff 0%,rgba(255,255,255,0.97) 40%,transparent 100%);
 }
 /* Gelişim rehberi — ortalanmış modal */
 #ar-learn-modal[aria-hidden="true"]{pointer-events:none}
@@ -573,13 +472,10 @@
     </div>
 
     <aside class="ar-dashboard-col-left flex w-full min-w-0 flex-col" aria-label="Şirket profili ve aranan profil">
-    <div class="ar-left-column-stack flex w-full min-w-0 max-w-full flex-col items-stretch gap-6">
-    <section id="key-traits-section" class="ar-surface-card ar-left-panel-surface flex hidden w-full max-w-full min-w-0 shrink-0 flex-col gap-6" aria-label="Aranan profil">
-                        <h3 class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Aranan profil</h3>
-                        <p class="mb-2.5 text-xs leading-snug text-slate-500">Bu rol için öne çıkan beklentiler.</p>
-                        <div class="ar-key-traits-wrap min-w-0 w-full max-w-full">
-                            <div id="key-traits" class="ar-live ar-key-traits-scroll flex w-full min-w-0 max-w-full flex-wrap gap-x-2 gap-y-2 content-start justify-start" role="list" aria-label="Aranan profil beklentileri"></div>
-                        </div>
+    <div class="ar-left-column-stack flex min-h-0 w-full min-w-0 max-w-full flex-col items-stretch gap-6">
+    <section id="key-traits-section" class="ar-surface-card ar-left-panel-surface flex hidden min-h-0 w-full max-w-full min-w-0 shrink-0 flex-col gap-3" aria-labelledby="ap-aranan-profil-title">
+        <h3 id="ap-aranan-profil-title" class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Aranan profil</h3>
+        <div id="key-traits" class="ar-live flex w-full min-w-0 flex-wrap content-start gap-2" role="list"></div>
     </section>
     </div>
     </aside>
