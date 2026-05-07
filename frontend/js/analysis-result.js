@@ -555,37 +555,39 @@ function populateAnalysisResult() {
     document.getElementById("ai-advice").textContent = alignment.advice || companyProfile.preparation_tips || "Analiziniz tamamlandı. Mülakat moduna geçebilirsiniz.";
 
     var traitLabels = [
-        { key: "S", label: "Yetenek eşleşmesi", hint: "CV’deki yeteneklerin şirket profiline uyumu", icon: "psychology" },
-        { key: "E", label: "Deneyim uyumu", hint: "Deneyim süresi ile rol beklentisi", icon: "work_history" },
-        { key: "D", label: "Eğitim faktörü", hint: "Eğitim seviyesi", icon: "school" }
+        { key: "S", label: "Yetenek", hint: "CV’deki yeteneklerin şirket profiline uyumu", icon: "psychology" },
+        { key: "E", label: "Deneyim", hint: "Deneyim süresi ile rol beklentisi", icon: "work_history" },
+        { key: "D", label: "Eğitim", hint: "Eğitim seviyesi", icon: "school" }
     ];
-    document.getElementById("score-breakdown").innerHTML = traitLabels.map(function(t) {
-        var v = alignment[t.key];
-        var p = pct01(v);
-        return (
-            '<div data-ar-score-row class="flex gap-2.5 items-start">' +
-            '<div class="ar-score-row-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-50 text-slate-500">' +
-            '<span class="material-symbols-outlined text-[16px]" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">' +
-            t.icon +
-            "</span></div>" +
-            '<div class="min-w-0 flex-1 pt-0.5">' +
-            '<div class="flex items-baseline justify-between gap-2">' +
-            '<span class="text-sm font-semibold text-slate-900 leading-tight">' +
-            escapeHtml(t.label) +
-            '</span><span class="ar-score-pct text-sm font-bold tabular-nums tracking-tight text-indigo-600" data-target="' +
-            p +
-            '">0%</span></div>' +
-            '<p class="mt-0.5 text-xs leading-snug text-slate-400">' +
-            escapeHtml(t.hint) +
-            "</p>" +
-            '<div class="ar-score-bar-track mt-2 h-1.5 w-full max-w-full rounded-full overflow-hidden">' +
-            '<div class="ar-score-bar-fill h-full rounded-full"></div></div>' +
-            "</div></div>"
-        );
-    }).join("");
-    requestAnimationFrame(function() {
-        requestAnimationFrame(animateScoreBreakdownPcts);
-    });
+    var scoreBreakdownEl = document.getElementById("score-breakdown");
+    if (scoreBreakdownEl) {
+        scoreBreakdownEl.innerHTML = traitLabels.map(function(t) {
+            var v = alignment[t.key];
+            var p = pct01(v);
+            return (
+                '<div data-ar-score-row class="flex gap-2 items-start" title="' +
+                escapeHtmlAttr(t.hint) +
+                '">' +
+                '<div class="ar-score-row-icon flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-50 text-slate-500">' +
+                '<span class="material-symbols-outlined text-[14px]" style="font-variation-settings:\'FILL\' 0,\'wght\' 400">' +
+                t.icon +
+                "</span></div>" +
+                '<div class="min-w-0 flex-1 pt-0">' +
+                '<div class="flex items-baseline justify-between gap-2">' +
+                '<span class="text-xs font-semibold text-slate-800 leading-tight">' +
+                escapeHtml(t.label) +
+                '</span><span class="ar-score-pct text-xs font-bold tabular-nums tracking-tight text-indigo-600" data-target="' +
+                p +
+                '">0%</span></div>' +
+                '<div class="ar-score-bar-track mt-1 h-1 w-full max-w-full rounded-full overflow-hidden">' +
+                '<div class="ar-score-bar-fill h-full rounded-full"></div></div>' +
+                "</div></div>"
+            );
+        }).join("");
+        requestAnimationFrame(function() {
+            requestAnimationFrame(animateScoreBreakdownPcts);
+        });
+    }
 
     var traits = companyProfile.key_traits || [];
     if (Array.isArray(traits) && traits.length) {

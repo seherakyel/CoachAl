@@ -130,8 +130,7 @@
   position:static;
   z-index:auto;
 }
-/* Skor / aranan profil blokları — dış boşluk yok (kart kenarı = sütun kenarı) */
-.ar-left-column-stack #score-breakdown-section,
+/* Skor / aranan profil — sol stack içi sadece rozet sarmalayıcı */
 .ar-left-column-stack #key-traits-section .ar-key-traits-wrap{
   margin:0;
   padding:0;
@@ -143,19 +142,18 @@
   box-sizing:border-box;
   padding:1.5rem;
 }
-/* Coach kartı — skor widget float-right; metin üstte sarar, altta tam genişlik */
+/* Coach kartı — skor widget (float yok; flex düzen) */
 .ar-coach-match-block{
   display:flex;
   flex-direction:column;
   overflow:hidden;
-  min-width:10rem;
-  max-width:13rem;
+  min-width:0;
+  max-width:100%;
 }
-@media (min-width:768px){
-  .ar-coach-advice-flow::after{
-    content:"";
-    display:block;
-    clear:both;
+@media (min-width:640px){
+  .ar-coach-match-block{
+    min-width:10rem;
+    max-width:13rem;
   }
 }
 .ar-coach-score-track-flush{
@@ -186,44 +184,80 @@
   max-width:100%;
   box-sizing:border-box;
 }
-.ar-dashboard-col-left [data-ar-score-row]{
+/* Skor hover popover — bileşen çubukları yalnızca burada */
+.ar-score-popover-anchor{
+  isolation:isolate;
+}
+.ar-score-detail-popover{
+  position:absolute;
+  z-index:60;
+  top:calc(100% + 0.375rem);
+  right:0;
+  width:min(18rem,calc(100vw - 2rem));
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translateY(-0.25rem);
+  transition:opacity 0.16s ease,visibility 0.16s ease,transform 0.16s ease;
+}
+@media (hover: hover){
+  .ar-score-popover-anchor:hover .ar-score-detail-popover{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:translateY(0);
+  }
+}
+.ar-score-popover-anchor:focus-within .ar-score-detail-popover{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+.ar-score-detail-popover .ar-score-breakdown-stack{
+  gap:0.5rem;
+}
+.ar-score-detail-popover [data-ar-score-row]{
   flex-direction:row;
-  align-items:flex-start;
-  gap:0.625rem;
+  align-items:center;
+  gap:0.5rem;
   padding:0!important;
   width:100%;
   max-width:100%;
   box-sizing:border-box;
 }
-.ar-dashboard-col-left [data-ar-score-row] > .flex.min-w-0{
+.ar-score-detail-popover [data-ar-score-row] > .flex.min-w-0{
   min-width:0!important;
 }
-.ar-dashboard-col-left .ar-score-row-icon{
-  height:1.75rem!important;
-  width:1.75rem!important;
-  align-self:flex-start;
-  margin-top:0.125rem;
+.ar-score-detail-popover .ar-score-row-icon{
+  height:1.375rem!important;
+  width:1.375rem!important;
+  align-self:center;
+  margin-top:0;
   box-shadow:none!important;
 }
-.ar-dashboard-col-left .ar-score-row-icon:hover{
+.ar-score-detail-popover .ar-score-row-icon:hover{
   transform:none!important;
 }
-.ar-dashboard-col-left .ar-score-row-icon .material-symbols-outlined{
-  font-size:16px!important;
+.ar-score-detail-popover .ar-score-row-icon .material-symbols-outlined{
+  font-size:14px!important;
 }
-.ar-dashboard-col-left .ar-score-bar-track{
+.ar-score-detail-popover .ar-score-bar-track{
   margin-bottom:0!important;
+  margin-top:0.25rem!important;
+  height:0.25rem!important;
   width:100%;
   max-width:100%;
   box-sizing:border-box;
 }
-.ar-dashboard-col-left [data-ar-score-row] .flex.items-baseline{
-  flex-wrap:wrap;
-  gap:0.25rem 0.5rem;
+.ar-score-detail-popover [data-ar-score-row] .flex.items-baseline{
+  flex-wrap:nowrap;
+  gap:0.25rem 0.375rem;
   margin-bottom:0!important;
+  align-items:center;
 }
-.ar-dashboard-col-left .ar-score-pct{
-  font-size:0.875rem!important;
+.ar-score-detail-popover .ar-score-pct{
+  font-size:0.75rem!important;
 }
 /* Aranan profil — sol sütunda wrap satırı rozetler */
 .ar-dashboard-col-left #key-traits.ar-key-traits-scroll{
@@ -437,7 +471,8 @@
     <div class="ar-dashboard-split">
     <div class="ar-dashboard-top-row">
     <div class="ar-dashboard-top-row-left">
-    <article class="ar-surface-card ar-left-panel-surface flex h-full min-h-0 w-full max-w-full min-w-0 shrink-0 flex-col gap-6" aria-label="Şirket bilgisi">
+    <article class="ar-surface-card ar-left-panel-surface flex h-full min-h-0 w-full max-w-full min-w-0 shrink-0 flex-col gap-6" aria-label="Şirket özeti">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Şirket özeti</p>
                 <div class="grid grid-cols-1">
                     <div class="col-start-1 row-start-1 ar-skel-wrap flex items-center gap-4 py-1 sm:gap-5" aria-hidden="true">
                         <div class="h-[72px] w-[72px] shrink-0 rounded-2xl ar-skel"></div>
@@ -484,16 +519,22 @@
     </article>
     </div>
     <div class="ar-dashboard-top-row-right">
-            <div class="ar-surface-card ar-left-panel-surface relative flex h-full min-h-0 min-w-0 w-full max-w-full shrink-0 flex-col overflow-hidden" aria-label="CoachAI tavsiyesi">
+            <div class="ar-surface-card ar-left-panel-surface ar-coach-match-surface relative flex h-full min-h-0 min-w-0 w-full max-w-full shrink-0 flex-col overflow-visible" aria-label="Maç analizi">
                 <div class="absolute top-0 right-0 w-40 h-40 bg-indigo-100/35 rounded-bl-full blur-3xl pointer-events-none"></div>
                 <div class="relative flex min-h-0 flex-1 flex-col">
-                <div class="flex min-h-0 flex-1 items-start gap-4 px-0 pb-0 pt-0 sm:gap-5 md:pr-1">
+                <div class="ar-coach-match-analysis flex min-h-0 flex-1 flex-col gap-5 px-0 pb-0 pt-0 md:pr-1">
+                    <div class="flex shrink-0 items-start gap-3 sm:gap-4">
                     <div class="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-indigo-600/20">
                         <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 1">lightbulb</span>
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="ar-coach-advice-flow flex min-w-0 flex-col gap-4 md:block md:gap-0">
-                            <aside class="ar-coach-match-block order-2 w-full max-w-full shrink-0 rounded-lg border border-slate-200/90 bg-slate-50/90 shadow-sm md:order-none md:float-right md:mb-4 md:ml-6 md:mt-0 md:w-auto md:max-w-[13rem]" aria-label="Genel eşleşme skoru">
+                    <div class="min-w-0 flex-1 flex flex-col gap-5">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Maç analizi</p>
+                                <h3 class="mt-1 text-sm font-semibold leading-snug tracking-tight text-slate-900">CoachAI tavsiyesi</h3>
+                            </div>
+                            <div class="ar-score-popover-anchor relative z-30 w-full max-w-full shrink-0 sm:w-auto sm:max-w-[13rem] sm:self-start">
+                            <aside class="ar-coach-match-block w-full max-w-full rounded-lg border border-slate-200/90 bg-slate-50/90 shadow-sm sm:mt-0 cursor-default transition-shadow duration-150 hover:border-slate-300/90 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2" tabindex="0" aria-label="Genel eşleşme skoru" aria-describedby="ar-score-popover-help">
                             <div class="flex h-auto items-center gap-3 px-6 py-3">
                                 <div class="flex shrink-0 items-baseline gap-0.5">
                                     <span class="text-2xl font-bold tabular-nums leading-none tracking-tight text-slate-900" id="score-value">—</span>
@@ -508,16 +549,22 @@
                                 <div id="coach-headline-score-bar" class="ar-coach-score-fill-flush"></div>
                             </div>
                             </aside>
-                            <h3 class="order-1 mb-2.5 text-sm font-semibold leading-snug tracking-tight text-slate-900 md:order-none">CoachAI tavsiyesi</h3>
-                            <div class="relative order-3 min-h-[3rem] min-w-0 flex-1 w-full max-w-none md:order-none md:pr-3">
+                            <span id="ar-score-popover-help" class="sr-only">Skor bileşenlerini görmek için kutunun üzerine gelin veya klavye ile odaklayın.</span>
+                            <div id="ar-score-detail-popover" class="ar-score-detail-popover rounded-lg border border-slate-200 bg-white p-3 shadow-lg ring-1 ring-slate-900/[0.04]" role="tooltip">
+                                <p id="ar-score-popover-heading" class="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Analiz detayı</p>
+                                <div id="score-breakdown" class="ar-score-breakdown-stack w-full min-w-0"></div>
+                            </div>
+                            </div>
+                        </div>
+                        <div class="relative min-h-[3rem] min-w-0 flex-1 w-full">
                                 <div class="ar-skel-wrap absolute inset-0 space-y-2" aria-hidden="true">
                                     <div class="h-3 ar-skel w-full rounded"></div>
                                     <div class="h-3 ar-skel w-full rounded opacity-90"></div>
                                     <div class="h-3 ar-skel w-4/5 rounded opacity-80"></div>
                                 </div>
                                 <p class="ar-live w-full max-w-none text-[15px] font-normal leading-relaxed text-slate-700" id="ai-advice">Analiz hazırlanıyor…</p>
-                            </div>
                         </div>
+                    </div>
                     </div>
                 </div>
                 </div>
@@ -525,17 +572,8 @@
     </div>
     </div>
 
-    <aside class="ar-dashboard-col-left flex w-full min-w-0 flex-col" aria-label="Özet ve skor bileşenleri">
+    <aside class="ar-dashboard-col-left flex w-full min-w-0 flex-col" aria-label="Şirket profili ve aranan profil">
     <div class="ar-left-column-stack flex w-full min-w-0 max-w-full flex-col items-stretch gap-6">
-    <section class="ar-surface-card ar-left-panel-surface flex w-full max-w-full min-w-0 shrink-0 flex-col gap-6" aria-label="Skorun bileşenleri">
-                    <div id="score-breakdown-section" class="w-full min-w-0">
-                        <h3 class="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Skorun bileşenleri</h3>
-                        <div class="w-full min-w-0 rounded-xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
-                            <div id="score-breakdown" class="ar-score-breakdown-stack w-full min-w-0"></div>
-                        </div>
-                    </div>
-    </section>
-
     <section id="key-traits-section" class="ar-surface-card ar-left-panel-surface flex hidden w-full max-w-full min-w-0 shrink-0 flex-col gap-6" aria-label="Aranan profil">
                         <h3 class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Aranan profil</h3>
                         <p class="mb-2.5 text-xs leading-snug text-slate-500">Bu rol için öne çıkan beklentiler.</p>
