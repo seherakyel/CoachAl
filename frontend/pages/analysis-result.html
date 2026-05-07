@@ -34,7 +34,7 @@
 .ar-dashboard-split{
   display:grid;
   grid-template-columns:1fr;
-  gap:2rem;
+  gap:1.5rem;
   align-items:start;
 }
 /* Mobil: üst satır şirket → CoachAI */
@@ -48,10 +48,10 @@
 @media (min-width:768px){
   .ar-dashboard-split{
     grid-template-columns:minmax(0,45fr) minmax(0,55fr);
-    row-gap:2rem;
-    column-gap:1.5rem;
+    row-gap:1.5rem;
+    column-gap:1rem;
     --ar-left-rail-gutter:1rem;
-    --ar-dashboard-col-gap:1.5rem;
+    --ar-dashboard-col-gap:1rem;
   }
   /* Üst: şirket | CoachAI — eş yükseklik; sütun aralığı ana grid ile aynı */
   .ar-dashboard-top-row{
@@ -487,13 +487,13 @@
             <div class="ar-surface-card ar-left-panel-surface relative flex h-full min-h-0 min-w-0 w-full max-w-full shrink-0 flex-col overflow-hidden" aria-label="CoachAI tavsiyesi">
                 <div class="absolute top-0 right-0 w-40 h-40 bg-indigo-100/35 rounded-bl-full blur-3xl pointer-events-none"></div>
                 <div class="relative flex min-h-0 flex-1 flex-col">
-                <div class="flex min-h-0 flex-1 items-start gap-4 sm:gap-5">
+                <div class="flex min-h-0 flex-1 items-start gap-4 px-0 pb-0 pt-0 sm:gap-5 md:pr-1">
                     <div class="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-indigo-600/20">
                         <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 1">lightbulb</span>
                     </div>
                     <div class="min-w-0 flex-1">
                         <div class="ar-coach-advice-flow flex min-w-0 flex-col gap-4 md:block md:gap-0">
-                            <aside class="ar-coach-match-block order-2 w-full max-w-full shrink-0 rounded-lg border border-slate-200/90 bg-slate-50/90 shadow-sm md:order-none md:float-right md:mb-4 md:ml-8 md:mt-0 md:w-auto md:max-w-[13rem]" aria-label="Genel eşleşme skoru">
+                            <aside class="ar-coach-match-block order-2 w-full max-w-full shrink-0 rounded-lg border border-slate-200/90 bg-slate-50/90 shadow-sm md:order-none md:float-right md:mb-4 md:ml-6 md:mt-0 md:w-auto md:max-w-[13rem]" aria-label="Genel eşleşme skoru">
                             <div class="flex h-auto items-center gap-3 px-6 py-3">
                                 <div class="flex shrink-0 items-baseline gap-0.5">
                                     <span class="text-2xl font-bold tabular-nums leading-none tracking-tight text-slate-900" id="score-value">—</span>
@@ -509,7 +509,7 @@
                             </div>
                             </aside>
                             <h3 class="order-1 mb-2.5 text-sm font-semibold leading-snug tracking-tight text-slate-900 md:order-none">CoachAI tavsiyesi</h3>
-                            <div class="relative order-3 min-h-[3rem] min-w-0 flex-1 w-full max-w-none md:order-none md:pr-1.5">
+                            <div class="relative order-3 min-h-[3rem] min-w-0 flex-1 w-full max-w-none md:order-none md:pr-3">
                                 <div class="ar-skel-wrap absolute inset-0 space-y-2" aria-hidden="true">
                                     <div class="h-3 ar-skel w-full rounded"></div>
                                     <div class="h-3 ar-skel w-full rounded opacity-90"></div>
