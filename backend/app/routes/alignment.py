@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 
 from app.config.firebase_config import get_firestore
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limit import enforce_daily_quota, limiter
 from app.services.alignment_engine import compute_alignment
 from app.services.gemini_client import alignment_coaching, enrich_skill_display_items
 
@@ -48,13 +47,11 @@ class AlignmentScoreBody(BaseModel):
 
 
 @router.post("/alignment/score")
-@limiter.limit("30/hour")
 async def alignment_score(
     request: Request,
     body: AlignmentScoreBody,
     uid: str = Depends(get_current_user),
 ):
-    enforce_daily_quota(uid, "alignment_score", "DAILY_QUOTA_ALIGNMENT")
     db = get_firestore()
     cv_ref = db.collection("cv_documents").document(body.cv_id)
     pr_ref = db.collection("company_profiles").document(body.profile_id)

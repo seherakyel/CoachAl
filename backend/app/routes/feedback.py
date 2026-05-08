@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 from app.config.firebase_config import get_firestore
 from app.config.settings import get_env
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limit import enforce_daily_quota, limiter
 from app.services.feedback_service import generate_feedback
 
 
@@ -39,13 +38,11 @@ def _summarize_session(sess: dict) -> dict | None:
 
 
 @router.post("/feedback/generate")
-@limiter.limit("15/hour")
 async def feedback_generate(
     request: Request,
     body: FeedbackBody,
     uid: str = Depends(get_current_user),
 ):
-    enforce_daily_quota(uid, "feedback", "DAILY_QUOTA_FEEDBACK")
     if not get_env("GEMINI_API_KEY"):
         raise HTTPException(
             status_code=503, detail="GEMINI_API_KEY tanımlı değil."
