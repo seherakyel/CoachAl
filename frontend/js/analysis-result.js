@@ -607,16 +607,16 @@ function populateAnalysisResult() {
     var traits = dedupeKeyTraits(companyProfile.key_traits || []);
     if (traits.length) {
         document.getElementById("key-traits-section").classList.remove("hidden");
+        var traitIcons = ["check_circle", "star", "workspace_premium", "auto_awesome", "verified", "diamond", "bolt", "psychology"];
         document.getElementById("key-traits").innerHTML = traits
             .map(function(t, idx) {
                 var raw = String(t);
-                var iconPart =
-                    idx % 2 === 0
-                        ? '<span class="material-symbols-outlined shrink-0 text-[14px] leading-none text-slate-500" style="font-variation-settings:\'FILL\' 1,\'wght\' 500" aria-hidden="true">check</span>'
-                        : '<span class="h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" aria-hidden="true"></span>';
+                var icon = traitIcons[idx % traitIcons.length];
                 return (
-                    '<span role="listitem" class="ap-profil-chip inline-flex max-w-full min-w-0 cursor-default items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left text-xs font-medium leading-snug text-slate-700 shadow-sm transition-colors duration-150 hover:border-slate-300 hover:bg-white">' +
-                    iconPart +
+                    '<span role="listitem" class="ar-trait-pill">' +
+                    '<span class="ar-trait-pill-icon">' +
+                    '<span class="material-symbols-outlined text-[14px] leading-none text-indigo-500" style="font-variation-settings:\'FILL\' 1,\'wght\' 500" aria-hidden="true">' + icon + '</span>' +
+                    '</span>' +
                     '<span class="min-w-0 break-words">' +
                     escapeHtml(raw) +
                     "</span></span>"
