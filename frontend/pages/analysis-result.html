@@ -365,44 +365,82 @@
   position:absolute;
   bottom:0;
   left:0;
-  right:4px;
-  height:2.5rem;
+  right:2px;
+  height:1.125rem;
   pointer-events:none;
-  background:linear-gradient(to top,#fff 0%,rgba(255,255,255,0.95) 40%,transparent 100%);
-  border-radius:0 0 16px 16px;
+  opacity:0;
+  transition:opacity 0.22s ease;
+  background:linear-gradient(to top,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.12) 50%,transparent 100%);
+  border-radius:0 0 12px 12px;
   z-index:3;
 }
-/* Aranan profil — pill tasarımı */
-.ar-trait-pill{
+/* Liste taşıyorsa: altta “devam var” — daha belirgin fade + hafif iç gölge */
+.ar-skills-fade-bottom--scrollable::after{
+  opacity:1;
+  height:2.75rem;
+  right:6px;
+  background:linear-gradient(
+    to top,
+    #fff 0%,
+    rgba(255,255,255,0.98) 20%,
+    rgba(255,255,255,0.72) 52%,
+    rgba(255,255,255,0.2) 82%,
+    transparent 100%
+  );
+  box-shadow:0 -10px 24px -8px rgba(15,23,42,0.1);
+}
+.ar-skills-fade-bottom--scrollable .ar-skills-scroll-area{
+  box-shadow:inset 0 -20px 18px -12px rgba(15,23,42,0.07);
+}
+.ar-skills-scroll-more-cue{
+  position:absolute;
+  bottom:0.2rem;
+  left:50%;
+  z-index:4;
+  transform:translateX(-50%);
+  max-width:calc(100% - 1.5rem);
+  pointer-events:none;
+  white-space:nowrap;
+  font-size:0.625rem;
+  font-weight:600;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:#94a3b8;
+  text-shadow:0 1px 0 #fff,0 0 8px #fff;
+  opacity:0;
+  transition:opacity 0.2s ease;
+}
+.ar-skills-fade-bottom--scrollable .ar-skills-scroll-more-cue:not([hidden]){
+  opacity:1;
+}
+/* Aranan profil — kartlarla aynı dil: beyaz yüzey, ince slate çerçeve */
+#key-traits .ar-trait-chip{
   display:inline-flex;
-  align-items:center;
-  gap:0.375rem;
-  padding:0.375rem 0.75rem 0.375rem 0.5rem;
-  border-radius:9999px;
-  border:1px solid rgba(99,102,241,0.18);
-  background:linear-gradient(135deg,rgba(238,242,255,0.7) 0%,rgba(224,231,255,0.45) 100%);
-  font-size:0.8125rem;
-  font-weight:500;
-  line-height:1.4;
-  color:#3730a3;
   max-width:100%;
   min-width:0;
-  transition:border-color 0.15s ease,box-shadow 0.15s ease;
+  align-items:flex-start;
+  gap:0.375rem;
+  padding:0.375rem 0.625rem;
+  border-radius:0.5rem;
+  border:1px solid #e2e8f0;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(15,23,42,0.04);
+  font-size:0.75rem;
+  font-weight:500;
+  line-height:1.45;
+  color:#334155;
+  box-sizing:border-box;
   cursor:default;
+  transition:border-color 0.15s ease,background-color 0.15s ease;
 }
-.ar-trait-pill:hover{
-  border-color:rgba(99,102,241,0.35);
-  box-shadow:0 1px 4px rgba(99,102,241,0.12);
+#key-traits .ar-trait-chip:hover{
+  border-color:#cbd5e1;
+  background:#fafafa;
 }
-.ar-trait-pill-icon{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:1.25rem;
-  height:1.25rem;
-  border-radius:50%;
-  background:rgba(99,102,241,0.12);
+#key-traits .ar-trait-chip .ar-trait-chip-mark{
   flex-shrink:0;
+  margin-top:0.125rem;
+  color:#94a3b8;
 }
 /* Gelişim rehberi — ortalanmış modal */
 #ar-learn-modal[aria-hidden="true"]{pointer-events:none}
@@ -556,6 +594,7 @@
                             <div class="h-11 ar-skel rounded-xl w-full opacity-90"></div>
                         </div>
                         <div id="matched-skills" class="ar-live ar-skills-scroll-area relative z-[2] space-y-2"></div>
+                        <span id="ar-matched-scroll-cue" class="ar-skills-scroll-more-cue" hidden>Devamı için aşağı kaydırın</span>
                     </div>
                 </div>
 
@@ -575,6 +614,7 @@
                             <div class="h-11 w-full rounded-xl ar-skel opacity-90"></div>
                         </div>
                         <div id="missing-skills" class="ar-live ar-skills-scroll-area relative z-[2] space-y-2"></div>
+                        <span id="ar-missing-scroll-cue" class="ar-skills-scroll-more-cue" hidden>Devamı için aşağı kaydırın</span>
                     </div>
                 </div>
             </div>

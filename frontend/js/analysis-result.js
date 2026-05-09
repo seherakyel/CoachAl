@@ -231,6 +231,34 @@ async function openArLearnModal(skillRaw) {
     }
 }
 
+/** Liste taşması: alt fade + ipucu yalnızca kaydırılacak içerik varken */
+function updateSkillsScrollOverflowHints() {
+    ["matched-skills", "missing-skills"].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el || !el.parentElement) return;
+        var wrap = el.parentElement;
+        if (!wrap.classList.contains("ar-skills-fade-bottom")) return;
+        var cueId = id === "matched-skills" ? "ar-matched-scroll-cue" : "ar-missing-scroll-cue";
+        var cue = document.getElementById(cueId);
+        var overflow = el.scrollHeight > el.clientHeight + 1;
+        wrap.classList.toggle("ar-skills-fade-bottom--scrollable", overflow);
+        if (cue) {
+            if (overflow) cue.removeAttribute("hidden");
+            else cue.setAttribute("hidden", "");
+        }
+    });
+}
+
+function initSkillsScrollOverflowWatch() {
+    if (initSkillsScrollOverflowWatch._done) return;
+    initSkillsScrollOverflowWatch._done = true;
+    var deb;
+    window.addEventListener("resize", function() {
+        clearTimeout(deb);
+        deb = setTimeout(updateSkillsScrollOverflowHints, 120);
+    });
+}
+
 /** Eşleşen + eksik yetenek accordion — liste başına tek açık satır */
 function initSkillAccordionsUi() {
     if (initSkillAccordionsUi._done) return;
@@ -263,6 +291,11 @@ function initSkillAccordionsUi() {
             var panel = item.querySelector(".ar-skill-acc-panel");
             if (panel) panel.setAttribute("aria-hidden", "false");
         }
+
+        requestAnimationFrame(function() {
+            updateSkillsScrollOverflowHints();
+        });
+        window.setTimeout(updateSkillsScrollOverflowHints, 360);
     });
 }
 
@@ -607,16 +640,12 @@ function populateAnalysisResult() {
     var traits = dedupeKeyTraits(companyProfile.key_traits || []);
     if (traits.length) {
         document.getElementById("key-traits-section").classList.remove("hidden");
-        var traitIcons = ["check_circle", "star", "workspace_premium", "auto_awesome", "verified", "diamond", "bolt", "psychology"];
         document.getElementById("key-traits").innerHTML = traits
-            .map(function(t, idx) {
+            .map(function(t) {
                 var raw = String(t);
-                var icon = traitIcons[idx % traitIcons.length];
                 return (
-                    '<span role="listitem" class="ar-trait-pill">' +
-                    '<span class="ar-trait-pill-icon">' +
-                    '<span class="material-symbols-outlined text-[14px] leading-none text-indigo-500" style="font-variation-settings:\'FILL\' 1,\'wght\' 500" aria-hidden="true">' + icon + '</span>' +
-                    '</span>' +
+                    '<span role="listitem" class="ar-trait-chip text-left">' +
+                    '<span class="material-symbols-outlined ar-trait-chip-mark text-[15px] leading-none" style="font-variation-settings:\'FILL\' 0,\'wght\' 400" aria-hidden="true">check_small</span>' +
                     '<span class="min-w-0 break-words">' +
                     escapeHtml(raw) +
                     "</span></span>"
@@ -667,6 +696,13 @@ function populateAnalysisResult() {
 
     initSkillAccordionsUi();
     initArLearnModalUi();
+    initSkillsScrollOverflowWatch();
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+            updateSkillsScrollOverflowHints();
+        });
+    });
+    window.setTimeout(updateSkillsScrollOverflowHints, 220);
 
     var root = document.getElementById("analysis-root");
     if (root) root.classList.add("analysis-ready");
