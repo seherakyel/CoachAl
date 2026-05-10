@@ -52,6 +52,7 @@
     column-gap:1rem;
     --ar-left-rail-gutter:1rem;
     --ar-dashboard-col-gap:1rem;
+    align-items:stretch;
   }
   /* Üst: şirket | CoachAI — eş yükseklik; sütun aralığı ana grid ile aynı */
   .ar-dashboard-top-row{
@@ -81,26 +82,28 @@
     min-height:0;
     flex:1 1 auto;
   }
+  /* Alt satır sol: sağ sütun (yetenekler + CTA) ile aynı yükseklik — alttan hizalı */
   .ar-dashboard-col-left{
-    position:sticky;
-    top:2.5rem;
-    align-self:start;
-    z-index:5;
-    max-height:calc(100vh - 3rem);
-    overflow-x:hidden;
-    overflow-y:auto;
-    overscroll-behavior:contain;
-    -webkit-overflow-scrolling:touch;
+    position:relative;
+    top:auto;
+    align-self:stretch;
+    z-index:auto;
+    max-height:none;
+    overflow:visible;
     padding-left:var(--ar-left-rail-gutter);
     padding-right:var(--ar-left-rail-gutter);
     isolation:isolate;
+    min-height:0;
   }
   .ar-dashboard-col-right{
     min-height:0;
     min-width:0;
+    align-self:stretch;
+    display:flex;
+    flex-direction:column;
   }
 }
-/* Sol sütun — dikey akış, kartlar dokümanda sıralı (sticky sadece aside’da) */
+/* Sol sütun (alt satır) — grid ile sağ sütun eş yükseklik; içerik flex ile dolar */
 .ar-dashboard-col-left{
   display:flex;
   flex-direction:column;
@@ -125,6 +128,12 @@
   margin-left:0!important;
   margin-right:0!important;
 }
+@media (min-width:768px){
+  .ar-left-column-stack > #key-traits-section.ar-surface-card{
+    flex:1 1 0;
+    min-height:16rem;
+  }
+}
 .ar-dashboard-col-left .ar-surface-card{
   overflow:visible;
   position:static;
@@ -133,6 +142,17 @@
 /* Aranan profil — yetenek chip’leri (yalnızca #key-traits içi) */
 .ar-left-column-stack #key-traits-section{
   margin:0;
+}
+@media (min-width:768px){
+  #key-traits.ar-key-traits-body{
+    scrollbar-width:thin;
+    scrollbar-color:rgba(148,163,184,0.45) transparent;
+    align-content:flex-start;
+  }
+  #key-traits.ar-key-traits-body::-webkit-scrollbar{width:4px}
+  #key-traits.ar-key-traits-body::-webkit-scrollbar-track{background:transparent}
+  #key-traits.ar-key-traits-body::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.4);border-radius:9999px}
+  #key-traits.ar-key-traits-body::-webkit-scrollbar-thumb:hover{background:rgba(100,116,139,0.55)}
 }
 .ar-left-panel-surface.ar-surface-card{
   width:100%;
@@ -566,18 +586,18 @@
     </div>
     </div>
 
-    <aside class="ar-dashboard-col-left flex w-full min-w-0 flex-col" aria-label="Şirket profili ve aranan profil">
-    <div class="ar-left-column-stack flex min-h-0 w-full min-w-0 max-w-full flex-col items-stretch gap-6">
-    <section id="key-traits-section" class="ar-surface-card ar-left-panel-surface flex hidden min-h-0 w-full max-w-full min-w-0 shrink-0 flex-col gap-3" aria-labelledby="ap-aranan-profil-title">
-        <h3 id="ap-aranan-profil-title" class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Aranan profil</h3>
-        <div id="key-traits" class="ar-live flex w-full min-w-0 flex-wrap content-start gap-2" role="list"></div>
+    <aside class="ar-dashboard-col-left flex w-full min-w-0 flex-col md:min-h-0" aria-label="Şirket profili ve aranan profil">
+    <div class="ar-left-column-stack flex min-h-0 w-full min-w-0 max-w-full flex-col items-stretch gap-6 md:h-full">
+    <section id="key-traits-section" class="ar-surface-card ar-left-panel-surface flex hidden min-h-0 w-full max-w-full min-w-0 flex-col gap-3 md:flex-1 md:min-h-0" aria-labelledby="ap-aranan-profil-title">
+        <h3 id="ap-aranan-profil-title" class="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Aranan profil</h3>
+        <div id="key-traits" class="ar-live ar-key-traits-body flex w-full min-w-0 flex-wrap content-start gap-2 md:min-h-0 md:flex-1 md:overflow-y-auto" role="list"></div>
     </section>
     </div>
     </aside>
 
         <!-- Sağ kolon: Eşleşen → Eksik → CTA -->
-        <div class="ar-dashboard-col-right flex min-h-0 min-w-0 flex-col gap-6 h-full xl:h-full">
-            <div class="flex min-w-0 flex-col gap-6">
+        <div class="ar-dashboard-col-right flex min-h-0 min-w-0 flex-col gap-6 md:h-full">
+            <div class="flex min-h-0 min-w-0 flex-col gap-6 md:flex-1">
                 <div class="ar-surface-card ar-skills-col-matched flex min-h-0 min-w-0 flex-col overflow-visible">
                     <div class="flex flex-wrap items-center gap-3 mb-4 pb-3 border-b border-slate-100">
                         <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 text-indigo-600">
