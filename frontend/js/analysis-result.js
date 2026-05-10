@@ -525,6 +525,40 @@ function dedupeKeyTraits(arr) {
     return out;
 }
 
+/** Aranan profil — kısa listeyi şablondan tamamlar (min. satır sayısı) */
+var AR_SUPPLEMENTAL_KEY_TRAITS = [
+    "Büyük ölçekli dağıtık sistemlerde tasarım ve operasyon deneyimi",
+    "Takım içi kod incelemesi ve teknik karar dokümantasyonu",
+    "Üretim ortamında gözlemlenebilirlik ve hata ayıklama disiplini",
+    "Çevik ritimlere uyum ve önceliklendirilmiş teslimat",
+    "Güvenlik ve veri gizliliği bilinciyle geliştirme",
+    "Performans ve maliyet odaklı mühendislik trade-off'ları",
+    "Sürekli öğrenme ve yeni teknolojileri kontrollü benimseme",
+    "Paydaşlarla net iletişim ve teknik sunum becerisi",
+    "Otomasyon, test ve kalite kapılarıyla sürdürülebilir pipeline",
+    "Incident müdahalesi ve kök neden analizi deneyimi",
+    "Domain modelleme ve sınır bağlam (bounded context) düşüncesi",
+    "Erişilebilirlik ve kullanıcı deneyimiyle uyumlu arayüz kararları"
+];
+
+function extendKeyTraits(traits, minLen) {
+    var out = dedupeKeyTraits(traits);
+    minLen = minLen || 10;
+    if (out.length >= minLen) return out;
+    var seen = {};
+    out.forEach(function(t) {
+        seen[String(t).trim().toLowerCase().replace(/\s+/g, " ")] = true;
+    });
+    for (var i = 0; i < AR_SUPPLEMENTAL_KEY_TRAITS.length && out.length < minLen; i++) {
+        var x = AR_SUPPLEMENTAL_KEY_TRAITS[i];
+        var k = String(x).trim().toLowerCase().replace(/\s+/g, " ");
+        if (seen[k]) continue;
+        seen[k] = true;
+        out.push(x);
+    }
+    return out;
+}
+
 function populateAnalysisResult() {
     var alignment = safeParseJSON(sessionStorage.getItem("coachai_alignment"), null);
     var companyProfile = safeParseJSON(sessionStorage.getItem("coachai_company_profile"), null);
@@ -637,7 +671,7 @@ function populateAnalysisResult() {
         });
     }
 
-    var traits = dedupeKeyTraits(companyProfile.key_traits || []);
+    var traits = extendKeyTraits(companyProfile.key_traits || [], 12);
     if (traits.length) {
         document.getElementById("key-traits-section").classList.remove("hidden");
         document.getElementById("key-traits").innerHTML = traits
