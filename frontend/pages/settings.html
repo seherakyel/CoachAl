@@ -10,24 +10,36 @@
 <script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"primary":"#3525cd","primary-container":"#4f46e5","on-primary":"#ffffff","on-primary-container":"#dad7ff","primary-fixed":"#e2dfff","primary-fixed-dim":"#c3c0ff","secondary":"#545f73","on-secondary":"#ffffff","secondary-container":"#d5e0f8","on-secondary-container":"#586377","error":"#ba1a1a","on-error":"#ffffff","error-container":"#ffdad6","on-error-container":"#93000a","background":"#fcf8ff","on-background":"#1b1b24","surface":"#fcf8ff","surface-container-lowest":"#ffffff","surface-container-low":"#f5f2ff","surface-container":"#f0ecf9","surface-container-high":"#eae6f4","surface-container-highest":"#e4e1ee","on-surface":"#1b1b24","on-surface-variant":"#464555","surface-variant":"#e4e1ee","outline":"#777587","outline-variant":"#c7c4d8"},borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},spacing:{"xs":"4px","sm":"12px","md":"24px","lg":"40px","xl":"64px","gutter":"24px","base":"8px"},fontFamily:{"body-md":["Inter"],"h1":["Inter"],"h2":["Inter"],"h3":["Inter"],"body-lg":["Inter"],"label-sm":["Inter"]},fontSize:{"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],"h1":["40px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"h2":["30px",{"lineHeight":"1.3","letterSpacing":"-0.01em","fontWeight":"600"}],"h3":["24px",{"lineHeight":"1.4","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"label-sm":["14px",{"lineHeight":"1.4","fontWeight":"500"}]}}}}</script>
 <style>
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
-.settings-panel{display:none}
-.settings-panel.active{display:block}
+/* Akordeon: menü + panel aynı kart */
+.st-acc-item{border-bottom:1px solid #f1f5f9}
+.st-acc-item:last-child{border-bottom:none}
 .st-menu-item{
   display:flex;align-items:center;gap:12px;
-  padding:14px 20px;cursor:pointer;
-  border-left:3px solid transparent;
-  transition:background 0.15s,border-color 0.15s;
+  padding:15px 20px;cursor:pointer;width:100%;text-align:left;
+  border-left:3px solid transparent;background:transparent;
+  transition:background .15s,border-color .15s;
   user-select:none;
 }
-.st-menu-item:hover{background:#f5f4ff}
-.st-menu-item.active{
-  border-left-color:#4f46e5;
-  background:#f0efff;
-}
+.st-menu-item:hover{background:#f8f7ff}
+.st-menu-item.active{border-left-color:#4f46e5;background:#f0efff}
 .st-menu-item.active .st-menu-label{color:#3525cd;font-weight:600}
 .st-menu-item.active .st-menu-icon{color:#4f46e5}
-.st-menu-label{font-size:15px;font-weight:500;color:#1b1b24;transition:color 0.15s}
-.st-menu-icon{color:#464555;font-size:20px;transition:color 0.15s}
+.st-menu-label{font-size:15px;font-weight:500;color:#1b1b24;flex:1;transition:color .15s}
+.st-menu-icon{color:#64748b;font-size:20px;transition:color .15s}
+.st-chevron{color:#cbd5e1;font-size:18px;transition:transform .22s ease}
+.st-menu-item.active .st-chevron{transform:rotate(180deg)}
+/* Akordeon panel — grid-rows geçişi */
+.st-acc-panel{
+  display:grid;grid-template-rows:0fr;
+  transition:grid-template-rows .28s ease;
+}
+.st-acc-panel.open{grid-template-rows:1fr}
+.st-acc-panel-inner{
+  overflow:hidden;
+  padding:0 20px;
+}
+.st-acc-panel.open .st-acc-panel-inner{padding:0 20px 20px}
+/* form alanları */
 .st-field-label{
   font-size:11px;font-weight:700;letter-spacing:.08em;
   text-transform:uppercase;color:#6b7280;margin-bottom:6px;display:block;
@@ -45,6 +57,7 @@
   position:absolute;right:12px;top:50%;transform:translateY(-50%);
   font-size:18px;color:#94a3b8;pointer-events:none;
 }
+/* toast */
 .st-toast{
   position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(12px);
   background:#1b1b24;color:#fff;padding:10px 20px;border-radius:12px;
@@ -76,188 +89,161 @@
         </div>
     </div>
 
-    <!-- Menü + Panel grubu -->
-    <div class="flex flex-col gap-4">
+    <!-- Akordeon kartı: menü + inline paneller -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-        <!-- Menü kartı -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
-            <button class="st-menu-item w-full text-left active" data-panel="profil">
+        <!-- Profil Yönetimi -->
+        <div class="st-acc-item">
+            <button class="st-menu-item active" data-panel="profil">
                 <span class="material-symbols-outlined st-menu-icon">person</span>
                 <span class="st-menu-label">Profil Yönetimi</span>
+                <span class="material-symbols-outlined st-chevron">expand_more</span>
             </button>
-            <button class="st-menu-item w-full text-left" data-panel="cvdosyalar">
+            <div class="st-acc-panel open" id="panel-profil">
+                <div class="st-acc-panel-inner">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="st-field-label">Ad Soyad</label>
+                            <div class="st-input-wrap">
+                                <input id="display-name" type="text" placeholder="Adınızı girin" class="st-input pr-10" />
+                                <span class="material-symbols-outlined">edit</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="st-field-label">E-posta Adresi</label>
+                            <input id="display-email" type="email" disabled class="st-input" />
+                        </div>
+                        <div>
+                            <label class="st-field-label">Ünvan / Rol</label>
+                            <div class="st-input-wrap">
+                                <input id="display-title" type="text" placeholder="Örn. Senior Technical Recruiter" class="st-input pr-10" />
+                                <span class="material-symbols-outlined">edit</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="st-field-label">Hakkımda</label>
+                            <textarea id="display-bio" placeholder="Kısa bir tanıtım yazın…" rows="3" class="st-input resize-none" style="height:auto"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 mt-5 pt-4 border-t border-slate-100">
+                        <button id="btn-cancel-profile" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors">İptal</button>
+                        <button id="btn-save-profile" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-primary-container text-white hover:bg-primary transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 0,'wght' 500">save</span>
+                            Değişiklikleri Kaydet
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CV ve Dosyalar -->
+        <div class="st-acc-item">
+            <button class="st-menu-item" data-panel="cvdosyalar" data-lazy="cv">
                 <span class="material-symbols-outlined st-menu-icon">description</span>
                 <span class="st-menu-label">CV ve Dosyalar</span>
+                <span class="material-symbols-outlined st-chevron">expand_more</span>
             </button>
-            <button class="st-menu-item w-full text-left" data-panel="bildirim">
+            <div class="st-acc-panel" id="panel-cvdosyalar">
+                <div class="st-acc-panel-inner">
+                    <div id="cv-list-wrap">
+                        <!-- JS tarafından doldurulur -->
+                        <div id="cv-list-loading" class="flex items-center gap-2 py-4 text-sm text-slate-400">
+                            <div class="w-4 h-4 border-2 border-slate-300 border-t-primary-container rounded-full animate-spin shrink-0"></div>
+                            Yükleniyor…
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+                        <a href="cv-analysis.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-primary-container text-white hover:bg-primary transition-colors">
+                            <span class="material-symbols-outlined text-[16px]">add</span>Yeni CV Yükle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bildirim Ayarları -->
+        <div class="st-acc-item">
+            <button class="st-menu-item" data-panel="bildirim">
                 <span class="material-symbols-outlined st-menu-icon">notifications</span>
                 <span class="st-menu-label">Bildirim Ayarları</span>
+                <span class="material-symbols-outlined st-chevron">expand_more</span>
             </button>
-            <button class="st-menu-item w-full text-left" data-panel="guvenlik">
+            <div class="st-acc-panel" id="panel-bildirim">
+                <div class="st-acc-panel-inner">
+                    <div class="divide-y divide-slate-100">
+                        <div class="flex items-center justify-between py-3.5">
+                            <div>
+                                <p class="text-sm font-medium text-slate-800">Analiz tamamlandı</p>
+                                <p class="text-xs text-slate-400 mt-0.5">CV analizi bittiğinde bildirim al</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="notif-analysis" class="sr-only peer" checked>
+                                <div class="w-10 h-6 bg-slate-200 peer-checked:bg-primary-container rounded-full transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-4 after:shadow-sm"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-3.5">
+                            <div>
+                                <p class="text-sm font-medium text-slate-800">Mülakat hatırlatıcısı</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Planlanan mülakat öncesi bildirim</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="notif-interview" class="sr-only peer">
+                                <div class="w-10 h-6 bg-slate-200 peer-checked:bg-primary-container rounded-full transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-4 after:shadow-sm"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-3.5">
+                            <div>
+                                <p class="text-sm font-medium text-slate-800">Koç tavsiyeleri</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Yeni gelişim önerileri için bildirim</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="notif-coach" class="sr-only peer" checked>
+                                <div class="w-10 h-6 bg-slate-200 peer-checked:bg-primary-container rounded-full transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-4 after:shadow-sm"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hesap ve Güvenlik -->
+        <div class="st-acc-item">
+            <button class="st-menu-item" data-panel="guvenlik">
                 <span class="material-symbols-outlined st-menu-icon">shield</span>
                 <span class="st-menu-label">Hesap ve Güvenlik</span>
+                <span class="material-symbols-outlined st-chevron">expand_more</span>
             </button>
-            <button class="st-menu-item w-full text-left" id="btn-logout" style="border-left-color:transparent">
+            <div class="st-acc-panel" id="panel-guvenlik">
+                <div class="st-acc-panel-inner">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="st-field-label">Yeni Şifre <span class="normal-case font-normal">(min. 6 karakter)</span></label>
+                            <div class="st-input-wrap">
+                                <input id="new-password" type="password" placeholder="••••••••" class="st-input pr-10" />
+                                <span class="material-symbols-outlined" id="pw-eye" style="cursor:pointer;pointer-events:auto">visibility_off</span>
+                            </div>
+                        </div>
+                        <div id="pw-error" class="hidden p-3 bg-error-container text-on-error-container text-sm rounded-xl border border-error/20"></div>
+                    </div>
+                    <div class="flex justify-end mt-5 pt-4 border-t border-slate-100">
+                        <button id="btn-change-pw" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-primary-container text-white hover:bg-primary transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 0,'wght' 500">lock_reset</span>
+                            Şifreyi Güncelle
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Çıkış Yap -->
+        <div class="st-acc-item">
+            <button class="st-menu-item" id="btn-logout" style="border-left-color:transparent">
                 <span class="material-symbols-outlined" style="color:#ba1a1a;font-size:20px">logout</span>
                 <span class="st-menu-label" style="color:#ba1a1a">Çıkış Yap</span>
             </button>
         </div>
 
-        <!-- Panel: Profil Yönetimi -->
-        <div class="settings-panel active bg-white rounded-2xl border border-slate-200 shadow-sm p-6" id="panel-profil">
-            <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-100">
-                <span class="material-symbols-outlined text-[22px] text-primary-container">person</span>
-                <h2 class="text-base font-semibold text-slate-900">Profil Yönetimi</h2>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="st-field-label">Ad Soyad</label>
-                    <div class="st-input-wrap">
-                        <input id="display-name" type="text" placeholder="Adınızı girin" class="st-input pr-10" />
-                        <span class="material-symbols-outlined">edit</span>
-                    </div>
-                </div>
-                <div>
-                    <label class="st-field-label">E-posta Adresi</label>
-                    <input id="display-email" type="email" disabled class="st-input" />
-                </div>
-                <div>
-                    <label class="st-field-label">Ünvan / Rol</label>
-                    <div class="st-input-wrap">
-                        <input id="display-title" type="text" placeholder="Örn. Senior Technical Recruiter" class="st-input pr-10" />
-                        <span class="material-symbols-outlined">edit</span>
-                    </div>
-                </div>
-                <div>
-                    <label class="st-field-label">Hakkımda</label>
-                    <textarea id="display-bio" placeholder="Kısa bir tanıtım yazın…" rows="3"
-                        class="st-input resize-none" style="height:auto"></textarea>
-                </div>
-            </div>
-            <div class="flex items-center justify-end gap-3 mt-6 pt-5 border-t border-slate-100">
-                <button id="btn-cancel-profile" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors">İptal</button>
-                <button id="btn-save-profile" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-primary-container text-white hover:bg-primary transition-colors flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 0,'wght' 500">save</span>
-                    Değişiklikleri Kaydet
-                </button>
-            </div>
-        </div>
-
-        <!-- Panel: CV ve Dosyalar -->
-        <div class="settings-panel bg-white rounded-2xl border border-slate-200 shadow-sm p-6" id="panel-cvdosyalar">
-            <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-100">
-                <span class="material-symbols-outlined text-[22px] text-primary-container">description</span>
-                <h2 class="text-base font-semibold text-slate-900">CV ve Dosyalar</h2>
-            </div>
-            <div class="flex flex-col items-center justify-center py-8 gap-4 text-center">
-                <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-[30px] text-slate-400">upload_file</span>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-slate-700">CV'nizi yükleyin ve yönetin</p>
-                    <p class="text-xs text-slate-400 mt-1">Yüklenen CV'leriniz buradan görüntülenecek.</p>
-                </div>
-                <a href="cv-analysis.html" class="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-primary-container text-white hover:bg-primary transition-colors">
-                    <span class="material-symbols-outlined text-[16px]">add</span>
-                    CV Analizi Başlat
-                </a>
-            </div>
-        </div>
-
-        <!-- Panel: Bildirim Ayarları -->
-        <div class="settings-panel bg-white rounded-2xl border border-slate-200 shadow-sm p-6" id="panel-bildirim">
-            <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-100">
-                <span class="material-symbols-outlined text-[22px] text-primary-container">notifications</span>
-                <h2 class="text-base font-semibold text-slate-900">Bildirim Ayarları</h2>
-            </div>
-            <div class="divide-y divide-slate-100">
-                <div class="flex items-center justify-between py-4">
-                    <div>
-                        <p class="text-sm font-medium text-slate-800">Analiz tamamlandı</p>
-                        <p class="text-xs text-slate-400 mt-0.5">CV analizi bittiğinde bildirim al</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="notif-analysis" class="sr-only peer" checked>
-                        <div class="w-10 h-6 bg-slate-200 peer-checked:bg-primary-container rounded-full transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-4 after:shadow-sm"></div>
-                    </label>
-                </div>
-                <div class="flex items-center justify-between py-4">
-                    <div>
-                        <p class="text-sm font-medium text-slate-800">Mülakat hatırlatıcısı</p>
-                        <p class="text-xs text-slate-400 mt-0.5">Planlanan mülakat öncesi bildirim</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="notif-interview" class="sr-only peer">
-                        <div class="w-10 h-6 bg-slate-200 peer-checked:bg-primary-container rounded-full transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-4 after:shadow-sm"></div>
-                    </label>
-                </div>
-                <div class="flex items-center justify-between py-4">
-                    <div>
-                        <p class="text-sm font-medium text-slate-800">Koç tavsiyeleri</p>
-                        <p class="text-xs text-slate-400 mt-0.5">Yeni gelişim önerileri için bildirim</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="notif-coach" class="sr-only peer" checked>
-                        <div class="w-10 h-6 bg-slate-200 peer-checked:bg-primary-container rounded-full transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-4 after:shadow-sm"></div>
-                    </label>
-                </div>
-            </div>
-            <p class="mt-4 text-xs text-slate-400 text-center">Bildirim tercihleri tarayıcı oturumuna kaydedilir.</p>
-        </div>
-
-        <!-- Panel: Hesap ve Güvenlik -->
-        <div class="settings-panel bg-white rounded-2xl border border-slate-200 shadow-sm p-6" id="panel-guvenlik">
-            <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-100">
-                <span class="material-symbols-outlined text-[22px] text-primary-container">shield</span>
-                <h2 class="text-base font-semibold text-slate-900">Hesap ve Güvenlik</h2>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="st-field-label">Yeni Şifre <span class="normal-case font-normal">(min. 6 karakter)</span></label>
-                    <div class="st-input-wrap">
-                        <input id="new-password" type="password" placeholder="••••••••" class="st-input pr-10" />
-                        <span class="material-symbols-outlined" id="pw-eye" style="cursor:pointer;pointer-events:auto">visibility_off</span>
-                    </div>
-                </div>
-                <div id="pw-error" class="hidden p-3 bg-error-container text-on-error-container text-sm rounded-xl border border-error/20"></div>
-            </div>
-            <div class="flex justify-end mt-6 pt-5 border-t border-slate-100">
-                <button id="btn-change-pw" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-primary-container text-white hover:bg-primary transition-colors flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 0,'wght' 500">lock_reset</span>
-                    Şifreyi Güncelle
-                </button>
-            </div>
-        </div>
-
-        <!-- Panel: Uygulama Bilgisi -->
-        <div class="settings-panel bg-white rounded-2xl border border-slate-200 shadow-sm p-6" id="panel-uygulama">
-            <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-100">
-                <span class="material-symbols-outlined text-[22px] text-primary-container">info</span>
-                <h2 class="text-base font-semibold text-slate-900">Uygulama Bilgisi</h2>
-            </div>
-            <div class="divide-y divide-slate-100 text-sm">
-                <div class="flex justify-between items-center py-3">
-                    <span class="text-slate-500">Versiyon</span>
-                    <span class="font-medium text-slate-800">1.0.0</span>
-                </div>
-                <div class="flex justify-between items-center py-3">
-                    <span class="text-slate-500">Backend</span>
-                    <span class="font-medium text-slate-800">FastAPI + Gemini</span>
-                </div>
-                <div class="flex justify-between items-center py-3">
-                    <span class="text-slate-500">Veritabanı</span>
-                    <span class="font-medium text-slate-800">Firebase Firestore</span>
-                </div>
-                <div class="flex justify-between items-center py-3">
-                    <span class="text-slate-500">Ortam</span>
-                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>development
-                    </span>
-                </div>
-            </div>
-        </div>
-
-    </div><!-- /grup -->
+    </div><!-- /akordeon -->
 
 </div>
 </main>

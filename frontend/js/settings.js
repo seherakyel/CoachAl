@@ -12,18 +12,88 @@ function showToast(text, isError) {
     setTimeout(function () { el.classList.remove("show"); }, 2800);
 }
 
-/* ---------- menü geçişi ---------- */
+/* ---------- CV listesi ---------- */
+var _cvLoaded = false;
+
+function formatDate(iso) {
+    if (!iso) return "";
+    try {
+        var d = new Date(iso);
+        return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" });
+    } catch (e) { return ""; }
+}
+
+async function loadCvList() {
+    if (_cvLoaded) return;
+    var wrap = document.getElementById("cv-list-wrap");
+    if (!wrap) return;
+    try {
+        var tok = await getToken();
+        var r = await fetch(API_BASE + "/api/cv/list?limit=20", {
+            headers: { Authorization: "Bearer " + tok }
+        });
+        var data = await r.json();
+        var items = (data && data.items) ? data.items : [];
+
+        if (!items.length) {
+            wrap.innerHTML =
+                '<div class="flex flex-col items-center py-6 gap-3 text-center">' +
+                '<span class="material-symbols-outlined text-[32px] text-slate-300">description</span>' +
+                '<p class="text-sm text-slate-400">Henüz CV yüklenmemiş.</p>' +
+                '</div>';
+            _cvLoaded = true;
+            return;
+        }
+
+        var html = '<div class="divide-y divide-slate-100">';
+        items.forEach(function (cv) {
+            var name = cv.cv_id ? cv.cv_id.slice(0, 8).toUpperCase() : "CV";
+            var date = cv.uploaded_at ? formatDate(cv.uploaded_at) : "";
+            var skills = cv.skill_count || 0;
+            var exp = cv.experience_years != null ? cv.experience_years + " yıl deneyim" : "";
+            var edu = cv.education_level || "";
+            var meta = [exp, edu].filter(Boolean).join(" · ");
+            html +=
+                '<div class="flex items-center gap-3 py-3.5">' +
+                '<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-primary-container">' +
+                '<span class="material-symbols-outlined text-[20px]" style="font-variation-settings:\'FILL\' 1">description</span>' +
+                '</div>' +
+                '<div class="min-w-0 flex-1">' +
+                '<p class="text-sm font-semibold text-slate-800 truncate">CV – ' + name + '</p>' +
+                (meta ? '<p class="text-xs text-slate-400 mt-0.5 truncate">' + meta + '</p>' : '') +
+                '<p class="text-xs text-slate-300 mt-0.5">' + (date ? date + ' · ' : '') + skills + ' yetenek</p>' +
+                '</div>' +
+                '<a href="cv-analysis.html" class="shrink-0 text-xs font-medium text-primary-container hover:text-primary transition-colors">Güncelle</a>' +
+                '</div>';
+        });
+        html += '</div>';
+        wrap.innerHTML = html;
+        _cvLoaded = true;
+    } catch (e) {
+        var wrap2 = document.getElementById("cv-list-wrap");
+        if (wrap2) wrap2.innerHTML = '<p class="py-4 text-sm text-red-400">CV listesi yüklenemedi.</p>';
+    }
+}
+
+/* ---------- akordeon toggle ---------- */
 document.querySelectorAll(".st-menu-item[data-panel]").forEach(function (btn) {
     btn.addEventListener("click", function () {
-        document.querySelectorAll(".st-menu-item[data-panel]").forEach(function (b) {
-            b.classList.remove("active");
-        });
-        document.querySelectorAll(".settings-panel").forEach(function (p) {
-            p.classList.remove("active");
-        });
-        btn.classList.add("active");
-        var panel = document.getElementById("panel-" + btn.dataset.panel);
-        if (panel) panel.classList.add("active");
+        var panelId = btn.dataset.panel;
+        var panel = document.getElementById("panel-" + panelId);
+        if (!panel) return;
+        var isOpen = panel.classList.contains("open");
+
+        /* hepsini kapat */
+        document.querySelectorAll(".st-acc-panel").forEach(function (p) { p.classList.remove("open"); });
+        document.querySelectorAll(".st-menu-item[data-panel]").forEach(function (b) { b.classList.remove("active"); });
+
+        /* tıklanan kapalıysa aç */
+        if (!isOpen) {
+            panel.classList.add("open");
+            btn.classList.add("active");
+            /* CV paneli için lazy yükle */
+            if (btn.dataset.lazy === "cv") loadCvList();
+        }
     });
 });
 
