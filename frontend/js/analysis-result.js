@@ -614,13 +614,25 @@ function populateAnalysisResult() {
     var company = companyProfile.company_name || sessionStorage.getItem("coachai_company_name") || "—";
     document.getElementById("company-name").textContent = company;
     var companyKey = String(company).trim().toLowerCase();
+    var logoLi = document.getElementById("company-logo-li");
     var logoTrendy = document.getElementById("company-logo-trendyol");
     var logoFallback = document.getElementById("company-logo-fallback");
     var initialEl = document.getElementById("company-initial");
-    if (companyKey.indexOf("trendyol") !== -1) {
+    var liLogoUrl = sessionStorage.getItem("coachai_company_logo_url") || "";
+    if (liLogoUrl) {
+        if (logoLi) {
+            logoLi.src = liLogoUrl;
+            logoLi.alt = company;
+            logoLi.classList.remove("hidden");
+        }
+        if (logoTrendy) logoTrendy.classList.add("hidden");
+        if (logoFallback) logoFallback.classList.add("hidden");
+    } else if (companyKey.indexOf("trendyol") !== -1) {
+        if (logoLi) logoLi.classList.add("hidden");
         if (logoTrendy) logoTrendy.classList.remove("hidden");
         if (logoFallback) logoFallback.classList.add("hidden");
     } else {
+        if (logoLi) logoLi.classList.add("hidden");
         if (logoTrendy) logoTrendy.classList.add("hidden");
         if (logoFallback) logoFallback.classList.remove("hidden");
         if (initialEl) initialEl.textContent = company[0] ? company[0].toUpperCase() : "—";

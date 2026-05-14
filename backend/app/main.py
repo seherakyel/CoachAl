@@ -16,6 +16,7 @@ from app.routes import (
     auth_test,
     cv,
     company,
+    linkedin_search,
     alignment,
     interview,
     feedback,
@@ -101,6 +102,7 @@ app.include_router(firebase.router, prefix="/api")
 app.include_router(auth_test.router, prefix="/api")
 app.include_router(cv.router, prefix="/api")
 app.include_router(company.router, prefix="/api")
+app.include_router(linkedin_search.router, prefix="/api")
 app.include_router(alignment.router, prefix="/api")
 app.include_router(interview.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
