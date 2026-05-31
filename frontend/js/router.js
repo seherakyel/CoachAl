@@ -12,7 +12,8 @@
         "cv-analysis.html": { pageId: "cv-analysis", scripts: ["../js/cv-analysis.js"] },
         "interviews.html": { pageId: "interviews", scripts: ["../js/interviews.js"] },
         "reports.html": { pageId: "reports", scripts: ["../js/reports.js"] },
-        "settings.html": { pageId: "settings", scripts: ["../js/settings.js"] },
+        "profile.html": { pageId: "profile", scripts: ["../js/profile.js"] },
+        "settings.html": { pageId: "profile", scripts: ["../js/profile.js"] },
         "analysis-result.html": {
             pageId: "cv-analysis",
             scripts: [

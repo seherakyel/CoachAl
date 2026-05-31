@@ -1,4 +1,4 @@
-/* Settings page — menü geçişleri, profil güncelleme, şifre değiştirme, çıkış */
+/* Profil sayfası — menü geçişleri, profil güncelleme, şifre değiştirme, çıkış */
 
 var _profileSnapshot = {};
 
