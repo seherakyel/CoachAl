@@ -183,7 +183,15 @@ async function loadSavedCvList() {
         '<div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0"></div>' +
         "CV'ler yükleniyor…</div>";
     try {
-        var items = await fetchUserCvList(20);
+        var res = await fetchUserCvList(20);
+        var items = res.items;
+        var hintEl = document.getElementById("saved-cv-limit-hint");
+        if (hintEl) {
+            hintEl.textContent =
+                res.cv_count >= res.max_cvs
+                    ? "CV limitine ulaştınız (" + res.max_cvs + "/" + res.max_cvs + "). Yeni yüklemek için Profil sayfasından bir CV silin."
+                    : "Listeden seçin veya yeni PDF yükleyin (" + res.cv_count + "/" + res.max_cvs + " CV).";
+        }
         wrap.innerHTML = renderCvListItems(items, {
             selectedId: cvId,
             actionLabel: "Bu CV'yi kullan",
@@ -368,7 +376,10 @@ async function startUpload(file) {
             body: form
         });
         var d = await r.json();
-        if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail));
+        if (!r.ok) {
+            var uploadMsg = typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail);
+            throw new Error(uploadMsg);
+        }
 
         var pd = d.parsed_data || {};
         applyCvSelection(d.cv_id, file.name, pd);

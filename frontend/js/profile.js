@@ -24,8 +24,15 @@ async function loadCvList(force) {
         '<div class="w-4 h-4 border-2 border-slate-300 border-t-primary-container rounded-full animate-spin shrink-0"></div>' +
         "Yükleniyor…</div>";
     try {
-        var items = await fetchUserCvList(20);
+        var res = await fetchUserCvList(20);
+        var items = res.items;
+        var countEl = document.getElementById("cv-list-count");
+        if (countEl) {
+            countEl.textContent =
+                res.cv_count + " / " + res.max_cvs + " CV (en fazla " + res.max_cvs + ")";
+        }
         wrap.innerHTML = renderCvListItems(items, {
+            showDelete: true,
             actionLabel: "Analizde kullan",
             actionClass:
                 "shrink-0 rounded-lg bg-primary-container px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary transition-colors",
@@ -39,6 +46,29 @@ async function loadCvList(force) {
                     coachaiGo(href);
                 } else {
                     window.location.href = href;
+                }
+            });
+        });
+        wrap.querySelectorAll("[data-cv-delete]").forEach(function (btn) {
+            btn.addEventListener("click", async function () {
+                var id = btn.getAttribute("data-cv-delete");
+                if (!id) return;
+                var label = btn.closest("[data-cv-id]");
+                var name =
+                    label && label.querySelector("p")
+                        ? label.querySelector("p").textContent
+                        : "bu CV";
+                if (!confirm(name + " silinsin mi? Bu işlem geri alınamaz.")) return;
+                btn.disabled = true;
+                try {
+                    await deleteCvDocument(id);
+                    clearSelectedCvIfDeleted(id);
+                    showToast("CV silindi.");
+                    _cvLoaded = false;
+                    await loadCvList(true);
+                } catch (err) {
+                    showToast(err.message || "CV silinemedi.", true);
+                    btn.disabled = false;
                 }
             });
         });

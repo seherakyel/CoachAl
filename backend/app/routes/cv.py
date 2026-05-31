@@ -14,6 +14,7 @@ router = APIRouter()
 MAX_BYTES = 10 * 1024 * 1024
 MIN_BYTES = 100
 MIN_TEXT_CHARS = 40
+MAX_CVS_PER_USER = 3
 
 
 @router.post("/cv/upload")
@@ -65,8 +66,20 @@ async def upload_cv(
 
     parsed = extract_cv_structure_from_text(extracted_text)
 
-    cv_id = str(uuid.uuid4())
     db = get_firestore()
+    snapshots = _fetch_user_cv_snapshots(db, uid)
+    _enforce_cv_limit(db, uid, snapshots)
+    snapshots = _fetch_user_cv_snapshots(db, uid)
+    if len(snapshots) >= MAX_CVS_PER_USER:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"En fazla {MAX_CVS_PER_USER} CV yükleyebilirsiniz. "
+                "Profil sayfasından eski bir CV'yi silin."
+            ),
+        )
+
+    cv_id = str(uuid.uuid4())
     db.collection("cv_documents").document(cv_id).set(
         {
             "user_id": uid,
@@ -119,6 +132,45 @@ def _format_uploaded_at(ts) -> str | None:
     return None
 
 
+def _fetch_user_cv_snapshots(db, uid: str) -> list:
+    snapshots = list(
+        db.collection("cv_documents").where("user_id", "==", uid).limit(100).stream()
+    )
+    snapshots.sort(
+        key=lambda d: _uploaded_at_sort_key((d.to_dict() or {}).get("uploaded_at")),
+        reverse=True,
+    )
+    return snapshots
+
+
+def _enforce_cv_limit(db, uid: str, snapshots: list | None = None) -> int:
+    """Kullanıcı başına en yeni MAX_CVS_PER_USER kaydı tut; fazlaları sil."""
+    if snapshots is None:
+        snapshots = _fetch_user_cv_snapshots(db, uid)
+    deleted = 0
+    for doc in snapshots[MAX_CVS_PER_USER:]:
+        db.collection("cv_documents").document(doc.id).delete()
+        deleted += 1
+    return deleted
+
+
+def _snapshot_to_list_item(d) -> dict:
+    data = d.to_dict() or {}
+    skills = data.get("skills") or []
+    if not isinstance(skills, list):
+        skills = []
+    return {
+        "cv_id": d.id,
+        "file_name": data.get("file_name") or "",
+        "skill_count": len(skills),
+        "skills_preview": [str(s) for s in skills[:8]],
+        "experience_years": data.get("experience_years"),
+        "education_level": data.get("education_level") or "",
+        "summary": str(data.get("summary") or "")[:160],
+        "uploaded_at": _format_uploaded_at(data.get("uploaded_at")),
+    }
+
+
 @router.get("/cv/list")
 async def list_cv_documents(
     uid: str = Depends(get_current_user),
@@ -128,18 +180,10 @@ async def list_cv_documents(
     limit = max(1, min(50, int(limit)))
     db = get_firestore()
 
-    # user_id + order_by(uploaded_at) composite index gerektirir; bellek içi sıralama daha güvenilir.
-    max_fetch = min(100, max(limit * 5, 50))
-    snapshots = list(
-        db.collection("cv_documents")
-        .where("user_id", "==", uid)
-        .limit(max_fetch)
-        .stream()
-    )
-    snapshots.sort(
-        key=lambda d: _uploaded_at_sort_key((d.to_dict() or {}).get("uploaded_at")),
-        reverse=True,
-    )
+    snapshots = _fetch_user_cv_snapshots(db, uid)
+    _enforce_cv_limit(db, uid, snapshots)
+    snapshots = _fetch_user_cv_snapshots(db, uid)
+    total_count = len(snapshots)
 
     if cursor:
         ids = [s.id for s in snapshots]
@@ -150,27 +194,33 @@ async def list_cv_documents(
     has_more = len(page) > limit
     page = page[:limit]
 
-    items = []
-    for d in page:
-        data = d.to_dict() or {}
-        skills = data.get("skills") or []
-        if not isinstance(skills, list):
-            skills = []
-        items.append(
-            {
-                "cv_id": d.id,
-                "file_name": data.get("file_name") or "",
-                "skill_count": len(skills),
-                "skills_preview": [str(s) for s in skills[:8]],
-                "experience_years": data.get("experience_years"),
-                "education_level": data.get("education_level") or "",
-                "summary": str(data.get("summary") or "")[:160],
-                "uploaded_at": _format_uploaded_at(data.get("uploaded_at")),
-            }
-        )
+    items = [_snapshot_to_list_item(d) for d in page]
 
     next_cursor = items[-1]["cv_id"] if items and has_more else None
-    return {"items": items, "next_cursor": next_cursor, "limit": limit}
+    return {
+        "items": items,
+        "next_cursor": next_cursor,
+        "limit": limit,
+        "cv_count": total_count,
+        "max_cvs": MAX_CVS_PER_USER,
+    }
+
+
+@router.delete("/cv/{cv_id}")
+async def delete_cv_document(
+    cv_id: str,
+    uid: str = Depends(get_current_user),
+):
+    db = get_firestore()
+    ref = db.collection("cv_documents").document(cv_id)
+    snap = ref.get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="CV bulunamadı")
+    data = snap.to_dict() or {}
+    if data.get("user_id") != uid:
+        raise HTTPException(status_code=404, detail="CV bulunamadı")
+    ref.delete()
+    return {"ok": True, "cv_id": cv_id}
 
 
 @router.get("/cv/{cv_id}")

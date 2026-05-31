@@ -48,7 +48,33 @@ async function fetchUserCvList(limit) {
             typeof data.detail === "string" ? data.detail : "CV listesi alınamadı"
         );
     }
-    return data.items || [];
+    var items = data.items || [];
+    return {
+        items: items,
+        cv_count: data.cv_count != null ? data.cv_count : items.length,
+        max_cvs: data.max_cvs != null ? data.max_cvs : 3,
+    };
+}
+
+async function deleteCvDocument(cvId) {
+    var tok = await getToken();
+    var r = await fetch(API_BASE + "/api/cv/" + encodeURIComponent(cvId), {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + tok },
+    });
+    var data = await r.json().catch(function () { return {}; });
+    if (!r.ok) {
+        throw new Error(typeof data.detail === "string" ? data.detail : "CV silinemedi");
+    }
+    return data;
+}
+
+function clearSelectedCvIfDeleted(cvId) {
+    if (sessionStorage.getItem("coachai_cv_id") === cvId) {
+        sessionStorage.removeItem("coachai_cv_id");
+        sessionStorage.removeItem("coachai_cv_name");
+        sessionStorage.removeItem("coachai_cv_parsed");
+    }
 }
 
 async function fetchCvDetail(cvId) {
@@ -76,6 +102,7 @@ function renderCvListItems(items, options) {
     var actionClass =
         options.actionClass ||
         "shrink-0 rounded-lg border border-primary/30 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors";
+    var showDelete = !!options.showDelete;
 
     if (!items.length) {
         return (
@@ -114,13 +141,23 @@ function renderCvListItems(items, options) {
                 ? '<p class="text-xs font-medium text-primary-container mt-1">Seçili CV</p>'
                 : "") +
             "</div>" +
-            '<button type="button" class="' +
-            actionClass +
-            '" data-cv-select="' +
-            escapeCvHtml(id) +
-            '">' +
-            escapeCvHtml(isSelected ? "Seçili" : actionLabel) +
-            "</button>" +
+            '<div class="flex shrink-0 items-center gap-2">' +
+            (showDelete
+                ? '<button type="button" class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-colors" data-cv-delete="' +
+                  escapeCvHtml(id) +
+                  '" aria-label="CV sil" title="CV sil">' +
+                  '<span class="material-symbols-outlined text-[20px]">delete</span></button>'
+                : "") +
+            (options.hideSelectAction
+                ? ""
+                : '<button type="button" class="' +
+                  actionClass +
+                  '" data-cv-select="' +
+                  escapeCvHtml(id) +
+                  '">' +
+                  escapeCvHtml(isSelected ? "Seçili" : actionLabel) +
+                  "</button>") +
+            "</div>" +
             "</div>";
     });
     html += "</div>";
