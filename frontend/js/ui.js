@@ -81,48 +81,81 @@ function _header(email) {
 </div></header>`;
 }
 
-function initLayout(pageId) {
+var _shellUser = null;
+var _shellBound = false;
+
+function getCoachAiShellUser() {
+    return _shellUser;
+}
+
+function setActivePage(pageId) {
+    var nav = document.querySelector("#main-sidebar nav");
+    if (!nav) return;
+    nav.innerHTML = _NAV.map(function (i) { return _navLink(i, pageId); }).join("");
+}
+
+function bindShellEvents() {
+    if (_shellBound) return;
+    _shellBound = true;
+
+    var so = document.getElementById("ui-signout");
+    if (so) {
+        so.addEventListener("click", function () {
+            logout().then(function () { window.location.href = "login.html"; });
+        });
+    }
+
+    var toggleBtn = document.getElementById("sidebar-toggle");
+    var sidebar = document.getElementById("main-sidebar");
+    var overlay = document.getElementById("sidebar-overlay");
+    if (toggleBtn && sidebar && overlay) {
+        toggleBtn.addEventListener("click", function () {
+            sidebar.classList.toggle("-translate-x-full");
+            overlay.classList.toggle("hidden");
+        });
+        overlay.addEventListener("click", function () {
+            sidebar.classList.add("-translate-x-full");
+            overlay.classList.add("hidden");
+        });
+    }
+
+    var notifBtn = document.getElementById("notif-btn");
+    var notifPanel = document.getElementById("notif-panel");
+    if (notifBtn && notifPanel) {
+        notifBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            notifPanel.classList.toggle("hidden");
+        });
+        document.addEventListener("click", function (e) {
+            if (notifPanel && !notifPanel.contains(e.target) && !notifBtn.contains(e.target)) {
+                notifPanel.classList.add("hidden");
+            }
+        });
+    }
+}
+
+function ensureShell(user, pageId) {
+    _shellUser = user;
     injectCoachAiChromeStyles();
     var sc = document.getElementById("sidebar-container");
     var hc = document.getElementById("header-container");
-    onAuthChange(function(user) {
-        if (!user) { window.location.href = "login.html"; return; }
+    if (!document.getElementById("main-sidebar")) {
         if (sc) sc.innerHTML = _sidebar(pageId);
         if (hc) hc.innerHTML = _header(user.email);
+        bindShellEvents();
+    } else {
+        setActivePage(pageId);
+    }
+}
 
-        var so = document.getElementById("ui-signout");
-        if (so) so.addEventListener("click", function() {
-            logout().then(function() { window.location.href = "login.html"; });
-        });
-
-        var toggleBtn = document.getElementById("sidebar-toggle");
-        var sidebar = document.getElementById("main-sidebar");
-        var overlay = document.getElementById("sidebar-overlay");
-        if (toggleBtn && sidebar && overlay) {
-            toggleBtn.addEventListener("click", function() {
-                sidebar.classList.toggle("-translate-x-full");
-                overlay.classList.toggle("hidden");
-            });
-            overlay.addEventListener("click", function() {
-                sidebar.classList.add("-translate-x-full");
-                overlay.classList.add("hidden");
-            });
+function initLayout(pageId) {
+    onAuthChange(function (user) {
+        if (!user) {
+            window.location.href = "login.html";
+            return;
         }
-
-        var notifBtn = document.getElementById("notif-btn");
-        var notifPanel = document.getElementById("notif-panel");
-        if (notifBtn && notifPanel) {
-            notifBtn.addEventListener("click", function(e) {
-                e.stopPropagation();
-                notifPanel.classList.toggle("hidden");
-            });
-            document.addEventListener("click", function(e) {
-                if (notifPanel && !notifPanel.contains(e.target)) {
-                    notifPanel.classList.add("hidden");
-                }
-            });
-        }
-
+        ensureShell(user, pageId);
+        if (typeof initSpaRouter === "function") initSpaRouter();
         if (typeof onLayoutReady === "function") onLayoutReady(user);
     });
 }

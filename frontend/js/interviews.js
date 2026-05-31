@@ -65,7 +65,7 @@ function onLayoutReady() {
             sessionStorage.removeItem("coachai_company_name");
             sessionStorage.removeItem("coachai_alignment");
             sessionStorage.removeItem("coachai_company_profile");
-            window.location.href = "cv-analysis.html";
+            coachaiGo("cv-analysis.html");
         });
     }
 }

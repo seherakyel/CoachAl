@@ -250,20 +250,17 @@ function updateSkillsScrollOverflowHints() {
 }
 
 function initSkillsScrollOverflowWatch() {
-    if (initSkillsScrollOverflowWatch._done) return;
-    initSkillsScrollOverflowWatch._done = true;
+    var signal = window.coachaiPageSignal;
     var deb;
     window.addEventListener("resize", function() {
         clearTimeout(deb);
         deb = setTimeout(updateSkillsScrollOverflowHints, 120);
-    });
+    }, { signal: signal });
 }
 
 /** Eşleşen + eksik yetenek accordion — liste başına tek açık satır */
 function initSkillAccordionsUi() {
-    if (initSkillAccordionsUi._done) return;
-    initSkillAccordionsUi._done = true;
-
+    var signal = window.coachaiPageSignal;
     document.addEventListener("click", function(e) {
         if (e.target.closest(".ar-missing-learn-btn")) return;
 
@@ -296,14 +293,12 @@ function initSkillAccordionsUi() {
             updateSkillsScrollOverflowHints();
         });
         window.setTimeout(updateSkillsScrollOverflowHints, 360);
-    });
+    }, { signal: signal });
 }
 
 /** Tek modal — backdrop, X, Escape, sekme geçişleri */
 function initArLearnModalUi() {
-    if (initArLearnModalUi._done) return;
-    initArLearnModalUi._done = true;
-
+    var signal = window.coachaiPageSignal;
     document.addEventListener("click", function(e) {
         var trig = e.target.closest(".ar-missing-learn-btn");
         var ms = document.getElementById("missing-skills");
@@ -316,13 +311,13 @@ function initArLearnModalUi() {
         if (e.target.id === "ar-learn-modal-backdrop") {
             closeArLearnModal();
         }
-    });
+    }, { signal: signal });
 
     var closeBtn = document.getElementById("ar-learn-modal-close");
     if (closeBtn) {
         closeBtn.addEventListener("click", function() {
             closeArLearnModal();
-        });
+        }, { signal: signal });
     }
 
     document.addEventListener("keydown", function(e) {
@@ -330,14 +325,14 @@ function initArLearnModalUi() {
             var modal = document.getElementById("ar-learn-modal");
             if (modal && !modal.classList.contains("hidden")) closeArLearnModal();
         }
-    });
+    }, { signal: signal });
 
     ["watch", "read", "cheatsheet"].forEach(function(t) {
         var btn = document.getElementById("ar-learn-tab-" + t);
         if (btn) {
             btn.addEventListener("click", function() {
                 setArLearnModalTab(t);
-            });
+            }, { signal: signal });
         }
     });
 }
@@ -564,7 +559,7 @@ function populateAnalysisResult() {
     var companyProfile = safeParseJSON(sessionStorage.getItem("coachai_company_profile"), null);
 
     if (alignment == null || companyProfile == null) {
-        window.location.href = "cv-analysis.html";
+        coachaiGo("cv-analysis.html");
         return;
     }
 
@@ -759,6 +754,6 @@ function onLayoutReady() {
         populateAnalysisResult();
     } catch (e) {
         console.error("analysis-result populate:", e);
-        window.location.href = "cv-analysis.html";
+        coachaiGo("cv-analysis.html");
     }
 }

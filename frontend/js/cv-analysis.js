@@ -1,20 +1,25 @@
 var cvId = null;
 
-var dropZone = document.getElementById("drop-zone");
-var fileInput = document.getElementById("file-input");
-var btnAnalyze = document.getElementById("btn-analyze");
-var btnAnalyzeText = document.getElementById("btn-analyze-text");
-var uploadStatus = document.getElementById("upload-status");
-var uploadingState = document.getElementById("uploading-state");
-var skillsContainer = document.getElementById("skills-container");
-var globalError = document.getElementById("global-error");
-var step2 = document.getElementById("step2");
-var step2Lock = document.getElementById("step2-lock");
-var step2Badge = document.getElementById("step2-badge");
+var dropZone, fileInput, btnAnalyze, btnAnalyzeText, uploadStatus, uploadingState;
+var skillsContainer, globalError, step2, step2Lock, step2Badge;
+var companyInput, companyResultsEl, companySearchWrap;
 
-var companyInput = document.getElementById("company");
-var companyResultsEl = document.getElementById("company-results");
-var companySearchWrap = document.getElementById("company-search-wrap");
+function refreshCvAnalysisElements() {
+    dropZone = document.getElementById("drop-zone");
+    fileInput = document.getElementById("file-input");
+    btnAnalyze = document.getElementById("btn-analyze");
+    btnAnalyzeText = document.getElementById("btn-analyze-text");
+    uploadStatus = document.getElementById("upload-status");
+    uploadingState = document.getElementById("uploading-state");
+    skillsContainer = document.getElementById("skills-container");
+    globalError = document.getElementById("global-error");
+    step2 = document.getElementById("step2");
+    step2Lock = document.getElementById("step2-lock");
+    step2Badge = document.getElementById("step2-badge");
+    companyInput = document.getElementById("company");
+    companyResultsEl = document.getElementById("company-results");
+    companySearchWrap = document.getElementById("company-search-wrap");
+}
 var companySearchDebounceTimer = null;
 var companySearchSeq = 0;
 
@@ -134,30 +139,35 @@ function unlockStep2() {
     checkAnalyzeReady();
 }
 
-dropZone.addEventListener("click", function() { fileInput.click(); });
-dropZone.addEventListener("keydown", function(e) {
-    if (e.key === "Enter" || e.key === " ") fileInput.click();
-});
-dropZone.addEventListener("dragover", function(e) {
-    e.preventDefault();
-    dropZone.classList.add("border-primary", "bg-surface-container");
-});
-dropZone.addEventListener("dragleave", function() {
-    dropZone.classList.remove("border-primary", "bg-surface-container");
-});
-dropZone.addEventListener("drop", function(e) {
-    e.preventDefault();
-    dropZone.classList.remove("border-primary", "bg-surface-container");
-    var f = e.dataTransfer.files[0];
-    if (f) startUpload(f);
-});
-fileInput.addEventListener("change", function() {
-    if (fileInput.files[0]) startUpload(fileInput.files[0]);
-});
+function bindCvAnalysisPage() {
+    refreshCvAnalysisElements();
+    var signal = window.coachaiPageSignal;
+    if (!dropZone || !fileInput) return;
 
-var btnReupload = document.getElementById("btn-reupload");
-if (btnReupload) {
-    btnReupload.addEventListener("click", function(e) {
+    dropZone.addEventListener("click", function() { fileInput.click(); }, { signal: signal });
+    dropZone.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" || e.key === " ") fileInput.click();
+    }, { signal: signal });
+    dropZone.addEventListener("dragover", function(e) {
+        e.preventDefault();
+        dropZone.classList.add("border-primary", "bg-surface-container");
+    }, { signal: signal });
+    dropZone.addEventListener("dragleave", function() {
+        dropZone.classList.remove("border-primary", "bg-surface-container");
+    }, { signal: signal });
+    dropZone.addEventListener("drop", function(e) {
+        e.preventDefault();
+        dropZone.classList.remove("border-primary", "bg-surface-container");
+        var f = e.dataTransfer.files[0];
+        if (f) startUpload(f);
+    }, { signal: signal });
+    fileInput.addEventListener("change", function() {
+        if (fileInput.files[0]) startUpload(fileInput.files[0]);
+    }, { signal: signal });
+
+    var btnReupload = document.getElementById("btn-reupload");
+    if (btnReupload) {
+        btnReupload.addEventListener("click", function(e) {
         e.stopPropagation();
         cvId = null;
         sessionStorage.removeItem("coachai_cv_id");
@@ -176,7 +186,65 @@ if (btnReupload) {
         btnAnalyze.disabled = true;
         fileInput.value = "";
         clearError();
-    });
+        }, { signal: signal });
+    }
+
+    if (companyInput) {
+        companyInput.addEventListener("input", function() {
+            checkAnalyzeReady();
+            var v = companyInput.value;
+            clearTimeout(companySearchDebounceTimer);
+            companySearchDebounceTimer = setTimeout(function() {
+                runCompanySearch(v);
+            }, 400);
+        }, { signal: signal });
+    }
+    var positionEl = document.getElementById("position");
+    if (positionEl) {
+        positionEl.addEventListener("input", checkAnalyzeReady, { signal: signal });
+    }
+    document.addEventListener("click", function(e) {
+        if (companySearchWrap && !e.target.closest("#company-search-wrap")) {
+            hideCompanyResults();
+        }
+    }, { signal: signal });
+    if (btnAnalyze) {
+        btnAnalyze.addEventListener("click", async function() {
+            var company = document.getElementById("company").value.trim();
+            var position = document.getElementById("position").value.trim();
+            if (!cvId || !company || !position) return;
+            clearError();
+            btnAnalyze.disabled = true;
+            btnAnalyzeText.textContent = "Analiz ediliyor…";
+            try {
+                var tok = await getToken();
+                var cr = await fetch(API_BASE + "/api/company/analyze", {
+                    method: "POST",
+                    headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+                    body: JSON.stringify({ company_name: company, position: position })
+                });
+                var cd = await cr.json();
+                if (!cr.ok) throw new Error(cd.detail || "Şirket analizi başarısız");
+                var profileId = cd.profile_id;
+                sessionStorage.setItem("coachai_profile_id", profileId);
+                sessionStorage.setItem("coachai_company_name", company);
+                sessionStorage.setItem("coachai_company_profile", JSON.stringify(cd));
+                var ar = await fetch(API_BASE + "/api/alignment/score", {
+                    method: "POST",
+                    headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+                    body: JSON.stringify({ cv_id: cvId, profile_id: profileId })
+                });
+                var ad = await ar.json();
+                if (!ar.ok) throw new Error(ad.detail || "Eşleşme analizi başarısız");
+                sessionStorage.setItem("coachai_alignment", JSON.stringify(ad));
+                coachaiGo("analysis-result.html");
+            } catch(err) {
+                showError("Analiz başarısız: " + (err.message || "Sunucuya bağlanılamadı."));
+                btnAnalyze.disabled = false;
+                btnAnalyzeText.textContent = "Analizi Başlat";
+            }
+        }, { signal: signal });
+    }
 }
 
 function renderCvParsed(pd) {
@@ -259,65 +327,9 @@ function checkAnalyzeReady() {
     btnAnalyze.disabled = !(cvId && company && position);
 }
 
-if (companyInput) {
-    companyInput.addEventListener("input", function() {
-        checkAnalyzeReady();
-        var v = companyInput.value;
-        clearTimeout(companySearchDebounceTimer);
-        companySearchDebounceTimer = setTimeout(function() {
-            runCompanySearch(v);
-        }, 400);
-    });
-}
-document.getElementById("position").addEventListener("input", checkAnalyzeReady);
-
-document.addEventListener("click", function(e) {
-    if (companySearchWrap && !e.target.closest("#company-search-wrap")) {
-        hideCompanyResults();
-    }
-});
-
-btnAnalyze.addEventListener("click", async function() {
-    var company = document.getElementById("company").value.trim();
-    var position = document.getElementById("position").value.trim();
-    if (!cvId || !company || !position) return;
-    clearError();
-    btnAnalyze.disabled = true;
-    btnAnalyzeText.textContent = "Analiz ediliyor…";
-
-    try {
-        var tok = await getToken();
-        var cr = await fetch(API_BASE + "/api/company/analyze", {
-            method: "POST",
-            headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
-            body: JSON.stringify({ company_name: company, position: position })
-        });
-        var cd = await cr.json();
-        if (!cr.ok) throw new Error(typeof cd.detail === "string" ? cd.detail : JSON.stringify(cd.detail));
-
-        var profileId = cd.profile_id;
-        sessionStorage.setItem("coachai_profile_id", profileId);
-        sessionStorage.setItem("coachai_company_name", company);
-        sessionStorage.setItem("coachai_company_profile", JSON.stringify(cd));
-
-        var ar = await fetch(API_BASE + "/api/alignment/score", {
-            method: "POST",
-            headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
-            body: JSON.stringify({ cv_id: cvId, profile_id: profileId })
-        });
-        var ad = await ar.json();
-        if (!ar.ok) throw new Error(typeof ad.detail === "string" ? ad.detail : JSON.stringify(ad.detail));
-
-        sessionStorage.setItem("coachai_alignment", JSON.stringify(ad));
-        window.location.href = "analysis-result.html";
-    } catch(err) {
-        showError("Analiz başarısız: " + (err.message || "Sunucuya bağlanılamadı."));
-        btnAnalyze.disabled = false;
-        btnAnalyzeText.textContent = "Analizi Başlat";
-    }
-});
-
 function onLayoutReady() {
+    refreshCvAnalysisElements();
+    bindCvAnalysisPage();
     var savedCvId = sessionStorage.getItem("coachai_cv_id");
     if (savedCvId) {
         cvId = savedCvId;
@@ -337,3 +349,4 @@ function onLayoutReady() {
         unlockStep2();
     }
 }
+

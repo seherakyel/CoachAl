@@ -8,7 +8,7 @@ async function onLayoutReady(user) {
     if (searchInput) {
         searchInput.addEventListener("input", function() {
             filterTable(searchInput.value.trim().toLowerCase());
-        });
+        }, { signal: window.coachaiPageSignal });
     }
 }
 

@@ -142,7 +142,7 @@ function renderRoadmap(steps) {
 function populateInterviewPrep() {
     var companyProfile = safeParseJSON(sessionStorage.getItem("coachai_company_profile"), null);
     if (companyProfile == null) {
-        window.location.href = "cv-analysis.html";
+        coachaiGo("cv-analysis.html");
         return;
     }
 
@@ -171,6 +171,10 @@ function onInterviewPrepReady() {
         populateInterviewPrep();
     } catch (e) {
         console.error("interview-prep:", e);
-        window.location.href = "cv-analysis.html";
+        coachaiGo("cv-analysis.html");
     }
+}
+
+function onLayoutReady() {
+    onInterviewPrepReady();
 }
