@@ -4,12 +4,6 @@ async function onLayoutReady(user) {
     document.getElementById("welcome-title").textContent = "Hoş Geldin, " + (user.displayName || user.email.split("@")[0]) + "!";
     showSkeletons();
     await loadDashboard();
-    var searchInput = document.getElementById("global-search");
-    if (searchInput) {
-        searchInput.addEventListener("input", function() {
-            filterTable(searchInput.value.trim().toLowerCase());
-        }, { signal: window.coachaiPageSignal });
-    }
 }
 
 function showSkeletons() {
@@ -127,16 +121,4 @@ function renderTable(applications) {
             '<td class="py-4 px-6 text-right"><a href="' + detailHref + '" class="text-sm text-slate-500 border border-slate-200 px-3 py-1.5 rounded-lg hover:border-primary hover:text-primary transition-all">Detay</a></td>' +
             '</tr>';
     }).join("");
-}
-
-function filterTable(query) {
-    if (!query) {
-        renderTable(_allApplications);
-        return;
-    }
-    var filtered = _allApplications.filter(function(a) {
-        return (a.company_name || "").toLowerCase().includes(query) ||
-               (a.position || "").toLowerCase().includes(query);
-    });
-    renderTable(filtered);
 }

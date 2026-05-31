@@ -57,10 +57,7 @@ function _header(email) {
 <div class="flex items-center gap-3">
 <button id="sidebar-toggle" class="md:hidden p-2 rounded-lg hover:bg-slate-50 text-slate-500 transition-colors" aria-label="Menüyü aç">
 <span class="material-symbols-outlined text-[22px]">menu</span></button>
-<div class="relative hidden md:block w-56">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">search</span>
-<input id="global-search" class="w-full pl-10 pr-4 py-1.5 bg-surface-container-low border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors" placeholder="Ara..."/>
-</div></div>
+</div>
 <div class="flex items-center gap-3">
 <span class="text-sm text-on-surface-variant hidden md:block">${email || ""}</span>
 <div class="relative">
