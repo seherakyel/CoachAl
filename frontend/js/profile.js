@@ -2,10 +2,14 @@
 
 var _profileSnapshot = {};
 
+/* ---------- toast ---------- */
 function showToast(text, isError) {
-    if (typeof coachaiToast === "function") {
-        coachaiToast(text, { variant: isError ? "error" : "success" });
-    }
+    var el = document.getElementById("st-toast");
+    if (!el) return;
+    el.textContent = text;
+    el.style.background = isError ? "#ba1a1a" : "#1b1b24";
+    el.classList.add("show");
+    setTimeout(function () { el.classList.remove("show"); }, 2800);
 }
 
 /* ---------- CV listesi ---------- */
@@ -22,6 +26,11 @@ async function loadCvList(force) {
     try {
         var res = await fetchUserCvList(20);
         var items = res.items;
+        var countEl = document.getElementById("cv-list-count");
+        if (countEl) {
+            countEl.textContent =
+                res.cv_count + " / " + res.max_cvs + " CV (en fazla " + res.max_cvs + ")";
+        }
         wrap.innerHTML = renderCvListItems(items, {
             showDelete: true,
             actionLabel: "Analizde kullan",
@@ -44,24 +53,12 @@ async function loadCvList(force) {
             btn.addEventListener("click", async function () {
                 var id = btn.getAttribute("data-cv-delete");
                 if (!id) return;
-                var row = btn.closest("[data-cv-id]");
+                var label = btn.closest("[data-cv-id]");
                 var name =
-                    row && row.querySelector("p")
-                        ? row.querySelector("p").textContent
-                        : "Bu CV";
-                var ok =
-                    typeof coachaiConfirm === "function"
-                        ? await coachaiConfirm(
-                              name + " kalıcı olarak silinecek. Bu işlem geri alınamaz.",
-                              {
-                                  title: "CV silinsin mi?",
-                                  confirmLabel: "Sil",
-                                  cancelLabel: "İptal",
-                                  variant: "danger",
-                              }
-                          )
-                        : false;
-                if (!ok) return;
+                    label && label.querySelector("p")
+                        ? label.querySelector("p").textContent
+                        : "bu CV";
+                if (!confirm(name + " silinsin mi? Bu işlem geri alınamaz.")) return;
                 btn.disabled = true;
                 try {
                     await deleteCvDocument(id);

@@ -126,18 +126,11 @@ async function runCompanySearch(query) {
 }
 
 function showError(msg) {
-    if (typeof coachaiToast === "function") {
-        coachaiToast(msg, { variant: "error", duration: 4500 });
-    }
-    if (globalError) {
-        globalError.textContent = msg;
-        globalError.classList.remove("hidden");
-        globalError.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
+    globalError.textContent = msg;
+    globalError.classList.remove("hidden");
+    globalError.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
-function clearError() {
-    if (globalError) globalError.classList.add("hidden");
-}
+function clearError() { globalError.classList.add("hidden"); }
 
 function unlockStep2() {
     if (step2Lock) step2Lock.classList.add("hidden");
@@ -196,8 +189,8 @@ async function loadSavedCvList() {
         if (hintEl) {
             hintEl.textContent =
                 res.cv_count >= res.max_cvs
-                    ? "CV limitine ulaştınız. Yeni yüklemek için Profil sayfasından bir CV silin."
-                    : "Listeden bir CV seçerek yeni bir hedef analizi başlatabilir veya aşağıdan yeni PDF yükleyebilirsiniz.";
+                    ? "CV limitine ulaştınız (" + res.max_cvs + "/" + res.max_cvs + "). Yeni yüklemek için Profil sayfasından bir CV silin."
+                    : "Listeden seçin veya yeni PDF yükleyin (" + res.cv_count + "/" + res.max_cvs + " CV).";
         }
         wrap.innerHTML = renderCvListItems(items, {
             selectedId: cvId,

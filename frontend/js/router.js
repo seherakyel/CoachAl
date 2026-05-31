@@ -8,25 +8,18 @@
 
     /** @type {Record<string, { pageId: string, scripts?: string[], readyFn?: string }>} */
     var ROUTES = {
-        "dashboard.html": { pageId: "dashboard", scripts: ["../js/dialogs.js", "../js/dashboard.js"] },
+        "dashboard.html": { pageId: "dashboard", scripts: ["../js/dashboard.js"] },
         "cv-analysis.html": {
             pageId: "cv-analysis",
-            scripts: ["../js/dialogs.js", "../js/cv-documents.js", "../js/cv-analysis.js"],
+            scripts: ["../js/cv-documents.js", "../js/cv-analysis.js"],
         },
-        "interviews.html": { pageId: "interviews", scripts: ["../js/dialogs.js", "../js/interviews.js"] },
-        "reports.html": { pageId: "reports", scripts: ["../js/dialogs.js", "../js/reports.js"] },
-        "profile.html": {
-            pageId: "profile",
-            scripts: ["../js/dialogs.js", "../js/cv-documents.js", "../js/profile.js"],
-        },
-        "settings.html": {
-            pageId: "profile",
-            scripts: ["../js/dialogs.js", "../js/cv-documents.js", "../js/profile.js"],
-        },
+        "interviews.html": { pageId: "interviews", scripts: ["../js/interviews.js"] },
+        "reports.html": { pageId: "reports", scripts: ["../js/reports.js"] },
+        "profile.html": { pageId: "profile", scripts: ["../js/cv-documents.js", "../js/profile.js"] },
+        "settings.html": { pageId: "profile", scripts: ["../js/cv-documents.js", "../js/profile.js"] },
         "analysis-result.html": {
             pageId: "cv-analysis",
             scripts: [
-                "../js/dialogs.js",
                 "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js",
                 "../js/coaching-firestore.js",
                 "../js/analysis-result.js",
@@ -34,11 +27,11 @@
         },
         "interview-prep.html": {
             pageId: "interviews",
-            scripts: ["../js/dialogs.js", "../js/interview-prep.js"],
+            scripts: ["../js/interview-prep.js"],
             readyFn: "onInterviewPrepReady",
         },
-        "exam.html": { pageId: "interviews", scripts: ["../js/dialogs.js", "../js/exam.js"] },
-        "quiz.html": { pageId: "interviews", scripts: ["../js/dialogs.js", "../js/quiz.js"] },
+        "exam.html": { pageId: "interviews", scripts: ["../js/exam.js"] },
+        "quiz.html": { pageId: "interviews", scripts: ["../js/quiz.js"] },
     };
 
     var _navigating = false;
