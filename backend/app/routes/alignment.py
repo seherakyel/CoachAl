@@ -41,6 +41,53 @@ async def alignment_list(
     return {"items": items, "total": len(items)}
 
 
+@router.get("/alignment/{alignment_id}")
+async def alignment_get(
+    alignment_id: str,
+    uid: str = Depends(get_current_user),
+):
+    """Kayıtlı hizalama + ilişkili şirket profili (web analysis-result ile aynı veri sözlüğü)."""
+    db = get_firestore()
+    snap = db.collection("alignment_results").document(alignment_id).get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="alignment bulunamadı")
+    d = snap.to_dict() or {}
+    if d.get("user_id") != uid:
+        raise HTTPException(status_code=403, detail="Bu hizalama sonucuna erişim yok")
+
+    pr_data: dict = {}
+    pid = d.get("profile_id")
+    if pid:
+        ps = db.collection("company_profiles").document(str(pid)).get()
+        if ps.exists:
+            pr_data = ps.to_dict() or {}
+
+    score_val = d.get("score")
+    if score_val is None:
+        score_val = 0
+
+    return {
+        "result_id": alignment_id,
+        "cv_id": d.get("cv_id") or "",
+        "profile_id": d.get("profile_id") or "",
+        "company_name": pr_data.get("company_name") or "",
+        "position": pr_data.get("position") or "",
+        "culture_summary": pr_data.get("culture_summary") or "",
+        "key_traits": pr_data.get("key_traits") or [],
+        "advice": d.get("advice") or "",
+        "next_steps": d.get("next_steps") or [],
+        "matched_skills_ui": d.get("matched_skills_ui") or [],
+        "missing_skills_ui": d.get("missing_skills_ui") or [],
+        "score_percent": score_val,
+        "risk_level": d.get("risk_level") or "",
+        "S": d.get("S"),
+        "E": d.get("E"),
+        "D": d.get("D"),
+        "matched_skills": d.get("matched_skills") or [],
+        "missing_skills": d.get("missing_skills") or [],
+    }
+
+
 class AlignmentScoreBody(BaseModel):
     cv_id: str = Field(..., min_length=1)
     profile_id: str = Field(..., min_length=1)
