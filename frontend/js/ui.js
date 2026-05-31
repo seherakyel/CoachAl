@@ -154,6 +154,7 @@ function initLayout(pageId) {
             window.location.href = "login.html";
             return;
         }
+        if (typeof injectCoachAiDialogs === "function") injectCoachAiDialogs();
         ensureShell(user, pageId);
         if (typeof initSpaRouter === "function") initSpaRouter();
         if (typeof onLayoutReady === "function") onLayoutReady(user);
