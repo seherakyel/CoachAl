@@ -96,6 +96,29 @@ async def upload_cv(
     }
 
 
+def _uploaded_at_sort_key(ts) -> float:
+    """Firestore timestamp → sortable float (missing → oldest)."""
+    if ts is None:
+        return 0.0
+    if hasattr(ts, "timestamp"):
+        try:
+            return float(ts.timestamp())
+        except (TypeError, ValueError, OSError):
+            return 0.0
+    return 0.0
+
+
+def _format_uploaded_at(ts) -> str | None:
+    if ts is None:
+        return None
+    if hasattr(ts, "isoformat"):
+        try:
+            return ts.isoformat()
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
 @router.get("/cv/list")
 async def list_cv_documents(
     uid: str = Depends(get_current_user),
@@ -104,38 +127,75 @@ async def list_cv_documents(
 ):
     limit = max(1, min(50, int(limit)))
     db = get_firestore()
-    from google.cloud.firestore import Query
 
-    q = (
+    # user_id + order_by(uploaded_at) composite index gerektirir; bellek içi sıralama daha güvenilir.
+    max_fetch = min(100, max(limit * 5, 50))
+    snapshots = list(
         db.collection("cv_documents")
         .where("user_id", "==", uid)
-        .order_by("uploaded_at", direction=Query.DESCENDING)
-        .limit(limit + 1)
+        .limit(max_fetch)
+        .stream()
     )
-    if cursor:
-        cur_snap = db.collection("cv_documents").document(cursor).get()
-        if cur_snap.exists:
-            q = q.start_after(cur_snap)
+    snapshots.sort(
+        key=lambda d: _uploaded_at_sort_key((d.to_dict() or {}).get("uploaded_at")),
+        reverse=True,
+    )
 
-    docs = list(q.stream())
-    has_more = len(docs) > limit
-    docs = docs[:limit]
+    if cursor:
+        ids = [s.id for s in snapshots]
+        if cursor in ids:
+            snapshots = snapshots[ids.index(cursor) + 1 :]
+
+    page = snapshots[: limit + 1]
+    has_more = len(page) > limit
+    page = page[:limit]
 
     items = []
-    for d in docs:
+    for d in page:
         data = d.to_dict() or {}
         skills = data.get("skills") or []
-        ts = data.get("uploaded_at")
+        if not isinstance(skills, list):
+            skills = []
         items.append(
             {
                 "cv_id": d.id,
+                "file_name": data.get("file_name") or "",
                 "skill_count": len(skills),
-                "skills_preview": skills[:8],
+                "skills_preview": [str(s) for s in skills[:8]],
                 "experience_years": data.get("experience_years"),
-                "education_level": data.get("education_level"),
-                "uploaded_at": ts.isoformat() if hasattr(ts, "isoformat") else None,
+                "education_level": data.get("education_level") or "",
+                "summary": str(data.get("summary") or "")[:160],
+                "uploaded_at": _format_uploaded_at(data.get("uploaded_at")),
             }
         )
 
     next_cursor = items[-1]["cv_id"] if items and has_more else None
     return {"items": items, "next_cursor": next_cursor, "limit": limit}
+
+
+@router.get("/cv/{cv_id}")
+async def get_cv_document(
+    cv_id: str,
+    uid: str = Depends(get_current_user),
+):
+    db = get_firestore()
+    snap = db.collection("cv_documents").document(cv_id).get()
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail="CV bulunamadı")
+    data = snap.to_dict() or {}
+    if data.get("user_id") != uid:
+        raise HTTPException(status_code=404, detail="CV bulunamadı")
+
+    skills = data.get("skills") or []
+    return {
+        "cv_id": snap.id,
+        "file_name": data.get("file_name") or "",
+        "uploaded_at": _format_uploaded_at(data.get("uploaded_at")),
+        "parsed_data": {
+            "skills": skills,
+            "experience_years": data.get("experience_years"),
+            "education_level": data.get("education_level"),
+            "summary": data.get("summary") or "",
+            "match_score_logic": data.get("match_score_logic") or "",
+        },
+    }

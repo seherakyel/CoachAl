@@ -133,10 +133,71 @@ function showError(msg) {
 function clearError() { globalError.classList.add("hidden"); }
 
 function unlockStep2() {
-    step2Lock.classList.add("hidden");
-    step2Badge.className = "w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-sm font-bold";
-    step2.classList.remove("pointer-events-none");
+    if (step2Lock) step2Lock.classList.add("hidden");
+    if (step2Badge) {
+        step2Badge.className =
+            "w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-sm font-bold";
+    }
+    if (step2) step2.classList.remove("pointer-events-none");
     checkAnalyzeReady();
+}
+
+function applyCvSelection(cvIdValue, fileName, parsedData) {
+    cvId = cvIdValue;
+    persistSelectedCv(cvIdValue, fileName, parsedData);
+    refreshCvAnalysisElements();
+    var nameEl = document.getElementById("upload-filename");
+    if (nameEl) nameEl.textContent = (fileName || "CV") + " — kayıtlı";
+    renderCvParsed(parsedData || {});
+    if (uploadStatus) uploadStatus.classList.remove("hidden");
+    unlockStep2();
+    clearError();
+}
+
+async function selectSavedCvById(cvIdValue) {
+    if (!cvIdValue) return;
+    var listEl = document.getElementById("saved-cv-list");
+    if (listEl) {
+        listEl.classList.add("opacity-60", "pointer-events-none");
+    }
+    try {
+        var detail = await fetchCvDetail(cvIdValue);
+        applyCvSelection(
+            detail.cv_id,
+            detail.file_name || cvDisplayLabel(detail),
+            detail.parsed_data || {}
+        );
+        await loadSavedCvList();
+    } catch (err) {
+        showError(err.message || "CV seçilemedi.");
+    } finally {
+        if (listEl) listEl.classList.remove("opacity-60", "pointer-events-none");
+    }
+}
+
+async function loadSavedCvList() {
+    var wrap = document.getElementById("saved-cv-list");
+    if (!wrap) return;
+    wrap.innerHTML =
+        '<div class="flex items-center gap-2 py-4 text-sm text-on-surface-variant">' +
+        '<div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0"></div>' +
+        "CV'ler yükleniyor…</div>";
+    try {
+        var items = await fetchUserCvList(20);
+        wrap.innerHTML = renderCvListItems(items, {
+            selectedId: cvId,
+            actionLabel: "Bu CV'yi kullan",
+        });
+        wrap.querySelectorAll("[data-cv-select]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var id = btn.getAttribute("data-cv-select");
+                if (id && id !== cvId) selectSavedCvById(id);
+            });
+        });
+    } catch (e) {
+        wrap.innerHTML =
+            '<p class="py-4 text-sm text-error">CV listesi yüklenemedi. Lütfen yenileyin.</p>';
+    }
 }
 
 function bindCvAnalysisPage() {
@@ -186,6 +247,14 @@ function bindCvAnalysisPage() {
         btnAnalyze.disabled = true;
         fileInput.value = "";
         clearError();
+        void loadSavedCvList();
+        }, { signal: signal });
+    }
+
+    var btnRefreshCv = document.getElementById("btn-refresh-cv-list");
+    if (btnRefreshCv) {
+        btnRefreshCv.addEventListener("click", function () {
+            loadSavedCvList();
         }, { signal: signal });
     }
 
@@ -301,17 +370,10 @@ async function startUpload(file) {
         var d = await r.json();
         if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : JSON.stringify(d.detail));
 
-        cvId = d.cv_id;
-        sessionStorage.setItem("coachai_cv_id", cvId);
-        sessionStorage.setItem("coachai_cv_name", file.name);
-
         var pd = d.parsed_data || {};
-        sessionStorage.setItem("coachai_cv_parsed", JSON.stringify(pd));
+        applyCvSelection(d.cv_id, file.name, pd);
         document.getElementById("upload-filename").textContent = file.name + " — yüklendi";
-        renderCvParsed(pd);
-
-        uploadStatus.classList.remove("hidden");
-        unlockStep2();
+        await loadSavedCvList();
     } catch(err) {
         showError("Yükleme başarısız: " + (err.message || "Sunucuya bağlanılamadı."));
     }
@@ -322,30 +384,54 @@ async function startUpload(file) {
 }
 
 function checkAnalyzeReady() {
-    var company = document.getElementById("company").value.trim();
-    var position = document.getElementById("position").value.trim();
+    if (!btnAnalyze) return;
+    var companyEl = document.getElementById("company");
+    var positionEl = document.getElementById("position");
+    var company = companyEl ? companyEl.value.trim() : "";
+    var position = positionEl ? positionEl.value.trim() : "";
     btnAnalyze.disabled = !(cvId && company && position);
 }
 
-function onLayoutReady() {
+async function onLayoutReady() {
     refreshCvAnalysisElements();
     bindCvAnalysisPage();
+    await loadSavedCvList();
+
+    var params = new URLSearchParams(window.location.search);
+    var queryCvId = params.get("cv_id");
+    if (queryCvId) {
+        await selectSavedCvById(queryCvId);
+        return;
+    }
+
     var savedCvId = sessionStorage.getItem("coachai_cv_id");
-    if (savedCvId) {
+    if (!savedCvId) return;
+
+    try {
+        var detail = await fetchCvDetail(savedCvId);
+        applyCvSelection(detail.cv_id, detail.file_name, detail.parsed_data || {});
+        document.getElementById("upload-filename").textContent =
+            (detail.file_name || "CV") + " — önceki oturumdan";
+    } catch (e) {
         cvId = savedCvId;
         var name = sessionStorage.getItem("coachai_cv_name") || "Önceki CV";
-        document.getElementById("upload-filename").textContent = name + " — önceki oturumdan";
+        var nameEl = document.getElementById("upload-filename");
+        if (nameEl) nameEl.textContent = name + " — önceki oturumdan";
         try {
             var raw = sessionStorage.getItem("coachai_cv_parsed");
             if (raw) {
                 renderCvParsed(JSON.parse(raw));
-            } else {
-                if (skillsContainer) skillsContainer.innerHTML = "<li class=\"text-on-surface-variant\">Yetenekler önceki oturumda kayıtlı; yeniden yükleyerek güncelleyin.</li>";
+            } else if (skillsContainer) {
+                skillsContainer.innerHTML =
+                    '<li class="text-on-surface-variant">Yetenek ayrıntıları için listeden CV\'yi yeniden seçin.</li>';
             }
-        } catch (e) {
-            if (skillsContainer) skillsContainer.innerHTML = "<li class=\"text-on-surface-variant\">Yetenekler önceki oturumda kayıtlı</li>";
+        } catch (err) {
+            if (skillsContainer) {
+                skillsContainer.innerHTML =
+                    '<li class="text-on-surface-variant">Yetenekler yüklenemedi; listeden CV seçin.</li>';
+            }
         }
-        uploadStatus.classList.remove("hidden");
+        if (uploadStatus) uploadStatus.classList.remove("hidden");
         unlockStep2();
     }
 }

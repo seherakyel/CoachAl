@@ -27,8 +27,31 @@
     <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-8 flex flex-col gap-6">
         <div class="flex items-center gap-3 mb-2">
             <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-sm font-bold">1</div>
-            <h3 class="font-h3 text-h3 text-on-surface">Özgeçmiş Yükleme</h3>
+            <h3 class="font-h3 text-h3 text-on-surface">Özgeçmiş</h3>
         </div>
+
+        <div id="saved-cv-section" class="flex flex-col gap-3">
+            <div class="flex items-center justify-between gap-2">
+                <p class="font-label-sm text-label-sm text-on-surface font-semibold">Daha önce yüklediğim CV'ler</p>
+                <button type="button" id="btn-refresh-cv-list" class="text-xs font-medium text-primary-container hover:text-primary transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">refresh</span>Yenile
+                </button>
+            </div>
+            <div id="saved-cv-list" class="rounded-xl border border-outline-variant bg-surface-container-low px-3 min-h-[4rem]">
+                <div id="saved-cv-loading" class="flex items-center gap-2 py-4 text-sm text-on-surface-variant">
+                    <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0"></div>
+                    CV'ler yükleniyor…
+                </div>
+            </div>
+            <p class="text-xs text-on-surface-variant">Listeden bir CV seçerek yeni bir hedef analizi başlatabilir veya aşağıdan yeni PDF yükleyebilirsiniz.</p>
+        </div>
+
+        <div class="relative flex items-center gap-3 py-1">
+            <div class="flex-1 border-t border-outline-variant"></div>
+            <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">veya yeni yükle</span>
+            <div class="flex-1 border-t border-outline-variant"></div>
+        </div>
+
         <div id="drop-zone" tabindex="0" class="border-2 border-dashed border-outline-variant rounded-xl p-xl flex flex-col items-center justify-center text-center bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer group">
             <div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
                 <span class="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
@@ -100,6 +123,7 @@
 <script src="../js/auth.js"></script>
 <script src="../js/ui.js"></script>
 <script src="../js/router.js"></script>
+<script src="../js/cv-documents.js"></script>
 <script src="../js/cv-analysis.js"></script>
 <script>initLayout("cv-analysis");</script>
 </body>

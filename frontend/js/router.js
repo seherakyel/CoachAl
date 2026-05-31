@@ -9,11 +9,14 @@
     /** @type {Record<string, { pageId: string, scripts?: string[], readyFn?: string }>} */
     var ROUTES = {
         "dashboard.html": { pageId: "dashboard", scripts: ["../js/dashboard.js"] },
-        "cv-analysis.html": { pageId: "cv-analysis", scripts: ["../js/cv-analysis.js"] },
+        "cv-analysis.html": {
+            pageId: "cv-analysis",
+            scripts: ["../js/cv-documents.js", "../js/cv-analysis.js"],
+        },
         "interviews.html": { pageId: "interviews", scripts: ["../js/interviews.js"] },
         "reports.html": { pageId: "reports", scripts: ["../js/reports.js"] },
-        "profile.html": { pageId: "profile", scripts: ["../js/profile.js"] },
-        "settings.html": { pageId: "profile", scripts: ["../js/profile.js"] },
+        "profile.html": { pageId: "profile", scripts: ["../js/cv-documents.js", "../js/profile.js"] },
+        "settings.html": { pageId: "profile", scripts: ["../js/cv-documents.js", "../js/profile.js"] },
         "analysis-result.html": {
             pageId: "cv-analysis",
             scripts: [
