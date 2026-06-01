@@ -36,6 +36,41 @@ function showCompanyResultsLoading() {
         '<div class="px-4 py-3 text-sm text-on-surface-variant text-center">Aranıyor…</div>';
 }
 
+function pickCompanyLogoUrl(item) {
+    if (!item) return "";
+    var url = item.logo_url || item.logo || item.image_url || "";
+    url = String(url).trim();
+    if (url.indexOf("//") === 0) url = "https:" + url;
+    return url;
+}
+
+function fillCompanyLogoSlot(logoEl, item) {
+    var url = pickCompanyLogoUrl(item);
+    var name = item && item.name ? String(item.name) : "";
+    var initial = name[0] ? name[0].toUpperCase() : "?";
+
+    logoEl.innerHTML = "";
+    logoEl.className =
+        "flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-container-highest text-xs font-bold text-on-surface-variant";
+
+    if (!url) {
+        logoEl.textContent = initial;
+        return;
+    }
+
+    var img = document.createElement("img");
+    img.src = url;
+    img.alt = "";
+    img.className = "h-full w-full object-contain bg-white p-0.5";
+    img.referrerPolicy = "no-referrer";
+    img.loading = "lazy";
+    img.onerror = function () {
+        img.remove();
+        logoEl.textContent = initial;
+    };
+    logoEl.appendChild(img);
+}
+
 function renderCompanyResults(items) {
     if (!companyResultsEl) return;
     companyResultsEl.innerHTML = "";
@@ -54,20 +89,7 @@ function renderCompanyResults(items) {
         row.setAttribute("role", "option");
 
         var logo = document.createElement("div");
-        logo.className =
-            "flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-container-highest text-xs font-bold text-on-surface-variant";
-        if (item.logo_url) {
-            var img = document.createElement("img");
-            img.src = item.logo_url;
-            img.alt = "";
-            img.className = "h-full w-full object-cover";
-            img.referrerPolicy = "no-referrer";
-            logo.innerHTML = "";
-            logo.appendChild(img);
-        } else {
-            var ch = (item.name && item.name[0]) ? item.name[0].toUpperCase() : "?";
-            logo.textContent = ch;
-        }
+        fillCompanyLogoSlot(logo, item);
 
         var textWrap = document.createElement("div");
         textWrap.className = "min-w-0 flex-1";
@@ -84,7 +106,7 @@ function renderCompanyResults(items) {
         row.appendChild(textWrap);
         row.addEventListener("click", function() {
             if (companyInput) companyInput.value = item.name || "";
-            sessionStorage.setItem("coachai_company_logo_url", item.logo_url || "");
+            sessionStorage.setItem("coachai_company_logo_url", pickCompanyLogoUrl(item));
             sessionStorage.setItem("coachai_company_universal_name", item.universal_name || "");
             hideCompanyResults();
             checkAnalyzeReady();

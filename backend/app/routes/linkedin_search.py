@@ -40,11 +40,30 @@ def search_linkedin_companies(query: str, li_at: str, jsessionid: str) -> list[d
         data = response.json()
         results: list[dict] = []
 
+        def _normalize_media_url(url: str) -> str:
+            url = (url or "").strip()
+            if not url:
+                return ""
+            if url.startswith("//"):
+                return "https:" + url
+            if url.startswith("http://") or url.startswith("https://"):
+                return url
+            if url.startswith("/"):
+                return "https://media.licdn.com" + url
+            return url
+
         def _build_url(root: str, segment: str) -> str:
             """rootUrl ve fileIdentifyingUrlPathSegment'i güvenli birleştir."""
             root = root.rstrip("/")
             segment = segment.lstrip("/")
-            return f"{root}/{segment}" if root and segment else ""
+            if not root and not segment:
+                return ""
+            if segment.startswith("http://") or segment.startswith("https://"):
+                return _normalize_media_url(segment)
+            if segment.startswith("//"):
+                return _normalize_media_url(segment)
+            built = f"{root}/{segment}" if root and segment else (root or segment)
+            return _normalize_media_url(built)
 
         def _vector_image_url(obj: dict) -> str:
             """
@@ -55,12 +74,19 @@ def search_linkedin_companies(query: str, li_at: str, jsessionid: str) -> list[d
             artifacts = obj.get("artifacts")
             if not isinstance(artifacts, list) or not artifacts:
                 return ""
-            # En sona doğru git; geçerli dict bulduğun ilk yerden al
             for artifact in reversed(artifacts):
-                if isinstance(artifact, dict):
-                    seg = artifact.get("fileIdentifyingUrlPathSegment", "")
-                    if seg:
-                        return _build_url(root, seg)
+                if not isinstance(artifact, dict):
+                    continue
+                full = artifact.get("fileIdentifyingUrl") or ""
+                if full:
+                    normalized = _normalize_media_url(str(full))
+                    if normalized:
+                        return normalized
+                seg = artifact.get("fileIdentifyingUrlPathSegment", "")
+                if seg:
+                    built = _build_url(root, str(seg))
+                    if built:
+                        return built
             return ""
 
         def extract_logo(obj) -> str:
@@ -85,9 +111,24 @@ def search_linkedin_companies(query: str, li_at: str, jsessionid: str) -> list[d
                 if url:
                     return url
 
+            # 1b. Doğrudan URL alanları
+            for key in ("url", "fileIdentifyingUrl", "logoUrl", "imageUrl"):
+                raw = obj.get(key)
+                if isinstance(raw, str) and raw.strip():
+                    normalized = _normalize_media_url(raw)
+                    if normalized:
+                        return normalized
+
             # 2. LinkedIn typeahead'de sık görülen wrapper anahtarları
-            for key in ("vectorImage", "com.linkedin.common.VectorImage",
-                        "nonCustomized", "attributes"):
+            for key in (
+                "vectorImage",
+                "com.linkedin.common.VectorImage",
+                "nonCustomized",
+                "attributes",
+                "detailData",
+                "companyLogo",
+                "logo",
+            ):
                 child = obj.get(key)
                 if isinstance(child, dict):
                     url = extract_logo(child)
@@ -137,6 +178,15 @@ def search_linkedin_companies(query: str, li_at: str, jsessionid: str) -> list[d
                         logo_url = extract_logo(image_obj)
                     else:
                         logo_url = extract_logo(view)
+                    if not logo_url:
+                        logo_url = extract_logo(obj)
+                    if not logo_url:
+                        licdn = re.search(
+                            r"https?://[^\s\"\\]*\.licdn\.com[^\s\"\\]*",
+                            obj_str,
+                        )
+                        if licdn:
+                            logo_url = _normalize_media_url(licdn.group(0))
 
                     if title and uni_name:
                         if not any(r["universal_name"] == uni_name for r in results):
