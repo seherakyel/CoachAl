@@ -432,8 +432,61 @@ def _new_session_doc(
     }
 
 
+def _ctx_from_alignment_doc(align_data: dict, cv_id: str, profile_id: str) -> dict:
+    """Alignment snapshot — cv_skills alanı eski kayıtlarda olmayabilir."""
+    cv_skills = align_data.get("cv_skills")
+    if not isinstance(cv_skills, list) or not cv_skills:
+        matched = align_data.get("matched_skills")
+        cv_skills = matched if isinstance(matched, list) else []
+    return {
+        "cv_id": cv_id,
+        "profile_id": profile_id,
+        "cv_name": (align_data.get("cv_name") or "").strip() or f"CV {cv_id[:8]}",
+        "company_name": (align_data.get("company_name") or "").strip(),
+        "position": (align_data.get("position") or align_data.get("target_position") or "").strip(),
+        "alignment_score": align_data.get("score"),
+        "risk_level": align_data.get("risk_level") or "",
+        "tech_stack": align_data.get("tech_stack") or [],
+        "key_traits": align_data.get("key_traits") or [],
+        "cv_skills": cv_skills,
+        "missing_skills": align_data.get("missing_skills") or [],
+    }
+
+
+def _merge_profile_into_ctx(ctx: dict, pr_data: dict) -> None:
+    if not ctx.get("company_name"):
+        ctx["company_name"] = (pr_data.get("company_name") or "").strip()
+    if not ctx.get("position"):
+        ctx["position"] = (pr_data.get("position") or "").strip()
+    if not ctx.get("tech_stack"):
+        ctx["tech_stack"] = pr_data.get("tech_stack") or []
+    if not ctx.get("key_traits"):
+        ctx["key_traits"] = pr_data.get("key_traits") or []
+
+
+def _merge_cv_into_ctx(ctx: dict, cv_data: dict, cv_id: str) -> None:
+    if not ctx.get("cv_skills"):
+        ctx["cv_skills"] = cv_data.get("skills") or []
+    fn = (cv_data.get("file_name") or "").strip()
+    if fn and (not ctx.get("cv_name") or str(ctx["cv_name"]).startswith("CV ")):
+        ctx["cv_name"] = fn
+
+
+def _load_profile_doc(db, uid: str, profile_id: str) -> dict:
+    pr_snap = db.collection("company_profiles").document(profile_id).get()
+    if not pr_snap.exists:
+        raise HTTPException(
+            status_code=404,
+            detail="Şirket profili bulunamadı. CV Analizi ile yeni bir eşleşme oluşturun.",
+        )
+    pr_data = pr_snap.to_dict() or {}
+    if pr_data.get("user_id") != uid:
+        raise HTTPException(status_code=403, detail="Bu şirket profiline erişim yok")
+    return pr_data
+
+
 def _interview_context_from_body(db, uid: str, body: InterviewStartBody) -> dict:
-    """Mülakat soru üretimi için bağlam — alignment kaydındaki snapshot varsa ekstra okuma yok."""
+    """Mülakat soru üretimi — alignment snapshot öncelikli; silinmiş CV için 404 vermez."""
     cv_id = str(body.cv_id or "").strip()
     profile_id = str(body.profile_id or "").strip()
     align_data: dict | None = None
@@ -448,28 +501,35 @@ def _interview_context_from_body(db, uid: str, body: InterviewStartBody) -> dict
         align_data = snap.to_dict() or {}
         if align_data.get("user_id") != uid:
             raise HTTPException(status_code=403, detail="Bu analiz kaydına erişim yok")
-        cv_id = str(align_data.get("cv_id") or "").strip()
-        profile_id = str(align_data.get("profile_id") or "").strip()
+        cv_id = str(align_data.get("cv_id") or cv_id).strip()
+        profile_id = str(align_data.get("profile_id") or profile_id).strip()
         if not cv_id or not profile_id:
             raise HTTPException(
                 status_code=400,
                 detail="Bu analiz kaydında CV veya şirket bilgisi eksik. Yeni bir analiz yapın.",
             )
-        if align_data.get("company_name") and "cv_skills" in align_data:
-            return {
-                "cv_id": cv_id,
-                "profile_id": profile_id,
-                "cv_name": align_data.get("cv_name") or "",
-                "company_name": align_data.get("company_name") or "",
-                "position": align_data.get("position") or "",
-                "alignment_score": align_data.get("score"),
-                "risk_level": align_data.get("risk_level") or "",
-                "tech_stack": align_data.get("tech_stack") or [],
-                "key_traits": align_data.get("key_traits") or [],
-                "cv_skills": align_data.get("cv_skills") or [],
-                "missing_skills": align_data.get("missing_skills") or [],
-            }
-    elif not cv_id or not profile_id:
+
+        ctx = _ctx_from_alignment_doc(align_data, cv_id, profile_id)
+
+        if not ctx["company_name"] or not ctx["position"] or not ctx["tech_stack"]:
+            pr_data = _load_profile_doc(db, uid, profile_id)
+            _merge_profile_into_ctx(ctx, pr_data)
+
+        if not ctx["cv_skills"]:
+            cv_snap = db.collection("cv_documents").document(cv_id).get()
+            if cv_snap.exists():
+                cv_data = cv_snap.to_dict() or {}
+                if cv_data.get("user_id") == uid:
+                    _merge_cv_into_ctx(ctx, cv_data, cv_id)
+
+        if not ctx["company_name"] and not ctx["position"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Bu analiz kaydında şirket bilgisi eksik. Yeni bir eşleşme analizi yapın.",
+            )
+        return ctx
+
+    if not cv_id or not profile_id:
         raise HTTPException(
             status_code=400,
             detail="alignment_id veya cv_id ve profile_id gerekli",
