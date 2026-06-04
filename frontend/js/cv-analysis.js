@@ -343,6 +343,11 @@ function bindCvAnalysisPage() {
                 var ad = await ar.json();
                 if (!ar.ok) throw new Error(ad.detail || "Eşleşme analizi başarısız");
                 sessionStorage.setItem("coachai_alignment", JSON.stringify(ad));
+                sessionStorage.setItem("coachai_alignment_id", ad.result_id || "");
+                if (typeof prependAlignmentListCache === "function") {
+                    var listEntry = alignmentEntryFromScoreResponse(ad, cvId, profileId);
+                    if (listEntry) prependAlignmentListCache(listEntry);
+                }
                 coachaiGo("analysis-result.html");
             } catch(err) {
                 showError("Analiz başarısız: " + (err.message || "Sunucuya bağlanılamadı."));

@@ -24,20 +24,54 @@
 
     <div id="selector-panel" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 space-y-6">
         <h3 class="font-h3 text-h3 text-on-surface">Rapor Seçimi</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <p class="text-sm text-on-surface-variant -mt-2">Hangi CV ile hangi şirket/role yaptığınız analizi seçin; isteğe bağlı olarak ilgili mülakat oturumunu ekleyin.</p>
+        <div class="space-y-6">
             <div class="flex flex-col gap-2">
-                <label class="font-label-sm text-label-sm text-on-surface">Eşleşme Analizi</label>
-                <select id="alignment-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">Yükleniyor…</option></select>
+                <label class="font-label-sm text-label-sm text-on-surface" for="alignment-select">Geçmiş eşleşme analizi</label>
+                <select id="alignment-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">Analizler yükleniyor…</option></select>
             </div>
-            <div class="flex flex-col gap-2">
-                <label class="font-label-sm text-label-sm text-on-surface">Mülakat Seansı (İsteğe bağlı)</label>
-                <select id="session-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">Seçiniz…</option></select>
+            <div id="alignment-detail" class="hidden rounded-xl border border-outline-variant bg-surface-container-low p-4"></div>
+        </div>
+
+        <div id="sessions-section" class="hidden border-t border-outline-variant pt-6 space-y-4">
+            <div class="flex items-center justify-between gap-4">
+                <h4 class="font-label-sm text-label-sm text-on-surface font-semibold">Bu analize ait sınavlar</h4>
+                <span id="sessions-count" class="text-xs text-on-surface-variant"></span>
+            </div>
+            <p id="session-hint" class="text-xs text-on-surface-variant">Tamamlanan klasik sınav ve quiz oturumları — değerlendirme detaylarını inceleyebilir veya AI birleşik rapora dahil edebilirsiniz.</p>
+            <div id="sessions-list" class="space-y-3"></div>
+            <div id="sessions-empty" class="hidden rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-8 text-center text-sm text-on-surface-variant">
+                Bu analiz için henüz tamamlanmış sınav yok. Önce <a href="exam.html" class="text-primary font-medium hover:underline">Klasik Sınav</a> veya <a href="quiz.html" class="text-primary font-medium hover:underline">Quiz</a> tamamlayın.
             </div>
         </div>
-        <div id="selector-error" class="hidden p-3 bg-error-container text-on-error-container text-sm rounded-lg border border-error/20"></div>
-        <button id="btn-generate" class="px-8 py-4 bg-primary-container text-on-primary rounded-lg font-semibold hover:bg-primary transition-colors flex items-center gap-2">
-            <span class="material-symbols-outlined">auto_awesome</span>Raporu Oluştur
-        </button>
+
+        <div id="session-detail-panel" class="hidden rounded-xl border border-primary/20 bg-primary-fixed/30 p-6 space-y-4">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-primary mb-1">Sınav değerlendirmesi</p>
+                    <h4 id="session-detail-title" class="font-h3 text-h3 text-on-surface">—</h4>
+                    <p id="session-detail-meta" class="text-sm text-on-surface-variant mt-1">—</p>
+                </div>
+                <button type="button" id="btn-close-session-detail" class="p-2 rounded-lg hover:bg-surface-container-lowest text-on-surface-variant" aria-label="Kapat">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <p id="session-detail-summary" class="text-sm text-on-surface bg-surface-container-lowest rounded-lg p-4 border border-outline-variant hidden"></p>
+            <div id="session-detail-questions" class="space-y-4 max-h-[420px] overflow-y-auto pr-1"></div>
+            <button type="button" id="btn-use-session-for-report" class="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
+                <span class="material-symbols-outlined text-[18px]">link</span>Bu oturumu AI raporuna dahil et
+            </button>
+        </div>
+
+        <div class="border-t border-outline-variant pt-6 space-y-3">
+            <h4 class="font-label-sm text-label-sm text-on-surface font-semibold">AI birleşik geri bildirim raporu</h4>
+            <p class="text-xs text-on-surface-variant">Eşleşme analizinize göre güçlü/zayıf yönler ve aksiyon planı üretir. İsteğe bağlı olarak yukarıdan bir sınav oturumu seçilir.</p>
+            <p id="ai-report-session-note" class="text-xs text-primary font-medium hidden"></p>
+            <div id="selector-error" class="hidden p-3 bg-error-container text-on-error-container text-sm rounded-lg border border-error/20"></div>
+            <button id="btn-generate" class="px-8 py-4 bg-primary-container text-on-primary rounded-lg font-semibold hover:bg-primary transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined">auto_awesome</span>AI Raporu Oluştur
+            </button>
+        </div>
     </div>
 
     <div id="generating-state" class="hidden flex flex-col items-center justify-center py-16 gap-6">
@@ -94,6 +128,7 @@
 <script src="../js/dialogs.js"></script>
 <script src="../js/ui.js"></script>
 <script src="../js/router.js"></script>
+<script src="../js/alignment-picker.js"></script>
 <script src="../js/reports.js"></script>
 <script>initLayout("reports");</script>
 </body>

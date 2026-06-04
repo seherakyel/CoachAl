@@ -46,47 +46,11 @@ function hideTopicFlowError() {
     }
 }
 
-function applyStoredCredentialsToSelects() {
-    var cvSel = document.getElementById("cv-select");
-    var profileSel = document.getElementById("profile-select");
-    if (!cvSel || !profileSel) return;
-
-    var cvId =
-        sessionStorage.getItem("coachai_cv_id") || localStorage.getItem("coachai_cv_id") || "";
-    var profileId =
-        sessionStorage.getItem("coachai_profile_id") ||
-        localStorage.getItem("coachai_profile_id") ||
-        "";
-
-    if (cvId) {
-        cvSel.value = cvId;
-    }
-    if (profileId) {
-        profileSel.value = profileId;
-    }
-}
-
-/** Topic akışında sessionStorage / localStorage veya listedeki ilk kayıt. */
-function ensureTopicDefaults() {
-    var cvSel = document.getElementById("cv-select");
-    var profileSel = document.getElementById("profile-select");
-    if (!cvSel || !profileSel) return { cvId: "", profileId: "" };
-
-    applyStoredCredentialsToSelects();
-
-    var cvId = cvSel.value;
-    var profileId = profileSel.value;
-
-    if (!cvId && cvSel.options.length > 1) {
-        cvSel.selectedIndex = 1;
-        cvId = cvSel.value;
-    }
-    if (!profileId && profileSel.options.length > 1) {
-        profileSel.selectedIndex = 1;
-        profileId = profileSel.value;
-    }
-
-    return { cvId: cvId || "", profileId: profileId || "" };
+function setTopicFlowError(msg) {
+    var el = document.getElementById("topic-flow-error");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove("hidden");
 }
 
 function applyTopicFlowUI(label) {
@@ -112,61 +76,25 @@ function showPanel(id) {
     if (ban && id !== "quiz-panel") ban.classList.add("hidden");
 }
 
-async function loadDropdowns() {
-    var tok;
-    try {
-        tok = await getToken();
-    } catch (e) {
-        return;
-    }
+async function loadSetup() {
+    await initAlignmentPicker({
+        selectId: "alignment-select",
+        detailId: "alignment-detail",
+        emptyMessage: "Henüz analiz yok — önce CV Analizi yapın",
+    });
+}
 
-    var cvSel = document.getElementById("cv-select");
-    var profileSel = document.getElementById("profile-select");
-    var savedCvId =
-        sessionStorage.getItem("coachai_cv_id") || localStorage.getItem("coachai_cv_id");
-    var savedProfileId =
-        sessionStorage.getItem("coachai_profile_id") ||
-        localStorage.getItem("coachai_profile_id");
-
-    try {
-        var cr = await fetch(API_BASE + "/api/cv/list?limit=20", {
-            headers: { Authorization: "Bearer " + tok },
-        });
-        var cd = await cr.json();
-        var cvs = cd.items || cd.cvs || [];
-        cvSel.innerHTML =
-            `<option value="">CV seçin…</option>` +
-            cvs
-                .map(function (c) {
-                    return `<option value="${c.id || c.cv_id}" ${
-                        (c.id || c.cv_id) === savedCvId ? "selected" : ""
-                    }>${c.filename || c.original_filename || c.id}</option>`;
-                })
-                .join("");
-    } catch (e) {
-        cvSel.innerHTML = `<option value="">CV yüklenemedi</option>`;
-    }
-
-    try {
-        var pr = await fetch(API_BASE + "/api/company/list?limit=20", {
-            headers: { Authorization: "Bearer " + tok },
-        });
-        var pd = await pr.json();
-        var profiles = pd.items || pd.profiles || [];
-        profileSel.innerHTML =
-            `<option value="">Şirket profili seçin…</option>` +
-            profiles
-                .map(function (p) {
-                    return `<option value="${p.id || p.profile_id}" ${
-                        (p.id || p.profile_id) === savedProfileId ? "selected" : ""
-                    }>${p.company_name || p.id} ${
-                        p.target_position ? "- " + p.target_position : ""
-                    }</option>`;
-                })
-                .join("");
-    } catch (e) {
-        profileSel.innerHTML = `<option value="">Profil yüklenemedi</option>`;
-    }
+function credentialsFromDefaultAlignment() {
+    var a = pickDefaultAlignment();
+    if (!a || !a.cv_id || !a.profile_id) return null;
+    return {
+        alignment_id: a.alignment_id || a.id,
+        cv_id: a.cv_id,
+        profile_id: a.profile_id,
+        cv_name: a.cv_name,
+        company_name: a.company_name,
+        position: a.position || a.target_position,
+    };
 }
 
 async function startQuizSession(cvId, profileId, opts) {
@@ -185,7 +113,13 @@ async function startQuizSession(cvId, profileId, opts) {
             opts.focusTopic !== undefined && opts.focusTopic !== null
                 ? opts.focusTopic
                 : focusTopicFromUrl;
-        var body = { cv_id: cvId, profile_id: profileId };
+        var body = {};
+        if (opts.alignment_id) {
+            body.alignment_id = opts.alignment_id;
+        } else {
+            body.cv_id = cvId;
+            body.profile_id = profileId;
+        }
         var ft = focusTopic && String(focusTopic).trim();
         if (ft) body.focus_topic = ft;
 
@@ -215,6 +149,7 @@ async function startQuizSession(cvId, profileId, opts) {
         var msg = err.message || "Quiz başlatılamadı";
         if (isTopicFlow()) {
             document.getElementById("setup-error").classList.add("hidden");
+            setTopicFlowError(msg);
         } else {
             var el = document.getElementById("setup-error");
             el.textContent = msg;
@@ -226,21 +161,33 @@ async function startQuizSession(cvId, profileId, opts) {
 document.getElementById("btn-start-quiz").addEventListener("click", async function () {
     if (isTopicFlow()) {
         hideTopicFlowError();
-        await loadDropdowns();
-        var ids = ensureTopicDefaults();
-        await startQuizSession(ids.cvId, ids.profileId, {});
+        if (!_alignmentCache.length) {
+            try {
+                _alignmentCache = await fetchAlignmentList(20);
+            } catch (e) {
+                setTopicFlowError("Analiz listesi yüklenemedi. Önce CV analizi yapın.");
+                return;
+            }
+        }
+        var creds = credentialsFromDefaultAlignment();
+        if (!creds || !creds.alignment_id) {
+            setTopicFlowError(
+                "Quiz için geçmiş bir eşleşme analizi gerekli. Önce CV Analizi sayfasından şirket eşleşmesi yapın."
+            );
+            return;
+        }
+        await startQuizSession(null, null, { alignment_id: creds.alignment_id });
         return;
     }
 
-    var cvId = document.getElementById("cv-select").value;
-    var profileId = document.getElementById("profile-select").value;
-    if (!cvId || !profileId) {
+    var selected = getSelectedAlignmentCredentials("alignment-select");
+    if (!selected) {
         var el = document.getElementById("setup-error");
-        el.textContent = "CV ve şirket profili seçin.";
+        el.textContent = "Lütfen listeden bir geçmiş analiz seçin.";
         el.classList.remove("hidden");
         return;
     }
-    await startQuizSession(cvId, profileId, {});
+    await startQuizSession(null, null, { alignment_id: selected.alignment_id });
 });
 
 function showQuestion(idx) {
@@ -391,10 +338,53 @@ ${r.feedback ? `<p class="text-sm text-on-surface-variant mt-1">${r.feedback}</p
 }
 
 async function onLayoutReady() {
-    await loadDropdowns();
+    try {
+        _alignmentCache = await fetchAlignmentList(20);
+    } catch (e) {
+        _alignmentCache = [];
+    }
+
     if (isTopicFlow()) {
         applyTopicFlowUI(displayTopicLabel(focusTopicFromUrl));
-        applyStoredCredentialsToSelects();
-        ensureTopicDefaults();
+        return;
     }
+
+    var selectEl = document.getElementById("alignment-select");
+    var detailEl = document.getElementById("alignment-detail");
+    if (!selectEl) return;
+
+    if (!_alignmentCache.length) {
+        selectEl.innerHTML =
+            '<option value="">Henüz analiz yok — önce CV Analizi yapın</option>';
+        if (detailEl) renderAlignmentDetail(detailEl, null);
+        return;
+    }
+
+    var saved =
+        sessionStorage.getItem("coachai_alignment_id") ||
+        new URLSearchParams(window.location.search).get("alignment_id") ||
+        "";
+
+    selectEl.innerHTML =
+        '<option value="">Geçmiş analiz seçin…</option>' +
+        _alignmentCache
+            .map(function (a) {
+                var id = a.alignment_id || a.id;
+                var sel = id === saved ? " selected" : "";
+                return (
+                    '<option value="' +
+                    escapeAlignHtml(id) +
+                    '"' +
+                    sel +
+                    ">" +
+                    escapeAlignHtml(alignmentOptionLabel(a)) +
+                    "</option>"
+                );
+            })
+            .join("");
+
+    selectEl.onchange = function () {
+        renderAlignmentDetail(detailEl, findAlignmentById(selectEl.value));
+    };
+    selectEl.onchange();
 }

@@ -57,12 +57,17 @@ async def feedback_generate(
 
     profile_id = a_data.get("profile_id")
     cv_id = a_data.get("cv_id")
-    pr_data = {}
-    if profile_id:
-        ps = db.collection("company_profiles").document(profile_id).get()
-        pr_data = ps.to_dict() if ps.exists else {}
-    company_name = pr_data.get("company_name") or ""
-    position = pr_data.get("position") or ""
+    company_name = (a_data.get("company_name") or "").strip()
+    position = (a_data.get("position") or "").strip()
+    if not company_name or not position:
+        pr_data = {}
+        if profile_id:
+            ps = db.collection("company_profiles").document(str(profile_id)).get()
+            pr_data = ps.to_dict() if ps.exists else {}
+        if not company_name:
+            company_name = pr_data.get("company_name") or ""
+        if not position:
+            position = pr_data.get("position") or ""
 
     sess_summary = None
     sess_data = None

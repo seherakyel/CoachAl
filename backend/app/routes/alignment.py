@@ -1,7 +1,10 @@
+import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from google.cloud import firestore
 from google.cloud.firestore import SERVER_TIMESTAMP
+from google.cloud.firestore_v1.base_query import FieldFilter
 from pydantic import BaseModel, Field
 
 from app.config.firebase_config import get_firestore
@@ -13,31 +16,92 @@ from app.services.gemini_client import alignment_coaching, enrich_skill_display_
 router = APIRouter()
 
 
+def _calculated_at_sort_key(ts) -> float:
+    if ts is None:
+        return 0.0
+    if hasattr(ts, "timestamp"):
+        try:
+            return float(ts.timestamp())
+        except (TypeError, ValueError, OSError):
+            return 0.0
+    return 0.0
+
+
+def _format_calculated_at(ts) -> str | None:
+    if ts is None:
+        return None
+    if hasattr(ts, "isoformat"):
+        try:
+            return ts.isoformat()
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
+def _alignment_list_items_sync(uid: str, limit: int) -> list[dict]:
+    """Tek Firestore sorgusu — ek CV/şirket okuması yok (denormalize alanlar)."""
+    db = get_firestore()
+    base = db.collection("alignment_results").where(
+        filter=FieldFilter("user_id", "==", uid)
+    )
+
+    try:
+        snapshots = list(
+            base.order_by("calculated_at", direction=firestore.Query.DESCENDING)
+            .limit(limit)
+            .stream()
+        )
+    except Exception:
+        snapshots = list(base.limit(min(limit * 3, 50)).stream())
+        snapshots.sort(
+            key=lambda doc: _calculated_at_sort_key((doc.to_dict() or {}).get("calculated_at")),
+            reverse=True,
+        )
+        snapshots = snapshots[:limit]
+
+    items = []
+    for doc in snapshots:
+        d = doc.to_dict() or {}
+        cv_id = str(d.get("cv_id") or "")
+        profile_id = str(d.get("profile_id") or "")
+        if not cv_id or not profile_id:
+            continue
+
+        cv_name = (d.get("cv_name") or "").strip() or f"CV {cv_id[:8]}"
+        company_name = (d.get("company_name") or "").strip() or "Şirket"
+        position = (d.get("position") or d.get("target_position") or "").strip() or "Pozisyon"
+
+        score_val = d.get("score")
+        if score_val is None:
+            score_val = 0
+
+        items.append(
+            {
+                "id": doc.id,
+                "alignment_id": doc.id,
+                "cv_id": cv_id,
+                "profile_id": profile_id,
+                "cv_name": cv_name,
+                "company_name": company_name,
+                "position": position,
+                "target_position": position,
+                "score": score_val,
+                "risk_level": d.get("risk_level") or "",
+                "created_at": _format_calculated_at(d.get("calculated_at")),
+            }
+        )
+
+    return items
+
+
 @router.get("/alignment/list")
 async def alignment_list(
     limit: int = 20,
     uid: str = Depends(get_current_user),
 ):
-    db = get_firestore()
-    docs = (
-        db.collection("alignment_results")
-        .where("user_id", "==", uid)
-        .limit(min(limit, 50))
-        .stream()
-    )
-    items = []
-    for doc in docs:
-        d = doc.to_dict() or {}
-        items.append({
-            "id": doc.id,
-            "company_name": d.get("company_name", ""),
-            "target_position": d.get("position", ""),
-            "score": d.get("score", 0),
-            "risk_level": d.get("risk_level", ""),
-            "created_at": str(d.get("calculated_at", "")),
-            "cv_id": d.get("cv_id", ""),
-            "profile_id": d.get("profile_id", ""),
-        })
+    """Exam/quiz dropdown — yalnızca Firestore, Gemini yok."""
+    limit = max(1, min(50, int(limit)))
+    items = await asyncio.to_thread(_alignment_list_items_sync, uid, limit)
     return {"items": items, "total": len(items)}
 
 
@@ -147,12 +211,20 @@ async def alignment_score(
         result["missing_skills"],
     )
 
+    cv_name = (cv_data.get("file_name") or "").strip() or f"CV {body.cv_id[:8]}"
+
     result_id = str(uuid.uuid4())
     db.collection("alignment_results").document(result_id).set(
         {
             "user_id": uid,
             "cv_id": body.cv_id,
             "profile_id": body.profile_id,
+            "cv_name": cv_name,
+            "company_name": company_name,
+            "position": position,
+            "tech_stack": tech_stack,
+            "key_traits": key_traits,
+            "cv_skills": cv_data.get("skills") or [],
             "score": result["score_percent"],
             "risk_level": result["risk_level"],
             "matched_skills": result["matched_skills"],
@@ -172,6 +244,7 @@ async def alignment_score(
         "result_id": result_id,
         "cv_id": body.cv_id,
         "profile_id": body.profile_id,
+        "cv_name": cv_name,
         "company_name": company_name,
         "position": position,
         "advice": advice,

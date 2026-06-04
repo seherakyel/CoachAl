@@ -26,13 +26,10 @@
     <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 space-y-6">
         <div id="setup-dropdowns" class="space-y-6">
             <div class="flex flex-col gap-2">
-                <label class="font-label-sm text-label-sm text-on-surface">CV Seç</label>
-                <select id="cv-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">CV yükleniyor…</option></select>
+                <label class="font-label-sm text-label-sm text-on-surface" for="alignment-select">Geçmiş analiz</label>
+                <select id="alignment-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">Analizler yükleniyor…</option></select>
             </div>
-            <div class="flex flex-col gap-2">
-                <label class="font-label-sm text-label-sm text-on-surface">Şirket Profili Seç</label>
-                <select id="profile-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"><option value="">Şirket profili yükleniyor…</option></select>
-            </div>
+            <div id="alignment-detail" class="hidden rounded-xl border border-outline-variant bg-surface-container-low p-4"></div>
         </div>
 
         <div id="topic-quick-panel" class="hidden rounded-xl border border-primary/15 bg-gradient-to-br from-primary-fixed/90 via-surface-container-lowest to-surface-container-low p-6 md:p-8 shadow-[0_8px_40px_rgba(53,37,205,0.08)]">
@@ -110,6 +107,7 @@
 <script src="../js/dialogs.js"></script>
 <script src="../js/ui.js"></script>
 <script src="../js/router.js"></script>
+<script src="../js/alignment-picker.js"></script>
 <script src="../js/quiz.js"></script>
 <script>initLayout("interviews");</script>
 </body>

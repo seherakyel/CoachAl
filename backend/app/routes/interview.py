@@ -1,8 +1,11 @@
+import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from google.cloud import firestore
 from google.cloud.firestore import SERVER_TIMESTAMP
-from pydantic import BaseModel, Field
+from google.cloud.firestore_v1.base_query import FieldFilter
+from pydantic import BaseModel, Field, model_validator
 
 from app.config.firebase_config import get_firestore
 from app.config.settings import get_env
@@ -16,37 +19,288 @@ from app.services.quiz_generator import generate_quiz_questions
 router = APIRouter()
 
 
-@router.get("/interview/list")
-async def interview_list(
+def _started_at_sort_key(ts) -> float:
+    if ts is None:
+        return 0.0
+    if hasattr(ts, "timestamp"):
+        try:
+            return float(ts.timestamp())
+        except (TypeError, ValueError, OSError):
+            return 0.0
+    return 0.0
+
+
+def _format_started_at(ts) -> str | None:
+    if ts is None:
+        return None
+    if hasattr(ts, "isoformat"):
+        try:
+            return ts.isoformat()
+        except (TypeError, ValueError):
+            return None
+    return str(ts) if ts else None
+
+
+def _session_status(d: dict) -> str:
+    if d.get("completed_at") or d.get("status") == "completed":
+        return "completed"
+    return str(d.get("status") or "in_progress")
+
+
+def _quiz_correct_count(answers: list) -> int:
+    return sum(1 for a in answers if a.get("is_correct"))
+
+
+def _session_list_item(doc_id: str, d: dict) -> dict:
+    mode = d.get("mode") or d.get("type") or "classic"
+    answers = d.get("user_answers") or []
+    questions = d.get("questions") or []
+    q_count = int(d.get("question_count") or len(questions) or 0)
+    correct = d.get("correct_count")
+    if correct is None and mode == "quiz" and answers:
+        correct = _quiz_correct_count(answers)
+    status = _session_status(d)
+    return {
+        "id": doc_id,
+        "session_id": doc_id,
+        "alignment_id": d.get("alignment_id") or "",
+        "mode": mode,
+        "type": mode,
+        "status": status,
+        "cv_id": d.get("cv_id") or "",
+        "profile_id": d.get("profile_id") or "",
+        "cv_name": d.get("cv_name") or "",
+        "company_name": d.get("company_name") or "",
+        "position": d.get("position") or "",
+        "focus_topic": d.get("focus_topic") or "",
+        "question_count": q_count,
+        "correct_count": correct,
+        "total_score": d.get("total_score"),
+        "score": d.get("total_score"),
+        "feedback": (d.get("feedback") or "")[:280],
+        "completed_at": _format_started_at(d.get("completed_at")),
+        "started_at": _format_started_at(d.get("started_at")),
+        "created_at": _format_started_at(d.get("started_at")),
+    }
+
+
+def _session_detail_payload(doc_id: str, d: dict) -> dict:
+    item = _session_list_item(doc_id, d)
+    mode = item["mode"]
+    answers = d.get("user_answers") or []
+    per_question = []
+    for a in answers:
+        row = {
+            "question_index": a.get("question_index"),
+            "question": a.get("question") or "",
+            "difficulty": a.get("difficulty"),
+            "type": a.get("type"),
+        }
+        if mode == "quiz":
+            row.update(
+                {
+                    "options": a.get("options") or [],
+                    "selected_index": a.get("selected_index"),
+                    "correct_index": a.get("correct_index"),
+                    "is_correct": a.get("is_correct"),
+                    "explanation": a.get("explanation") or "",
+                }
+            )
+        else:
+            row.update(
+                {
+                    "answer": a.get("answer") or "",
+                    "score": a.get("score"),
+                    "feedback": a.get("feedback") or "",
+                }
+            )
+        per_question.append(row)
+    per_question.sort(key=lambda x: int(x.get("question_index") or 0))
+    item["per_question"] = per_question
+    item["feedback_full"] = d.get("feedback") or ""
+    return item
+
+
+def _sessions_for_alignment_sync(uid: str, alignment_id: str, limit: int) -> list[dict]:
+    db = get_firestore()
+    a_snap = db.collection("alignment_results").document(alignment_id).get()
+    if not a_snap.exists:
+        return []
+    a_data = a_snap.to_dict() or {}
+    if a_data.get("user_id") != uid:
+        return []
+
+    cv_id = str(a_data.get("cv_id") or "")
+    profile_id = str(a_data.get("profile_id") or "")
+    seen: set[str] = set()
+    merged: list = []
+
+    def _collect(query_snapshots):
+        for doc in query_snapshots:
+            if doc.id in seen:
+                continue
+            seen.add(doc.id)
+            merged.append(doc)
+
+    try:
+        by_align = list(
+            db.collection("interview_sessions")
+            .where(filter=FieldFilter("user_id", "==", uid))
+            .where(filter=FieldFilter("alignment_id", "==", alignment_id))
+            .order_by("started_at", direction=firestore.Query.DESCENDING)
+            .limit(limit)
+            .stream()
+        )
+        _collect(by_align)
+    except Exception:
+        by_align = list(
+            db.collection("interview_sessions")
+            .where(filter=FieldFilter("user_id", "==", uid))
+            .where(filter=FieldFilter("alignment_id", "==", alignment_id))
+            .limit(limit)
+            .stream()
+        )
+        _collect(by_align)
+
+    if cv_id and profile_id and len(merged) < limit:
+        try:
+            by_pair = list(
+                db.collection("interview_sessions")
+                .where(filter=FieldFilter("user_id", "==", uid))
+                .where(filter=FieldFilter("cv_id", "==", cv_id))
+                .where(filter=FieldFilter("profile_id", "==", profile_id))
+                .order_by("started_at", direction=firestore.Query.DESCENDING)
+                .limit(limit)
+                .stream()
+            )
+            for doc in by_pair:
+                d = doc.to_dict() or {}
+                aid = (d.get("alignment_id") or "").strip()
+                if aid and aid != alignment_id:
+                    continue
+                if doc.id in seen:
+                    continue
+                seen.add(doc.id)
+                merged.append(doc)
+        except Exception:
+            pass
+
+    merged.sort(
+        key=lambda doc: _started_at_sort_key((doc.to_dict() or {}).get("started_at")),
+        reverse=True,
+    )
+
+    items = []
+    for doc in merged[:limit]:
+        d = doc.to_dict() or {}
+        if _session_status(d) != "completed":
+            continue
+        items.append(_session_list_item(doc.id, d))
+    return items
+
+
+def _interview_list_items_sync(
+    uid: str, limit: int, cv_id: str | None, profile_id: str | None
+) -> list[dict]:
+    db = get_firestore()
+    snapshots = list(
+        db.collection("interview_sessions")
+        .where(filter=FieldFilter("user_id", "==", uid))
+        .limit(80)
+        .stream()
+    )
+    snapshots.sort(
+        key=lambda doc: _started_at_sort_key((doc.to_dict() or {}).get("started_at")),
+        reverse=True,
+    )
+
+    items = []
+    for doc in snapshots:
+        d = doc.to_dict() or {}
+        doc_cv = str(d.get("cv_id") or "")
+        doc_pr = str(d.get("profile_id") or "")
+        if cv_id and doc_cv != cv_id:
+            continue
+        if profile_id and doc_pr != profile_id:
+            continue
+
+        items.append(_session_list_item(doc.id, d))
+        if len(items) >= limit:
+            break
+
+    return items
+
+
+@router.get("/interview/by-alignment/{alignment_id}")
+async def interview_list_by_alignment(
+    alignment_id: str,
     limit: int = 20,
     uid: str = Depends(get_current_user),
 ):
-    db = get_firestore()
-    docs = (
-        db.collection("interview_sessions")
-        .where("user_id", "==", uid)
-        .limit(min(limit, 50))
-        .stream()
+    limit = max(1, min(30, int(limit)))
+    a_snap = await asyncio.to_thread(
+        lambda: get_firestore().collection("alignment_results").document(alignment_id).get()
     )
-    items = []
-    for doc in docs:
-        d = doc.to_dict() or {}
-        items.append({
-            "id": doc.id,
-            "session_id": doc.id,
-            "type": d.get("type", "classic"),
-            "created_at": str(d.get("created_at", "")),
-            "cv_id": d.get("cv_id", ""),
-            "profile_id": d.get("profile_id", ""),
-            "score": d.get("score"),
-        })
+    if not a_snap.exists:
+        raise HTTPException(status_code=404, detail="Analiz bulunamadı")
+    if (a_snap.to_dict() or {}).get("user_id") != uid:
+        raise HTTPException(status_code=403, detail="Bu analize erişim yok")
+    items = await asyncio.to_thread(_sessions_for_alignment_sync, uid, alignment_id, limit)
+    return {"alignment_id": alignment_id, "items": items, "total": len(items)}
+
+
+@router.get("/interview/session/{session_id}")
+async def interview_session_detail(
+    session_id: str,
+    uid: str = Depends(get_current_user),
+):
+    def _read():
+        db = get_firestore()
+        snap = db.collection("interview_sessions").document(session_id).get()
+        if not snap.exists:
+            return None
+        d = snap.to_dict() or {}
+        if d.get("user_id") != uid:
+            return "forbidden"
+        return _session_detail_payload(snap.id, d)
+
+    result = await asyncio.to_thread(_read)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı")
+    if result == "forbidden":
+        raise HTTPException(status_code=403, detail="Bu oturuma erişim yok")
+    return result
+
+
+@router.get("/interview/list")
+async def interview_list(
+    limit: int = 20,
+    cv_id: str | None = None,
+    profile_id: str | None = None,
+    uid: str = Depends(get_current_user),
+):
+    limit = max(1, min(50, int(limit)))
+    cv_filter = (cv_id or "").strip() or None
+    pr_filter = (profile_id or "").strip() or None
+    items = await asyncio.to_thread(
+        _interview_list_items_sync, uid, limit, cv_filter, pr_filter
+    )
     return {"items": items, "total": len(items)}
 
 
 class InterviewStartBody(BaseModel):
-    cv_id: str = Field(..., min_length=1)
-    profile_id: str = Field(..., min_length=1)
+    cv_id: str | None = Field(default=None, min_length=1)
+    profile_id: str | None = Field(default=None, min_length=1)
+    alignment_id: str | None = Field(default=None, min_length=1)
     focus_topic: str | None = Field(default=None, max_length=220)
+
+    @model_validator(mode="after")
+    def require_target(self):
+        if self.alignment_id:
+            return self
+        if self.cv_id and self.profile_id:
+            return self
+        raise ValueError("alignment_id veya cv_id ve profile_id gerekli")
 
 
 class AnswerItem(BaseModel):
@@ -69,13 +323,107 @@ class QuizSubmitBody(BaseModel):
     answers: list[QuizAnswerItem]
 
 
+def _new_session_doc(
+    uid: str,
+    ctx: dict,
+    body: InterviewStartBody,
+    mode: str,
+    questions: list,
+    focus_topic: str | None = None,
+) -> dict:
+    return {
+        "user_id": uid,
+        "cv_id": ctx["cv_id"],
+        "profile_id": ctx["profile_id"],
+        "alignment_id": (body.alignment_id or "").strip(),
+        "cv_name": ctx.get("cv_name") or "",
+        "mode": mode,
+        "company_name": ctx["company_name"],
+        "position": ctx["position"],
+        "focus_topic": (focus_topic or "").strip(),
+        "status": "in_progress",
+        "question_count": len(questions),
+        "correct_count": None,
+        "questions": questions,
+        "user_answers": [],
+        "total_score": None,
+        "feedback": "",
+        "started_at": SERVER_TIMESTAMP,
+        "completed_at": None,
+    }
+
+
+def _interview_context_from_body(db, uid: str, body: InterviewStartBody) -> dict:
+    """Mülakat soru üretimi için bağlam — alignment kaydındaki snapshot varsa ekstra okuma yok."""
+    cv_id = str(body.cv_id or "").strip()
+    profile_id = str(body.profile_id or "").strip()
+    align_data: dict | None = None
+
+    if body.alignment_id:
+        snap = db.collection("alignment_results").document(body.alignment_id).get()
+        if not snap.exists:
+            raise HTTPException(
+                status_code=404,
+                detail="Seçilen analiz kaydı bulunamadı. Listeyi yenileyip tekrar deneyin.",
+            )
+        align_data = snap.to_dict() or {}
+        if align_data.get("user_id") != uid:
+            raise HTTPException(status_code=403, detail="Bu analiz kaydına erişim yok")
+        cv_id = str(align_data.get("cv_id") or "").strip()
+        profile_id = str(align_data.get("profile_id") or "").strip()
+        if not cv_id or not profile_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Bu analiz kaydında CV veya şirket bilgisi eksik. Yeni bir analiz yapın.",
+            )
+        if align_data.get("company_name") and "cv_skills" in align_data:
+            return {
+                "cv_id": cv_id,
+                "profile_id": profile_id,
+                "cv_name": align_data.get("cv_name") or "",
+                "company_name": align_data.get("company_name") or "",
+                "position": align_data.get("position") or "",
+                "tech_stack": align_data.get("tech_stack") or [],
+                "key_traits": align_data.get("key_traits") or [],
+                "cv_skills": align_data.get("cv_skills") or [],
+                "missing_skills": align_data.get("missing_skills") or [],
+            }
+    elif not cv_id or not profile_id:
+        raise HTTPException(
+            status_code=400,
+            detail="alignment_id veya cv_id ve profile_id gerekli",
+        )
+
+    cv_data, pr_data = _load_cv_and_profile(db, uid, cv_id, profile_id)
+    cv_name = (cv_data.get("file_name") or "").strip() or f"CV {cv_id[:8]}"
+    if align_data and align_data.get("cv_name"):
+        cv_name = align_data.get("cv_name") or cv_name
+    return {
+        "cv_id": cv_id,
+        "profile_id": profile_id,
+        "cv_name": cv_name,
+        "company_name": pr_data.get("company_name") or "",
+        "position": pr_data.get("position") or "",
+        "tech_stack": pr_data.get("tech_stack") or [],
+        "key_traits": pr_data.get("key_traits") or [],
+        "cv_skills": cv_data.get("skills") or [],
+        "missing_skills": (align_data or {}).get("missing_skills") or [],
+    }
+
+
 def _load_cv_and_profile(db, uid: str, cv_id: str, profile_id: str) -> tuple[dict, dict]:
     cv_snap = db.collection("cv_documents").document(cv_id).get()
     pr_snap = db.collection("company_profiles").document(profile_id).get()
     if not cv_snap.exists:
-        raise HTTPException(status_code=404, detail="cv_id bulunamadı")
+        raise HTTPException(
+            status_code=404,
+            detail="CV bulunamadı (silinmiş olabilir). Profilden CV'yi kontrol edin veya yeni analiz yapın.",
+        )
     if not pr_snap.exists:
-        raise HTTPException(status_code=404, detail="profile_id bulunamadı")
+        raise HTTPException(
+            status_code=404,
+            detail="Şirket profili bulunamadı. CV Analizi ile yeni bir eşleşme oluşturun.",
+        )
     cv_data = cv_snap.to_dict() or {}
     pr_data = pr_snap.to_dict() or {}
     if cv_data.get("user_id") != uid:
@@ -100,18 +448,19 @@ async def start_classic(
         )
 
     db = get_firestore()
-    cv_data, pr_data = _load_cv_and_profile(db, uid, body.cv_id, body.profile_id)
-
-    company_name = pr_data.get("company_name") or ""
-    position = pr_data.get("position") or ""
+    ctx = _interview_context_from_body(db, uid, body)
+    cv_id = ctx["cv_id"]
+    profile_id = ctx["profile_id"]
+    company_name = ctx["company_name"]
+    position = ctx["position"]
 
     questions = generate_classic_questions(
         company_name=company_name,
         position=position,
-        tech_stack=pr_data.get("tech_stack") or [],
-        key_traits=pr_data.get("key_traits") or [],
-        cv_skills=cv_data.get("skills") or [],
-        missing_skills=[],
+        tech_stack=ctx["tech_stack"],
+        key_traits=ctx["key_traits"],
+        cv_skills=ctx["cv_skills"],
+        missing_skills=ctx["missing_skills"],
     )
     if not questions:
         raise HTTPException(
@@ -120,20 +469,7 @@ async def start_classic(
 
     session_id = str(uuid.uuid4())
     db.collection("interview_sessions").document(session_id).set(
-        {
-            "user_id": uid,
-            "cv_id": body.cv_id,
-            "profile_id": body.profile_id,
-            "mode": "classic",
-            "company_name": company_name,
-            "position": position,
-            "questions": questions,
-            "user_answers": [],
-            "total_score": None,
-            "feedback": "",
-            "started_at": SERVER_TIMESTAMP,
-            "completed_at": None,
-        }
+        _new_session_doc(uid, ctx, body, "classic", questions)
     )
 
     public_questions = [
@@ -148,6 +484,7 @@ async def start_classic(
 
     return {
         "session_id": session_id,
+        "alignment_id": body.alignment_id or "",
         "company_name": company_name,
         "position": position,
         "mode": "classic",
@@ -223,6 +560,8 @@ async def evaluate_classic(
             "user_answers": per_question,
             "total_score": total_score,
             "feedback": summary,
+            "status": "completed",
+            "correct_count": None,
             "completed_at": SERVER_TIMESTAMP,
         }
     )
@@ -249,18 +588,19 @@ async def start_quiz(
         )
 
     db = get_firestore()
-    cv_data, pr_data = _load_cv_and_profile(db, uid, body.cv_id, body.profile_id)
-
-    company_name = pr_data.get("company_name") or ""
-    position = pr_data.get("position") or ""
+    ctx = _interview_context_from_body(db, uid, body)
+    cv_id = ctx["cv_id"]
+    profile_id = ctx["profile_id"]
+    company_name = ctx["company_name"]
+    position = ctx["position"]
 
     focus = (body.focus_topic or "").strip() or None
     questions = generate_quiz_questions(
         company_name=company_name,
         position=position,
-        tech_stack=pr_data.get("tech_stack") or [],
-        key_traits=pr_data.get("key_traits") or [],
-        cv_skills=cv_data.get("skills") or [],
+        tech_stack=ctx["tech_stack"],
+        key_traits=ctx["key_traits"],
+        cv_skills=ctx["cv_skills"],
         focus_topic=focus,
     )
     if not questions:
@@ -270,21 +610,7 @@ async def start_quiz(
 
     session_id = str(uuid.uuid4())
     db.collection("interview_sessions").document(session_id).set(
-        {
-            "user_id": uid,
-            "cv_id": body.cv_id,
-            "profile_id": body.profile_id,
-            "mode": "quiz",
-            "company_name": company_name,
-            "position": position,
-            "focus_topic": focus,
-            "questions": questions,
-            "user_answers": [],
-            "total_score": None,
-            "feedback": "",
-            "started_at": SERVER_TIMESTAMP,
-            "completed_at": None,
-        }
+        _new_session_doc(uid, ctx, body, "quiz", questions, focus_topic=focus)
     )
 
     public_questions = [
@@ -363,6 +689,9 @@ async def submit_quiz(
             "user_answers": per_question,
             "total_score": total_score,
             "feedback": f"{correct_count}/{total} doğru cevap",
+            "status": "completed",
+            "correct_count": correct_count,
+            "question_count": total,
             "completed_at": SERVER_TIMESTAMP,
         }
     )

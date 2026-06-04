@@ -20,21 +20,16 @@
 <div id="setup-panel">
     <div class="mb-8">
         <h1 class="font-h1 text-h1 text-on-surface mb-2">Klasik Sınav</h1>
-        <p class="font-body-lg text-body-lg text-on-surface-variant">Mülakat için CV ve şirket profilinizi seçin.</p>
+        <p class="font-body-lg text-body-lg text-on-surface-variant">Daha önce yaptığınız bir eşleşme analizini seçerek klasik mülakat sınavını başlatın.</p>
     </div>
     <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 space-y-6">
         <div class="flex flex-col gap-2">
-            <label class="font-label-sm text-label-sm text-on-surface">CV Seç</label>
-            <select id="cv-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
-                <option value="">CV yükleniyor…</option>
+            <label class="font-label-sm text-label-sm text-on-surface" for="alignment-select">Geçmiş analiz</label>
+            <select id="alignment-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                <option value="">Analizler yükleniyor…</option>
             </select>
         </div>
-        <div class="flex flex-col gap-2">
-            <label class="font-label-sm text-label-sm text-on-surface">Şirket Profili</label>
-            <select id="profile-select" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
-                <option value="">Şirket profili yükleniyor…</option>
-            </select>
-        </div>
+        <div id="alignment-detail" class="hidden rounded-xl border border-outline-variant bg-surface-container-low p-4"></div>
         <div id="setup-error" class="hidden p-3 bg-error-container text-on-error-container text-sm rounded-lg border border-error/20"></div>
         <button id="btn-start-exam" class="w-full bg-primary-container text-on-primary py-4 rounded-lg font-semibold text-sm hover:bg-primary transition-colors flex items-center justify-center gap-2">
             <span class="material-symbols-outlined">play_arrow</span>Sınavı Başlat
@@ -85,6 +80,7 @@
 <script src="../js/dialogs.js"></script>
 <script src="../js/ui.js"></script>
 <script src="../js/router.js"></script>
+<script src="../js/alignment-picker.js"></script>
 <script src="../js/exam.js"></script>
 <script>initLayout("interviews");</script>
 </body>

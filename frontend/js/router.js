@@ -11,10 +11,18 @@
         "dashboard.html": { pageId: "dashboard", scripts: ["../js/dialogs.js", "../js/dashboard.js"] },
         "cv-analysis.html": {
             pageId: "cv-analysis",
-            scripts: ["../js/dialogs.js", "../js/cv-documents.js", "../js/cv-analysis.js"],
+            scripts: [
+                "../js/dialogs.js",
+                "../js/cv-documents.js",
+                "../js/alignment-picker.js",
+                "../js/cv-analysis.js",
+            ],
         },
         "interviews.html": { pageId: "interviews", scripts: ["../js/dialogs.js", "../js/interviews.js"] },
-        "reports.html": { pageId: "reports", scripts: ["../js/dialogs.js", "../js/reports.js"] },
+        "reports.html": {
+            pageId: "reports",
+            scripts: ["../js/dialogs.js", "../js/alignment-picker.js", "../js/reports.js"],
+        },
         "profile.html": {
             pageId: "profile",
             scripts: ["../js/dialogs.js", "../js/cv-documents.js", "../js/profile.js"],
@@ -37,8 +45,14 @@
             scripts: ["../js/dialogs.js", "../js/interview-prep.js"],
             readyFn: "onInterviewPrepReady",
         },
-        "exam.html": { pageId: "interviews", scripts: ["../js/dialogs.js", "../js/exam.js"] },
-        "quiz.html": { pageId: "interviews", scripts: ["../js/dialogs.js", "../js/quiz.js"] },
+        "exam.html": {
+            pageId: "interviews",
+            scripts: ["../js/dialogs.js", "../js/alignment-picker.js", "../js/exam.js"],
+        },
+        "quiz.html": {
+            pageId: "interviews",
+            scripts: ["../js/dialogs.js", "../js/alignment-picker.js", "../js/quiz.js"],
+        },
     };
 
     var _navigating = false;

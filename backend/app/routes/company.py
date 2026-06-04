@@ -68,6 +68,28 @@ async def company_analyze(
     }
 
 
+def _created_at_sort_key(ts) -> float:
+    if ts is None:
+        return 0.0
+    if hasattr(ts, "timestamp"):
+        try:
+            return float(ts.timestamp())
+        except (TypeError, ValueError, OSError):
+            return 0.0
+    return 0.0
+
+
+def _format_created_at(ts) -> str | None:
+    if ts is None:
+        return None
+    if hasattr(ts, "isoformat"):
+        try:
+            return ts.isoformat()
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
 @router.get("/company/list")
 async def list_company_profiles(
     uid: str = Depends(get_current_user),
@@ -76,34 +98,34 @@ async def list_company_profiles(
 ):
     limit = max(1, min(50, int(limit)))
     db = get_firestore()
-    from google.cloud.firestore import Query
 
-    q = (
-        db.collection("company_profiles")
-        .where("user_id", "==", uid)
-        .order_by("created_at", direction=Query.DESCENDING)
-        .limit(limit + 1)
+    snapshots = list(
+        db.collection("company_profiles").where("user_id", "==", uid).limit(100).stream()
     )
-    if cursor:
-        cur_snap = db.collection("company_profiles").document(cursor).get()
-        if cur_snap.exists:
-            q = q.start_after(cur_snap)
+    snapshots.sort(
+        key=lambda d: _created_at_sort_key((d.to_dict() or {}).get("created_at")),
+        reverse=True,
+    )
 
-    docs = list(q.stream())
-    has_more = len(docs) > limit
-    docs = docs[:limit]
+    if cursor:
+        ids = [s.id for s in snapshots]
+        if cursor in ids:
+            snapshots = snapshots[ids.index(cursor) + 1 :]
+
+    page = snapshots[: limit + 1]
+    has_more = len(page) > limit
+    page = page[:limit]
 
     items = []
-    for d in docs:
+    for d in page:
         data = d.to_dict() or {}
-        ts = data.get("created_at")
         items.append(
             {
                 "profile_id": d.id,
                 "company_name": data.get("company_name") or "",
                 "position": data.get("position") or "",
                 "tech_stack_preview": (data.get("tech_stack") or [])[:6],
-                "created_at": ts.isoformat() if hasattr(ts, "isoformat") else None,
+                "created_at": _format_created_at(data.get("created_at")),
             }
         )
 
