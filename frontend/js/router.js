@@ -19,10 +19,7 @@
             ],
         },
         "interviews.html": { pageId: "interviews", scripts: ["../js/dialogs.js", "../js/interviews.js"] },
-        "reports.html": {
-            pageId: "reports",
-            scripts: ["../js/dialogs.js", "../js/alignment-picker.js", "../js/reports.js"],
-        },
+        "reports.html": { pageId: "reports", scripts: ["../js/dialogs.js", "../js/reports.js"] },
         "profile.html": {
             pageId: "profile",
             scripts: ["../js/dialogs.js", "../js/cv-documents.js", "../js/profile.js"],
